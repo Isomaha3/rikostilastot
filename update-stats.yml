@@ -1,0 +1,39 @@
+name: Päivitä rikostilastot
+
+on:
+  # Ajaa automaattisesti joka vuosi 15. kesäkuuta klo 08:00
+  # (Tilastokeskus julkaisee vuositilaston yleensä toukokuussa)
+  schedule:
+    - cron: '0 8 15 6 *'
+
+  # Mahdollistaa myös manuaalisen ajamisen GitHub-sivulta
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Lataa repositorio
+        uses: actions/checkout@v4
+
+      - name: Asenna Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Asenna kirjastot
+        run: pip install requests
+
+      - name: Hae uudet tilastot ja päivitä dashboard
+        run: python update_stats.py
+
+      - name: Tallenna muutokset GitHubiin
+        run: |
+          git config user.name "Automaattinen päivitys"
+          git config user.email "action@github.com"
+          git add index.html
+          git diff --staged --quiet || git commit -m "Automaattinen tilastopäivitys $(date +%Y)"
+          git push
