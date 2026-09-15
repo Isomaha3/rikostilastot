@@ -316,8 +316,8 @@ function renderSeksuaali(){
   ${dataBox('seksuaali')}
   <div class="ibox amber"><strong>Lainmuutoshuomio:</strong> Seksuaalirikoslaki uudistui 1.1.2023. Raiskauksen määritelmä muuttui suostumusperusteiseksi. Lukuja ennen ja jälkeen 2023 ei voi suoraan verrata.</div>
   <div class="metrics">
-    <div class="mc"><div class="mlabel">Yhteensä ${Y[9]}</div><div class="mval r">${fi(T[9])}</div><div class="msub"><span class="tu">+25%</span> vs. 2023</div></div>
-    <div class="mc"><div class="mlabel">Lapsiin kohdistuvat</div><div class="mval r">${fi(L[9])}</div><div class="msub"><span class="tu">+43%</span> vs. 2023</div></div>
+    <div class="mc"><div class="mlabel">Yhteensä ${Y[9]}</div><div class="mval r">${fi(T[9])}</div><div class="msub">${(()=>{const c=(T[9]-T[8])/T[8]*100;return c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`;})()} vs. ${Y[8]}</div></div>
+    <div class="mc"><div class="mlabel">Lapsiin kohdistuvat</div><div class="mval r">${fi(L[9])}</div><div class="msub">${(()=>{const c=(L[9]-L[8])/L[8]*100;return c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`;})()} vs. ${Y[8]}</div></div>
     <div class="mc mc3"><div class="mlabel">Ulkomaalaisten osuus raiskausepäillyistä</div><div class="mval r">${UR[9].toFixed(1)} %</div><div class="msub">väestöosuus ${UV[9].toFixed(1)} %</div></div>
   </div>
   <div class="card">
@@ -737,6 +737,10 @@ document.addEventListener('DOMContentLoaded', function(){
 // Tilastokeskus: "Ulkomaalaiset suomalaisia useammin epäiltynä rikoksista" (2019)
 // Tilastokeskus Tieto&trendit: "Yhden rikos leimaa 99 nuorta" (2023)
 function renderIka(){
+
+  const EU=[45723,48455,54575,51746,46947,38221,38084,44368,50550,54462];
+  const ES=[587406,594381,636174,595451,468156,300958,272324,322567,280121,308415];
+  const PBI=[6.60,7.00,7.30,7.70,8.00,8.50,9.10,10.20,11.10,11.70];
   const el=document.getElementById('p-ika');
 
   // Ikäryhmäjakauma epäillyistä 2024 — kaikki rikokset
@@ -771,9 +775,9 @@ function renderIka(){
   <div class="ibox"><strong>Lähde:</strong> Tilastokeskus rikos- ja pakkokeinotilasto. Ikäjakauma on laskettu julkisista tilastoista. Seksuaalirikossuhdeluvut ovat Tilastokeskuksen ikä- ja sukupuolivakioituja lukuja vuosilta 2017–2018 — viimeisin julkaistu tätä yksityiskohtainen vertailu.</div>
 
   <div class="metrics">
-    <div class="mc"><div class="mlabel">Ulkomaalaistaustaisia epäiltyjä 2024</div><div class="mval r">46 700</div><div class="msub"><span class="tu">+13,7%</span> vs. 2023</div></div>
-    <div class="mc"><div class="mlabel">Suomalaistaustaisia epäiltyjä 2024</div><div class="mval">269 600</div><div class="msub"><span class="td">-13,2%</span> vs. 2023</div></div>
-    <div class="mc mc3"><div class="mlabel">Ulkomaalaistaustaisten osuus kaikista epäillyistä</div><div class="mval r">14,8 %</div><div class="msub">väestöosuus ~9 % → yliedustettu</div></div>
+    <div class="mc"><div class="mlabel">Ulkomaalaistaustaisia epäiltyjä ${Y[9]}</div><div class="mval r">${fi(EU[9])}</div><div class="msub">${(()=>{const c=(EU[9]-EU[8])/EU[8]*100;return c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`;})()} vs. ${Y[8]}</div></div>
+    <div class="mc"><div class="mlabel">Suomalaistaustaisia epäiltyjä ${Y[9]}</div><div class="mval">${fi(ES[9])}</div><div class="msub">${(()=>{const c=(ES[9]-ES[8])/ES[8]*100;return c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`;})()} vs. ${Y[8]}</div></div>
+    <div class="mc mc3"><div class="mlabel">Ulkomaalaistaustaisten osuus kaikista epäillyistä</div><div class="mval r">${(EU[9]/(EU[9]+ES[9])*100).toFixed(1)} %</div><div class="msub">väestöosuus ${PBI[9].toFixed(1)} %</div></div>
   </div>
 
   <div class="card">

@@ -487,6 +487,17 @@ def fetch_suspect_rate(origin_code, years):
     ], years, as_float=True)
 
 
+def fetch_suspect_count(origin_code, years):
+    """Epäiltyjen lukumäärä syntyperän mukaan, tapauskerrat (13zk)."""
+    return _pxpost(SYNT_TABLE, [
+        {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [SYNT_CRIME_ALL]}},
+        {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin_code]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": ["ep_lkm"]}},
+    ], years)
+
+
 def fetch_rape_suspects(citizen_code, years):
     """Raiskausepäillyt kansalaisuuden mukaan (13je)."""
     return _pxpost(RAPE_TABLE, [
@@ -751,6 +762,8 @@ def main():
     print("  Epäillyt syntyperän mukaan...")
     rate_foreign = fetch_suspect_rate(SYNT_FOREIGN, year_strs_pre)
     rate_domestic = fetch_suspect_rate(SYNT_DOMESTIC, year_strs_pre)
+    susp_foreign = fetch_suspect_count(SYNT_FOREIGN, year_strs_pre)
+    susp_domestic = fetch_suspect_count(SYNT_DOMESTIC, year_strs_pre)
 
     print("  Raiskausepäillyt kansalaisuuden mukaan...")
     rape_all = fetch_rape_suspects("SSS", year_strs_pre)
@@ -916,6 +929,16 @@ def main():
         np_ = [round(rate_domestic.get(y, 0) * 10) for y in year_strs]
         content = update_const_array(content, 'IP', ip)
         content = update_const_array(content, 'NP', np_)
+
+    # Epäiltyjen lukumäärät syntyperän mukaan (13zk, tapauskerrat)
+    if susp_foreign and susp_domestic:
+        content = update_const_array(content, 'EU', [int(susp_foreign.get(y,0)) for y in year_strs])
+        content = update_const_array(content, 'ES', [int(susp_domestic.get(y,0)) for y in year_strs])
+    if pop_ulk_syntypera and pop_kaikki_syntypera:
+        pbi = [round(pop_ulk_syntypera.get(y,0)/pop_kaikki_syntypera[y]*100,1)
+               for y in year_strs if pop_kaikki_syntypera.get(y)]
+        if len(pbi) == len(year_strs):
+            content = update_const_array(content, 'PBI', pbi, is_float=True)
 
     # ── Raiskausepäillyt kansalaisuuden mukaan (13je) ──
     if rape_all and rape_foreign:
