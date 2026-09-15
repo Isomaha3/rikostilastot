@@ -106,7 +106,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button id="back-btn" onclick="goHome()" style="display:none;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:0;line-height:1">←</button>
     <div>
       <h1 id="ttitle">Persutilastot</h1>
-      <small>Tilastokeskus &amp; Rise · <span id="datarange">2015–2024</span></small>
+      <small>Tilastokeskus &amp; Rise · <span id="datarange">2016–2025</span></small>
     </div>
   </div>
 </div>
@@ -144,7 +144,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script>
 const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'2025 ennakkotiedot (Q1–Q3)',ika:'Ikäjakauma & tausta'};
-const Y=['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024'];
+const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 
 function fi(n){return Math.round(n).toLocaleString('fi-FI');}
 
@@ -214,10 +214,10 @@ function stackedBars(years, datasets){
 
 // ── DATA COVERAGE BOX ──────────────────────────────────
 const COVERAGE = {
-  vakivalta:   {years:'2015–2024', note:'Vuosi 2024 on viimeisin täysi vuosi. Vuoden 2025 Q1–Q3 ennakkotieto saatavilla Tilastokeskukselta mutta ei sisälly tähän tilastoon.'},
-  seksuaali:   {years:'2015–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Huom: seksuaalirikoslaki muuttui 1.1.2023 — lukuja ei voi suoraan verrata ennen/jälkeen.'},
-  henki:       {years:'2015–2024', note:'Vuosi 2024 viimeisin täysi vuosi. 2025 Q1–Q3 ennakkotieto osoittaa jatkuvaa vaihtelua.'},
-  ryostot:     {years:'2015–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Vuoden 2022 piikki (+23 %) näkyy selkeästi trendikaaviossa.'},
+  vakivalta:   {years:'2016–2025', note:'Vuosi 2024 on viimeisin täysi vuosi. Vuoden 2025 Q1–Q3 ennakkotieto saatavilla Tilastokeskukselta mutta ei sisälly tähän tilastoon.'},
+  seksuaali:   {years:'2016–2025', note:'Vuosi 2024 viimeisin täysi vuosi. Huom: seksuaalirikoslaki muuttui 1.1.2023 — lukuja ei voi suoraan verrata ennen/jälkeen.'},
+  henki:       {years:'2016–2025', note:'Vuosi 2024 viimeisin täysi vuosi. 2025 Q1–Q3 ennakkotieto osoittaa jatkuvaa vaihtelua.'},
+  ryostot:     {years:'2016–2025', note:'Vuosi 2024 viimeisin täysi vuosi. Vuoden 2022 piikki (+23 %) näkyy selkeästi trendikaaviossa.'},
   nuoriso:     {years:'2015–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Alle 15-vuotiaiden tilasto ulottuu vuoteen 2024.'},
   perhe:       {years:'2009–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Tilasto julkaistaan kerran vuodessa, ei neljännesvuosittain.'},
   maahanmuuttajat:{years:'2015–2024', note:'Luvut ovat arvioita Tilastokeskuksen aineistojen pohjalta, ei suoraan rajapinnasta.'},
@@ -234,9 +234,9 @@ function dataBox(id){
 
 // ── RENDER GENERIC CRIME ────────────────────────────────
 const DATA={
-  vakivalta:{col:'#e05c5c',counts:[43200,42600,41800,41200,40500,39800,40600,41300,41800,41500],p100k:[784,773,758,747,733,719,733,745,753,747],trendPct:-3.9,trend:'laskeva',analysis:'Vuosi 2015 näyttää korkealta osittain siksi, että lievien pahoinpitelyjen syyteoikeus muuttui vuonna 2011 — tämä nosti tilastoituja lukuja keinotekoisesti. Pitkä trendi on silti laskeva. Vuonna 2024 pahoinpitelyjä 41 500. Ajoittuminen on muuttunut: yhä useampi tapahtuu päiväsaikaan, mikä heijastaa nuorten tekemien pahoinpitelyjen kasvua.'},
-  henki:{col:'#9b7de8',counts:[105,97,93,88,82,78,81,75,57,89],p100k:[1.91,1.76,1.69,1.60,1.49,1.41,1.46,1.35,1.03,1.60],trendPct:15.0,trend:'nouseva 2024',analysis:'Vuosi 2023 oli historiallisen matala (57). Vuonna 2024 luku nousi 89:ään — 32 enemmän — palaten 2010-luvun tasolle. Tappo 53 tapauksessa, murha 36.'},
-  ryostot:{col:'#4f8ef7',counts:[3620,3480,3320,3150,2980,2810,2720,2650,2740,2600],p100k:[65.7,63.2,60.2,57.1,54.0,50.8,49.1,47.8,49.4,46.8],trendPct:-28.2,trend:'laskeva',analysis:'Ryöstöt ovat laskeneet tasaisesti. Vuonna 2024 ryöstöjä 2 600 (-5,1 %). Selvitysprosentti 59 %. Yöaikaiset ryöstöt vähentyneet, iltapäiväryöstöt yleistyneet.'},
+  vakivalta:{col:'#e05c5c',counts:[32972,33053,33150,33426,32778,33620,37647,40712,40466,44013],p100k:[599.13,599.53,600.77,604.96,592.32,605.96,676.62,726.50,718.00,778.59],trendPct:33.5,trend:'laskeva',analysis:'Vuosi 2015 näyttää korkealta osittain siksi, että lievien pahoinpitelyjen syyteoikeus muuttui vuonna 2011 — tämä nosti tilastoituja lukuja keinotekoisesti. Pitkä trendi on silti laskeva. Vuonna 2024 pahoinpitelyjä 41 500. Ajoittuminen on muuttunut: yhä useampi tapahtuu päiväsaikaan, mikä heijastaa nuorten tekemien pahoinpitelyjen kasvua.'},
+  henki:{col:'#9b7de8',counts:[76,72,87,72,86,83,79,57,89,80],p100k:[1.38,1.31,1.58,1.30,1.55,1.50,1.42,1.02,1.58,1.42],trendPct:5.3,trend:'nouseva 2024',analysis:'Vuosi 2023 oli historiallisen matala (57). Vuonna 2024 luku nousi 89:ään — 32 enemmän — palaten 2010-luvun tasolle. Tappo 53 tapauksessa, murha 36.'},
+  ryostot:{col:'#4f8ef7',counts:[1409,1391,1448,1518,1690,1610,1963,2206,2141,2007],p100k:[25.60,25.23,26.24,27.47,30.54,29.02,35.28,39.37,37.99,35.50],trendPct:42.4,trend:'laskeva',analysis:'Ryöstöt ovat laskeneet tasaisesti. Vuonna 2024 ryöstöjä 2 600 (-5,1 %). Selvitysprosentti 59 %. Yöaikaiset ryöstöt vähentyneet, iltapäiväryöstöt yleistyneet.'},
   nuoriso:{col:'#e06898',counts:[16200,15800,15200,14700,14200,13800,14500,14100,13800,14400],p100k:[295,287,276,267,258,250,263,256,250,261],yShare:[18.2,17.8,17.1,16.5,15.9,15.4,16.1,15.7,15.2,15.8],trendPct:-11.1,trend:'laskeva pitkällä',analysis:'Vuoden 2015 piikki selittyy lastensuojelulain muutoksella (huhtikuu 2015): ilmoitusvelvollisuus laajeni ja koulut alkoivat ilmoittaa herkemmin oppilaiden rikosepäilyistä — todellinen rikollisuus ei kasvanut yhtä paljon kuin tilastot näyttävät. Kokonaismäärä on laskenut pitkällä aikavälillä. Silti alle 15-vuotiaiden pahoinpitelyt ovat aidosti kasvaneet — yleisin epäillyn ikä 2024 oli 14 vuotta (1 400 tapausta).'}
 };
 
@@ -279,11 +279,11 @@ function renderCrime(id){
 // ── SEKSUAALIRIKOKSET ───────────────────────────────────
 function renderSeksuaali(){
   const el=document.getElementById('p-seksuaali');
-  const R=[1050,1090,1020,1060,1110,1200,1450,1669,1888,2050];
-  const L=[1200,1250,1180,1220,1300,1450,1820,2100,3475,4986];
-  const A=[430,450,420,410,390,380,560,580,1139,1050];
+  const R=[1030,1140,1287,1384,1336,1749,1565,1842,2060,2113];
+  const L=[1187,1131,1350,1698,1752,2064,2343,2315,3469,2936];
+  const A=[535,424,521,529,570,753,776,1283,1526,1380];
   const K=[0,0,0,0,0,0,0,0,146,190];
-  const T=[3820,3900,3750,3820,3900,4100,5400,5500,7100,8900];
+  const T=[3326,3336,3859,4409,4531,5484,5591,7451,9607,10372];
   const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]));
   const UR=[22,23,24,25,26,28,30,33,38,40];
   const UV=[3.8,4.0,4.2,4.5,4.8,5.0,5.1,5.3,5.5,5.7];
