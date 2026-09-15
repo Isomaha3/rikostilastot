@@ -389,13 +389,24 @@ def update_year_array(content, new_years):
 
 
 def update_trend_pct(content, obj_key, first_val, last_val):
-    """Päivitä trendPct-arvo."""
+    """Päivitä trendPct-arvo ja sitä vastaava trend-nimilappu."""
     pct = round((last_val - first_val) / first_val * 100, 1)
     pattern = rf'({obj_key}:\{{[^}}]*trendPct:)[^,]+'
     new_content = re.sub(pattern, rf'\g<1>{pct}', content)
     if new_content != content:
         print(f"  ✓ Päivitetty: DATA.{obj_key}.trendPct = {pct}%")
-        return new_content
+        content = new_content
+
+    # Nimilappu pidetään datan mukana, jotta sivulla ei lue 'laskeva'
+    # silloin kun luvut nousevat. Aiemmin tämä jäi käsin ylläpidettäväksi
+    # ja ehti ajautua ristiriitaan datan kanssa.
+    label = 'vakaa' if abs(pct) < 1 else ('nouseva' if pct > 0 else 'laskeva')
+    label_pattern = rf"({obj_key}:\{{[^}}]*?trend:')[^']*(')"
+    relabeled = re.sub(label_pattern, rf"\g<1>{label}\g<2>", content)
+    if relabeled != content:
+        print(f"  ✓ Päivitetty: DATA.{obj_key}.trend = {label}")
+        content = relabeled
+
     return content
 
 
