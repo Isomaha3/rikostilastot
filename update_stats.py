@@ -67,6 +67,19 @@ POP_AREA_ALL = 'SSS'                       # KOKO MAA
 POP_VAR_YEAR = 'timeperiod_y'              # Vuosi
 POP_CONTENT = 'vaerak-vaesto'              # Väestö 31.12.
 
+# Nuorisorikollisuus — syylliseksi epäillyt iän mukaan (taulu 13yq, 2010–)
+YOUTH_TABLE = f'{PXWEB_BASE}/rpk/13yq.px'
+YOUTH_VAR_AREA = 'alue_23_20230101'        # Kunta
+YOUTH_VAR_SEX = 'sukupuoli_9_20180101'     # Epäillyn sukupuoli
+YOUTH_VAR_AGE = 'ikaryhma_10_20180101'     # Syylliseksi epäillyn ikä
+YOUTH_VAR_CRIME = 'rikokset_74_20211209'   # Rikosryhmä
+YOUTH_CRIME_RL = '101T504X406'             # 1 RIKOSLAKIRIKOKSET
+YOUTH_CONTENT = 'ep_lkm_tork'              # vuoden törkeimmän rikoksen mukaan
+YOUTH_AREA_ALL = 'SSS'
+YOUTH_SEX_ALL = 'SSS'
+YOUTH_AGE_ALL = 'SSS'
+YOUTH_AGE_0_17 = '0-17'
+
 # ── TILASTOKESKUKSEN RIKOSNIMIKEKOODIT ───────────────────
 # Koodit ovat muotoa <luku><pykälä><momentti>. Seksuaalirikoslaki uudistui
 # 2023, joten aikasarjan jatkuvuuden vuoksi mukana ovat sekä nykyiset koodit
@@ -297,6 +310,51 @@ def get_population(year_start, year_end=None):
         return None
 
 
+def fetch_youth(age_code, year_start, year_end=None):
+    """
+    Hae syylliseksi epäillyt ikäryhmittäin (taulu 13yq).
+
+    Rajattu rikoslakirikoksiin ja laskentatapaan "vuoden törkeimmän rikoksen
+    mukaan", jolloin kukin epäilty lasketaan vuodessa kerran. Kaikkien
+    rikosten ja rikkomusten kokonaisluvussa on vuosien 2020–2021 välillä
+    luokitusmuutos, joka tekisi osuusluvusta vertailukelvottoman.
+    """
+    years = [str(y) for y in range(year_start, (year_end or datetime.now().year) + 1)]
+
+    avail = available_years(YOUTH_TABLE, CRIME_VAR_YEAR)
+    if avail:
+        years = [y for y in years if y in avail]
+    if not years:
+        print("  Ei pyydettyjä vuosia saatavilla nuorisotaulussa.")
+        return None
+
+    query = {
+        "query": [
+            {"code": CRIME_VAR_YEAR,
+             "selection": {"filter": "item", "values": years}},
+            {"code": YOUTH_VAR_AREA,
+             "selection": {"filter": "item", "values": [YOUTH_AREA_ALL]}},
+            {"code": YOUTH_VAR_SEX,
+             "selection": {"filter": "item", "values": [YOUTH_SEX_ALL]}},
+            {"code": YOUTH_VAR_AGE,
+             "selection": {"filter": "item", "values": [age_code]}},
+            {"code": YOUTH_VAR_CRIME,
+             "selection": {"filter": "item", "values": [YOUTH_CRIME_RL]}},
+            {"code": "contentscode",
+             "selection": {"filter": "item", "values": [YOUTH_CONTENT]}},
+        ],
+        "response": {"format": "json-stat2"},
+    }
+
+    try:
+        r = requests.post(YOUTH_TABLE, json=query, timeout=30)
+        r.raise_for_status()
+        return parse_jsonstat2(r.json(), years, [age_code])
+    except Exception as e:
+        print(f"  Nuorisodata-virhe: {e}")
+        return None
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -473,6 +531,10 @@ def main():
     
     print("  Seksuaalirikokset yhteensä...")
     seks_yht = fetch_crime_data('seksuaali_yht', years[0], latest_year)
+
+    print("  Nuoret (alle 18) ja epäillyt yhteensä...")
+    nuoriso = fetch_youth(YOUTH_AGE_0_17, years[0], latest_year)
+    nuoriso_kaikki = fetch_youth(YOUTH_AGE_ALL, years[0], latest_year)
     
     # ── 4. Koosta arrayt ──
     print("\n[4/6] Koostetaan data-arrayt...")
@@ -506,11 +568,22 @@ def main():
     lapsi_arr = to_array(lapsi)
     ahdistelu_arr = to_array(ahdistelu)
     seks_yht_arr = to_array(seks_yht)
+    nuoriso_arr = to_array(nuoriso)
+    nuoriso_kaikki_arr = to_array(nuoriso_kaikki)
     
     # Per 100k
     pahoinpitely_p100k = calc_per100k(pahoinpitely_arr, pop)
     henkirikos_p100k = calc_per100k(henkirikos_arr, pop)
     ryosto_p100k = calc_per100k(ryosto_arr, pop)
+    nuoriso_p100k = calc_per100k(nuoriso_arr, pop)
+
+    # Alle 18-vuotiaiden osuus kaikista rikoslakirikoksista epäillyistä
+    nuoriso_share = None
+    if nuoriso_arr and nuoriso_kaikki_arr:
+        nuoriso_share = [
+            round(n / k * 100, 1) if k else 0
+            for n, k in zip(nuoriso_arr, nuoriso_kaikki_arr)
+        ]
     
     # Tulosta yhteenveto
     print("\n  Yhteenveto:")
@@ -554,6 +627,14 @@ def main():
         content = update_trend_pct(content, 'ryostot', ryosto_arr[0], ryosto_arr[-1])
     if ryosto_p100k:
         content = update_data_object(content, 'ryostot', 'p100k', ryosto_p100k, is_float=True)
+
+    if nuoriso_arr:
+        content = update_data_object(content, 'nuoriso', 'counts', nuoriso_arr)
+        content = update_trend_pct(content, 'nuoriso', nuoriso_arr[0], nuoriso_arr[-1])
+    if nuoriso_p100k:
+        content = update_data_object(content, 'nuoriso', 'p100k', nuoriso_p100k, is_float=True)
+    if nuoriso_share:
+        content = update_data_object(content, 'nuoriso', 'yShare', nuoriso_share, is_float=True)
     
     # Seksuaalirikokset
     if raiskaus_arr:
@@ -573,7 +654,7 @@ def main():
     )
     
     # Päivitä COVERAGE-vuodet
-    for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot']:
+    for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot', 'nuoriso']:
         content = re.sub(
             rf"({panel}:\s*\{{years:')[^']+(')",
             rf"\g<1>{years[0]}–{latest_year}\g<2>",
@@ -601,7 +682,6 @@ def main():
     print("  • Syntyperä")
     print("  • Maahanmuuttajat vs. kantaväestö")
     print("  • Perheväkivalta")
-    print("  • Nuorisorikollisuus (ikäryhmädata)")
     print("  • 2025 ennakkotiedot")
     print("=" * 60)
 

@@ -214,22 +214,22 @@ function stackedBars(years, datasets){
 
 // ── DATA COVERAGE BOX ──────────────────────────────────
 const COVERAGE = {
-  vakivalta:   {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.'},
-  seksuaali:   {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Huom: seksuaalirikoslaki muuttui 1.1.2023 — lukuja ei voi suoraan verrata ennen/jälkeen.'},
-  henki:       {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.'},
-  ryostot:     {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.'},
-  nuoriso:     {years:'2015–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Alle 15-vuotiaiden tilasto ulottuu vuoteen 2024.'},
-  perhe:       {years:'2009–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Tilasto julkaistaan kerran vuodessa, ei neljännesvuosittain.'},
-  maahanmuuttajat:{years:'2015–2024', note:'Luvut ovat arvioita Tilastokeskuksen aineistojen pohjalta, ei suoraan rajapinnasta.'},
-  kansalaisuus:{years:'2024', note:'Yhden vuoden poikkileikkaus. Kansalaisuuskohtaista aikasarjaa ei julkaista suoraan.'},
-  vangit:      {years:'2010–2025', note:'Rise-data on virallista. Päivittäinen tilanne 6.3.2026: 24,0 %. Koko vuoden 2025 tilasto julkaistaan 2026.'},
+  vakivalta:   {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.', src:'Tilastokeskus, StatFin-taulu rpk/13gw (automaattinen)'},
+  seksuaali:   {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Huom: seksuaalirikoslaki muuttui 1.1.2023 — lukuja ei voi suoraan verrata ennen/jälkeen.', src:'Tilastokeskus, StatFin-taulu rpk/13gw (automaattinen)'},
+  henki:       {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.', src:'Tilastokeskus, StatFin-taulu rpk/13gw (automaattinen)'},
+  ryostot:     {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.', src:'Tilastokeskus, StatFin-taulu rpk/13gw (automaattinen)'},
+  nuoriso:     {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Luvut ovat rikoslakirikoksista epäiltyjä henkilöitä, kukin laskettu vuodessa kerran.', src:'Tilastokeskus, StatFin-taulu rpk/13yq (automaattinen)'},
+  perhe:       {years:'2009–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Tilasto julkaistaan kerran vuodessa, ei neljännesvuosittain.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/157p'},
+  maahanmuuttajat:{years:'2015–2024', note:'Luvut ovat arvioita Tilastokeskuksen aineistojen pohjalta, ei suoraan rajapinnasta.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/13z4'},
+  kansalaisuus:{years:'2024', note:'Yhden vuoden poikkileikkaus. Kansalaisuuskohtaista aikasarjaa ei julkaista suoraan.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/13je'},
+  vangit:      {years:'2010–2025', note:'Rise-data on virallista. Päivittäinen tilanne 6.3.2026: 24,0 %. Koko vuoden 2025 tilasto julkaistaan 2026.', src:'Rikosseuraamuslaitos — ei saatavilla StatFin-rajapinnasta'},
   'syntyperä': {years:'2015–2025', note:'Rise-data on virallista. Väestöosuusluvut Tilastokeskukselta.'}
 };
 
 function dataBox(id){
   const c=COVERAGE[id];
   if(!c) return '';
-  return `<div class="dbox"><div class="dbox-dot"></div><span><strong>Ajanjakso: ${c.years}</strong> — ${c.note}</span></div>`;
+  return `<div class="dbox"><div class="dbox-dot"></div><span><strong>Ajanjakso: ${c.years}</strong> — ${c.note}${c.src?`<br><span style="opacity:.7">Lähde: ${c.src}</span>`:''}</span></div>`;
 }
 
 // ── RENDER GENERIC CRIME ────────────────────────────────
@@ -237,7 +237,7 @@ const DATA={
   vakivalta:{col:'#e05c5c',counts:[32972,33053,33150,33426,32778,33620,37647,40712,40466,44013],p100k:[599.13,599.53,600.77,604.96,592.32,605.96,676.62,726.50,718.00,778.59],trendPct:33.5,trend:'nouseva',analysis:'Pahoinpitelyt ovat kääntyneet selvään nousuun 2020-luvulla; kasvu on ollut nopeinta vuodesta 2021 alkaen. Luvut sisältävät vain täytetyt teot (RL 21:5–7), eivät yrityksiä.'},
   henki:{col:'#9b7de8',counts:[76,72,87,72,86,83,79,57,89,80],p100k:[1.38,1.31,1.58,1.30,1.55,1.50,1.42,1.02,1.58,1.42],trendPct:5.3,trend:'nouseva',analysis:'Henkirikoksia tapahtuu vähän, joten vuosivaihtelu on suurta eikä yksittäisen vuoden muutos kerro trendistä. Mukana ovat tappo, murha ja surma (RL 21:1–3), ei yrityksiä.'},
   ryostot:{col:'#4f8ef7',counts:[1409,1391,1448,1518,1690,1610,1963,2206,2141,2007],p100k:[25.60,25.23,26.24,27.47,30.54,29.02,35.28,39.37,37.99,35.50],trendPct:42.4,trend:'nouseva',analysis:'Ryöstöt kääntyivät nousuun vuoden 2019 jälkeen ja ovat viime vuosina asettuneet noin kahden tuhannen tasolle. Luvut sisältävät vain täytetyt teot (RL 31:1–2), eivät yrityksiä.'},
-  nuoriso:{col:'#e06898',counts:[16200,15800,15200,14700,14200,13800,14500,14100,13800,14400],p100k:[295,287,276,267,258,250,263,256,250,261],yShare:[18.2,17.8,17.1,16.5,15.9,15.4,16.1,15.7,15.2,15.8],trendPct:-11.1,trend:'laskeva pitkällä',analysis:'Vuoden 2015 piikki selittyy lastensuojelulain muutoksella (huhtikuu 2015): ilmoitusvelvollisuus laajeni ja koulut alkoivat ilmoittaa herkemmin oppilaiden rikosepäilyistä — todellinen rikollisuus ei kasvanut yhtä paljon kuin tilastot näyttävät. Kokonaismäärä on laskenut pitkällä aikavälillä. Silti alle 15-vuotiaiden pahoinpitelyt ovat aidosti kasvaneet — yleisin epäillyn ikä 2024 oli 14 vuotta (1 400 tapausta).'}
+  nuoriso:{col:'#e06898',counts:[12500,13220,12402,13108,15599,17186,18593,21711,21427,22411],p100k:[227.14,239.79,224.76,237.24,281.89,309.76,334.17,387.43,380.18,396.45],yShare:[9.00,10.50,9.70,10.60,11.30,12.10,13.60,15.30,14.80,14.60],trendPct:79.3,trend:'nouseva',analysis:'Alle 18-vuotiaiden osuus rikoslakirikoksista epäillyistä on noussut noin 9 prosentista 15 prosenttiin. Luvut ovat epäiltyjä henkilöitä, eivät rikoksia: kukin epäilty on laskettu vuodessa kerran vuoden törkeimmän rikoksensa mukaan. Muutokset ilmoitusalttiudessa ja kirjaamiskäytännöissä vaikuttavat tilastoituihin lukuihin.'}
 };
 
 function renderCrime(id){
