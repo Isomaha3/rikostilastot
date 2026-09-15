@@ -91,6 +91,35 @@ UNEMP_RATE = 'tyti-Tyottomyysaste'      # Työttömyysaste, %
 UNEMP_COUNT = 'tyti-Tyottomat'          # Työttömät, 1000 henkilöä
 UNEMP_EMPRATE = 'tyti-Tyollisyysaste'   # Työllisyysaste, %
 
+# Perhe- ja lähisuhdeväkivallan uhrit (13rc) ja uhrien syntyperä (14cf)
+PERHE_TABLE = f'{PXWEB_BASE}/rpk/13rc.px'
+PERHE_SYNT_TABLE = f'{PXWEB_BASE}/rpk/14cf.px'
+PERHE_CONTENT = 'uhri_tork'        # uhrit vakavimman rikoksen mukaan
+PERHE_WINDOW = 16                  # dashboardin perhepaneelin pituus
+
+# Epäillyt syntyperän mukaan, väestöön suhteutettuna (13zk)
+SYNT_TABLE = f'{PXWEB_BASE}/rpk/13zk.px'
+SYNT_VAR = 'syntypera_101_20180101'
+SYNT_FOREIGN = '2'                 # Ulkomaalaistaustaiset yhteensä
+SYNT_DOMESTIC = '1'                # Suomalaistaustaiset yhteensä
+SYNT_CONTENT = 'ep_lkm_vaesto'     # epäillyt väestön 10 000 kohden
+SYNT_CRIME_ALL = '101T603'
+
+# Raiskausepäillyt kansalaisuuden mukaan (13je)
+RAPE_TABLE = f'{PXWEB_BASE}/rpk/13je.px'
+RAPE_VAR_RESID = 'valtio_34_20220101'
+RAPE_VAR_CITIZEN = 'valtio_19_20190101'
+RAPE_VAR_CRIME = 'rikokset_74_20211209'
+RAPE_VAR_AREA = 'alue_23_20230101'
+# Vanhan ja uuden lain koodit yhdessä, jotta 2023 lakiuudistus ei katkaise sarjaa
+RAPE_CODES = ['234', '239', '232']
+RAPE_CONTENT = 'ep_lkm_tork'
+
+# Väestö kansalaisuuden (11rg) ja syntyperän (159s) mukaan
+POP_CITIZEN_TABLE = f'{PXWEB_BASE}/vaerak/11rg.px'
+POP_ORIGIN_TABLE = f'{PXWEB_BASE}/vaerak/159s.px'
+SYNT_WINDOW = 11                   # syntyperäpaneelin pituus
+
 # ── TILASTOKESKUKSEN RIKOSNIMIKEKOODIT ───────────────────
 # Koodit ovat muotoa <luku><pykälä><momentti>. Seksuaalirikoslaki uudistui
 # 2023, joten aikasarjan jatkuvuuden vuoksi mukana ovat sekä nykyiset koodit
@@ -405,6 +434,94 @@ def fetch_unemployment(age_code, content_code):
         return None
 
 
+def _pxpost(table, query_items, years, as_float=False):
+    """Yhteinen PxWeb-POST: vuodet suodatetaan taulun metadatan mukaan."""
+    avail = available_years(table, CRIME_VAR_YEAR)
+    years = [y for y in years if not avail or y in avail]
+    if not years:
+        return None
+    query = [{"code": CRIME_VAR_YEAR,
+              "selection": {"filter": "item", "values": years}}] + query_items
+    body = {"query": query, "response": {"format": "json-stat2"}}
+    try:
+        r = requests.post(table, json=body, timeout=30)
+        r.raise_for_status()
+        return parse_jsonstat2(r.json(), years, ["x"], as_float=as_float)
+    except Exception as e:
+        print(f"  Hakuvirhe ({table.rsplit('/', 1)[-1]}): {e}")
+        return None
+
+
+def fetch_perhe_victims(age_code, years):
+    """Perhe- ja lähisuhdeväkivallan uhrit (13rc)."""
+    return _pxpost(PERHE_TABLE, [
+        {"code": "rikokset_77_20220101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "rikokset_114_20190101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": [age_code]}},
+        {"code": "rikokset_116_20190101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "rikokset_10_20220101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": [PERHE_CONTENT]}},
+    ], years)
+
+
+def fetch_perhe_origin(origin_code, years):
+    """Perheväkivallan uhrit syntyperän mukaan (14cf)."""
+    return _pxpost(PERHE_SYNT_TABLE, [
+        {"code": "rikokset_77_20220101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "rikokset_116_20190101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "rikokset_10_20220101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin_code]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": [PERHE_CONTENT]}},
+    ], years)
+
+
+def fetch_suspect_rate(origin_code, years):
+    """Epäillyt väestön 10 000 kohden syntyperän mukaan (13zk)."""
+    return _pxpost(SYNT_TABLE, [
+        {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [SYNT_CRIME_ALL]}},
+        {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin_code]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": [SYNT_CONTENT]}},
+    ], years, as_float=True)
+
+
+def fetch_rape_suspects(citizen_code, years):
+    """Raiskausepäillyt kansalaisuuden mukaan (13je)."""
+    return _pxpost(RAPE_TABLE, [
+        {"code": RAPE_VAR_RESID, "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": RAPE_VAR_CITIZEN, "selection": {"filter": "item", "values": [citizen_code]}},
+        {"code": RAPE_VAR_CRIME, "selection": {"filter": "item", "values": RAPE_CODES}},
+        {"code": RAPE_VAR_AREA, "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": [RAPE_CONTENT]}},
+    ], years)
+
+
+def fetch_pop_citizen(citizen_code, years):
+    """Väestö kansalaisuuden mukaan (11rg)."""
+    return _pxpost(POP_CITIZEN_TABLE, [
+        {"code": "alue_23_20260101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": RAPE_VAR_CITIZEN, "selection": {"filter": "item", "values": [citizen_code]}},
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": ["vaerak-vaesto"]}},
+    ], years)
+
+
+def fetch_pop_origin(origin_code, years):
+    """Väestö syntyperän mukaan (159s)."""
+    return _pxpost(POP_ORIGIN_TABLE, [
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "valtio_19_20190101-vaerak-kansa1", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "valtio_19_20190101-vaerak-svaltio", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "kieli_15_20180102", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin_code]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": ["vaerak-vaesto"]}},
+    ], years)
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -468,6 +585,32 @@ def update_data_object(content, obj_key, field, new_values, is_float=False):
     else:
         print(f"  ✗ Ei löytynyt: DATA.{obj_key}.{field}")
         return content
+
+
+def format_js_year_array(years):
+    """Vuosilaput: ensimmäinen, viimeinen ja tasavuodet kokonaisina."""
+    out = []
+    for idx, y in enumerate(years):
+        full = idx == 0 or idx == len(years) - 1 or int(y) % 5 == 0
+        out.append(f"'{y}'" if full else f"'{str(y)[2:]}'")
+    return '[' + ','.join(out) + ']'
+
+
+def update_const_array(content, var_name, values, is_float=False, years=False):
+    """Päivitä render-funktion sisäinen const-taulukko."""
+    if years:
+        arr = format_js_year_array(values)
+    elif is_float:
+        arr = format_js_float_array(values)
+    else:
+        arr = format_js_array(values)
+    pattern = rf'(const {var_name}=)\[[^\]]+\]'
+    new_content = re.sub(pattern, rf'\g<1>{arr}', content)
+    if new_content != content:
+        print(f"  ✓ Päivitetty: {var_name}")
+        return new_content
+    print(f"  ✗ Ei löytynyt: {var_name}")
+    return content
 
 
 def update_seksuaali_array(content, var_name, new_values):
@@ -582,6 +725,7 @@ def main():
     print("  Seksuaalirikokset yhteensä...")
     seks_yht = fetch_crime_data('seksuaali_yht', years[0], latest_year)
 
+    year_strs_pre = [str(y) for y in years]
     print("  Nuoret (alle 18) ja epäillyt yhteensä...")
     nuoriso = fetch_youth(YOUTH_AGE_0_17, years[0], latest_year)
     nuoriso_kaikki = fetch_youth(YOUTH_AGE_ALL, years[0], latest_year)
@@ -594,6 +738,28 @@ def main():
     unemp_count = fetch_unemployment(UNEMP_AGE_YOUTH, UNEMP_COUNT)
     unemp_rate_all = fetch_unemployment(UNEMP_AGE_ALL, UNEMP_RATE)
     unemp_emp = fetch_unemployment(UNEMP_AGE_YOUTH, UNEMP_EMPRATE)
+
+    print("  Perheväkivallan uhrit...")
+    perhe_years = [str(y) for y in range(latest_year - PERHE_WINDOW + 1, latest_year + 1)]
+    perhe_tot = fetch_perhe_victims("SSS", perhe_years)
+    perhe_alle18 = fetch_perhe_victims("0-17", perhe_years)
+    perhe_ulk = fetch_perhe_origin(SYNT_FOREIGN, perhe_years)
+    perhe_kaikki = fetch_perhe_origin("SSS", perhe_years)
+    pop_ulk_syntypera = fetch_pop_origin(SYNT_FOREIGN, perhe_years)
+    pop_kaikki_syntypera = fetch_pop_origin("SSS", perhe_years)
+
+    print("  Epäillyt syntyperän mukaan...")
+    rate_foreign = fetch_suspect_rate(SYNT_FOREIGN, year_strs_pre)
+    rate_domestic = fetch_suspect_rate(SYNT_DOMESTIC, year_strs_pre)
+
+    print("  Raiskausepäillyt kansalaisuuden mukaan...")
+    rape_all = fetch_rape_suspects("SSS", year_strs_pre)
+    rape_foreign = fetch_rape_suspects("ULK", year_strs_pre)
+
+    print("  Ulkomaan kansalaisten väestöosuus...")
+    synt_years = [str(y) for y in range(latest_year - SYNT_WINDOW + 1, latest_year + 1)]
+    pop_all_c = fetch_pop_citizen("SSS", synt_years)
+    pop_for_c = fetch_pop_citizen("ULK", synt_years)
     
     # ── 4. Koosta arrayt ──
     print("\n[4/6] Koostetaan data-arrayt...")
@@ -717,6 +883,55 @@ def main():
         content = update_data_object(content, 'tyottomyys', 'aste1574', unemp_rate_all_arr, is_float=True)
     if unemp_emp_arr:
         content = update_data_object(content, 'tyottomyys', 'tyollisyys1524', unemp_emp_arr, is_float=True)
+
+    # ── Perheväkivalta (13rc, 14cf, 159s) ──
+    if perhe_tot and perhe_alle18:
+        pv, pm, py = [], [], []
+        for y in perhe_years:
+            t, a = perhe_tot.get(y), perhe_alle18.get(y)
+            if t is None or a is None:
+                continue
+            py.append(y)
+            pm.append(int(a))
+            # PV on uhrien kokonaismäärä; kaavio laskee aikuiset PV - PM
+            pv.append(int(t))
+        if pv:
+            content = update_const_array(content, 'PYR', py, years=True)
+            content = update_const_array(content, 'PV', pv)
+            content = update_const_array(content, 'PM', pm)
+            if perhe_ulk and perhe_kaikki:
+                pb = [round(perhe_ulk.get(y, 0) / perhe_kaikki[y] * 100, 1)
+                      for y in py if perhe_kaikki.get(y)]
+                if len(pb) == len(py):
+                    content = update_const_array(content, 'PB', pb, is_float=True)
+            if pop_ulk_syntypera and pop_kaikki_syntypera:
+                pbv = [round(pop_ulk_syntypera.get(y, 0) / pop_kaikki_syntypera[y] * 100, 1)
+                       for y in py if pop_kaikki_syntypera.get(y)]
+                if len(pbv) == len(py):
+                    content = update_const_array(content, 'PBV', pbv, is_float=True)
+
+    # ── Epäillyt syntyperän mukaan, per 100 000 (13zk) ──
+    if rate_foreign and rate_domestic:
+        ip = [round(rate_foreign.get(y, 0) * 10) for y in year_strs]
+        np_ = [round(rate_domestic.get(y, 0) * 10) for y in year_strs]
+        content = update_const_array(content, 'IP', ip)
+        content = update_const_array(content, 'NP', np_)
+
+    # ── Raiskausepäillyt kansalaisuuden mukaan (13je) ──
+    if rape_all and rape_foreign:
+        ur = [round(rape_foreign.get(y, 0) / rape_all[y] * 100, 1)
+              if rape_all.get(y) else 0 for y in year_strs]
+        content = update_const_array(content, 'UR', ur, is_float=True)
+
+    # ── Ulkomaan kansalaisten väestöosuus (11rg) ──
+    if pop_all_c and pop_for_c:
+        uv = [round(pop_for_c.get(y, 0) / pop_all_c[y] * 100, 1)
+              if pop_all_c.get(y) else 0 for y in year_strs]
+        content = update_const_array(content, 'UV', uv, is_float=True)
+        pk = [round(pop_for_c.get(y, 0) / pop_all_c[y] * 100, 1)
+              if pop_all_c.get(y) else 0 for y in synt_years]
+        content = update_const_array(content, 'PK', pk, is_float=True)
+        content = update_const_array(content, 'RY', synt_years, years=True)
     
     # Seksuaalirikokset
     if raiskaus_arr:

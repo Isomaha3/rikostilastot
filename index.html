@@ -298,8 +298,8 @@ function renderSeksuaali(){
   const K=[0,0,0,0,0,0,0,0,146,190];
   const T=[3326,3336,3859,4409,4531,5484,5591,7451,9607,10372];
   const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]));
-  const UR=[22,23,24,25,26,28,30,33,38,40];
-  const UV=[3.8,4.0,4.2,4.5,4.8,5.0,5.1,5.3,5.5,5.7];
+  const UR=[19.70,25.50,21.80,24.00,25.70,24.60,21.20,23.50,27.20,23.10];
+  const UV=[4.40,4.50,4.70,4.80,5.00,5.30,5.80,6.70,7.30,7.70];
 
   const lc1=lineChart([
     {data:R,color:'#e05c5c',fill:false,width:2},
@@ -316,12 +316,12 @@ function renderSeksuaali(){
   ${dataBox('seksuaali')}
   <div class="ibox amber"><strong>Lainmuutoshuomio:</strong> Seksuaalirikoslaki uudistui 1.1.2023. Raiskauksen määritelmä muuttui suostumusperusteiseksi. Lukuja ennen ja jälkeen 2023 ei voi suoraan verrata.</div>
   <div class="metrics">
-    <div class="mc"><div class="mlabel">Yhteensä 2024</div><div class="mval r">8 900</div><div class="msub"><span class="tu">+25%</span> vs. 2023</div></div>
-    <div class="mc"><div class="mlabel">Lapsiin kohdistuvat</div><div class="mval r">4 986</div><div class="msub"><span class="tu">+43%</span> vs. 2023</div></div>
-    <div class="mc mc3"><div class="mlabel">Ulkomaalaisten osuus raiskausepäillyistä</div><div class="mval r">~40 %</div><div class="msub">väestöosuus ~6 %</div></div>
+    <div class="mc"><div class="mlabel">Yhteensä ${Y[9]}</div><div class="mval r">${fi(T[9])}</div><div class="msub"><span class="tu">+25%</span> vs. 2023</div></div>
+    <div class="mc"><div class="mlabel">Lapsiin kohdistuvat</div><div class="mval r">${fi(L[9])}</div><div class="msub"><span class="tu">+43%</span> vs. 2023</div></div>
+    <div class="mc mc3"><div class="mlabel">Ulkomaalaisten osuus raiskausepäillyistä</div><div class="mval r">${UR[9].toFixed(1)} %</div><div class="msub">väestöosuus ${UV[9].toFixed(1)} %</div></div>
   </div>
   <div class="card">
-    <div class="ctitle">Alakategoriat 2015–2024</div>
+    <div class="ctitle">Alakategoriat ${Y[0]}–${Y[9]}</div>
     <div class="legend">
       <span class="li"><span class="ld" style="background:#e05c5c"></span>Raiskaukset</span>
       <span class="li"><span class="ld" style="background:#e8a23a"></span>Lapsiin kohdistuvat</span>
@@ -340,7 +340,7 @@ function renderSeksuaali(){
     ${stackedBars(Y,[{data:R,color:'#e05c5c'},{data:L,color:'#e8a23a'},{data:A,color:'#9b7de8'},{data:K,color:'#3ab8c8'},{data:M,color:'#4a5068'}])}
   </div>
   <div class="card">
-    <div class="ctitle">Ulkomaalaisten osuus raiskausepäillyistä vs. väestöosuus</div>
+    <div class="ctitle">Ulkomaalaisten osuus raiskausepäillyistä vs. väestöosuus (${Y[0]}–${Y[9]})</div>
     <div class="legend"><span class="li"><span class="ld" style="background:#e05c5c"></span>Raiskausepäillyistä</span><span class="li"><span class="ld" style="background:#7a8099"></span>Väestöosuus</span></div>
     ${lc2}
   </div>
@@ -361,11 +361,13 @@ function renderSeksuaali(){
 // ── PERHEVÄKIVALTA ──────────────────────────────────────
 function renderPerhe(){
   const el=document.getElementById('p-perhe');
-  const PY=['2009','10','11','12','13','14','2015','16','17','18','19','2020','21','22','23','2024'];
-  const PV=[8200,8600,8900,9100,9300,9500,9700,9900,10100,10300,10500,10700,11000,11600,12300,12500];
-  const PM=[1180,1210,1240,1280,1300,1320,1390,1440,1500,1560,1620,1700,2000,2400,2760,3000];
+  const PYR=['2010','11','12','13','14','2015','16','17','18','19','2020','21','22','23','24','2025'];
+  const PV=[5264,7706,7833,7115,6579,7073,7150,6651,7043,7237,7128,6926,7382,7341,7452,8965];
+  const PM=[1172,1435,1743,1453,1367,1766,1731,1605,1766,1840,1581,1670,1701,1790,1753,1862];
   const FP=[6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,10.5,11.0,11.5,13.0,14.5,16.0,18.8,18.0];
   const PP=[3.5,3.7,4.0,4.2,4.5,4.7,5.0,5.2,5.4,5.6,5.8,6.0,6.5,7.5,9.5,11.0];
+  const PB=[10.20,9.40,10.50,11.00,11.40,11.70,13.00,12.90,13.90,15.10,14.70,16.50,16.40,19.10,18.60,19.60];
+  const PBV=[4.40,4.80,5.20,5.50,5.90,6.20,6.60,7.00,7.30,7.70,8.00,8.50,9.10,10.20,11.10,11.70];
   const lcFP=lineChart([
     {data:FP,color:'#e05c8a',fill:true,width:2},
     {data:PP,color:'#7a8099',fill:false,width:1.5,dash:'4,3'}
@@ -375,14 +377,14 @@ function renderPerhe(){
   ${dataBox('perhe')}
   <div class="ibox"><strong>Lähde:</strong> Tilastokeskus, pari- ja lähisuhdeväkivalta (julk. 13.6.2025). Kattaa vain viranomaisten tietoon tulleet. Kansalaisuuskohtaista tekijätilastoa ei julkaista.</div>
   <div class="metrics">
-    <div class="mc"><div class="mlabel">Uhreja 2024</div><div class="mval r">12 500</div><div class="msub"><span class="tu">+2%</span> vs. 2023</div></div>
-    <div class="mc"><div class="mlabel">Ulkomaalaistaustaiset uhreista</div><div class="mval r">18 %</div><div class="msub">väestöosuus 11 %</div></div>
-    <div class="mc mc3"><div class="mlabel">Kasvu vs. 2009</div><div class="mval r">+53 %</div><div class="msub">alaikäisten uhrien kasvu +153 %</div></div>
+    <div class="mc"><div class="mlabel">Uhreja ${PYR[PYR.length-1]}</div><div class="mval r">${fi(PV[PV.length-1])}</div><div class="msub">${(()=>{const a=PV[PV.length-1],b=PV[PV.length-2],c=(a-b)/b*100;return (c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`);})()} vs. ${PYR[PYR.length-2]}</div></div>
+    <div class="mc"><div class="mlabel">Ulkomaalaistaustaiset uhreista</div><div class="mval r">${PB[PB.length-1].toFixed(1)} %</div><div class="msub">väestöosuus ${PBV[PBV.length-1].toFixed(1)} %</div></div>
+    <div class="mc mc3"><div class="mlabel">Kasvu vs. ${PYR[0]}</div><div class="mval r">${(()=>{const a=PV[0],b=PV[PV.length-1];return ((b-a)/a*100>=0?"+":"")+((b-a)/a*100).toFixed(0)+" %";})()}</div><div class="msub">alaikäisten uhrien kasvu ${((PM[PM.length-1]-PM[0])/PM[0]*100>=0?"+":"")}${((PM[PM.length-1]-PM[0])/PM[0]*100).toFixed(0)} %</div></div>
   </div>
   <div class="card">
-    <div class="ctitle">Uhrit 2009–2024</div>
+    <div class="ctitle">Uhrit ${PYR[0]}–${PYR[PYR.length-1]}</div>
     <div class="legend"><span class="li"><span class="ld" style="background:#e05c8a"></span>Aikuiset</span><span class="li"><span class="ld" style="background:#e8a23a"></span>Alaikäiset</span></div>
-    ${stackedBars(PY,[{data:PV.map((v,i)=>v-PM[i]),color:'#e05c8a'},{data:PM,color:'#e8a23a'}])}
+    ${stackedBars(PYR,[{data:PV.map((v,i)=>v-PM[i]),color:'#e05c8a'},{data:PM,color:'#e8a23a'}])}
   </div>
   <div class="card">
     <div class="ctitle">Ulkomaalaistaustaisten uhrien osuus vs. väestöosuus</div>
@@ -398,8 +400,8 @@ function renderPerhe(){
 // ── MAAHANMUUTTAJAT ─────────────────────────────────────
 function renderMaahanmuuttajat(){
   const el=document.getElementById('p-maahanmuuttajat');
-  const IP=[2420,2460,2510,2580,2650,2700,2780,2840,2910,2980];
-  const NP=[1520,1500,1480,1470,1460,1455,1458,1452,1448,1450];
+  const IP=[12534,12614,13555,12219,10573,8138,7494,7767,8102,8242];
+  const NP=[11431,11589,12437,11671,9198,5926,5386,6410,5589,6178];
   const lc=lineChart([
     {data:IP,color:'#3dba8c',fill:true,width:2},
     {data:NP,color:'#7a8099',fill:false,width:1.5,dash:'4,3'}
@@ -408,12 +410,12 @@ function renderMaahanmuuttajat(){
   ${dataBox('maahanmuuttajat')}
   <div class="ibox"><strong>Suhteutettu vertailu:</strong> Luvut per 100 000 ko. ryhmässä. Maahanmuuttajataustaisilla on nuorempi ikärakenne ja heikompi sosioekonominen asema — nämä selittävät osan erosta.</div>
   <div class="metrics">
-    <div class="mc"><div class="mlabel">Maahanmuuttajat / 100k</div><div class="mval r">${fi(2980)}</div></div>
-    <div class="mc"><div class="mlabel">Kantaväestö / 100k</div><div class="mval">${fi(1450)}</div></div>
-    <div class="mc mc3"><div class="mlabel">Yliedustus</div><div class="mval r">${(2980/1450).toFixed(1)}x</div><div class="msub">suhteessa kantaväestöön</div></div>
+    <div class="mc"><div class="mlabel">Maahanmuuttajat / 100k</div><div class="mval r">${fi(IP[IP.length-1])}</div></div>
+    <div class="mc"><div class="mlabel">Kantaväestö / 100k</div><div class="mval">${fi(NP[NP.length-1])}</div></div>
+    <div class="mc mc3"><div class="mlabel">Yliedustus</div><div class="mval r">${(IP[IP.length-1]/NP[NP.length-1]).toFixed(1)}×</div><div class="msub">suhteessa kantaväestöön</div></div>
   </div>
   <div class="card">
-    <div class="ctitle">Per 100 000 — 2015–2024</div>
+    <div class="ctitle">Per 100 000 — ${Y[0]}–${Y[9]}</div>
     <div class="legend"><span class="li"><span class="ld" style="background:#3dba8c"></span>Maahanmuuttajataustaiset</span><span class="li"><span class="ld" style="background:#7a8099"></span>Kantaväestö</span></div>
     ${lc}
   </div>
@@ -485,7 +487,7 @@ function renderSyntyperä(){
   const el=document.getElementById('p-syntyperä');
   const RY=['2015','16','17','18','19','2020','21','22','23','24','2025'];
   const PP=[15.5,18.0,17.8,17.0,17.0,16.5,17.5,18.0,20.5,22.9,23.7];
-  const PK=[3.8,4.0,4.2,4.5,4.8,5.0,5.1,5.3,5.5,5.6,5.7];
+  const PK=[4.20,4.40,4.50,4.70,4.80,5.00,5.30,5.80,6.70,7.30,7.70];
   const PS=[6.0,6.3,6.6,7.0,7.3,7.5,7.7,8.0,8.3,8.5,8.7];
   const RA=PP.map((p,i)=>+(p/PK[i]).toFixed(1));
   const lc1=lineChart([
@@ -514,7 +516,7 @@ function renderSyntyperä(){
     </div>
   </div>
   <div class="card">
-    <div class="ctitle">Kehitys 2015–2025</div>
+    <div class="ctitle">Kehitys ${RY[0]}–${RY[RY.length-1]}</div>
     <div class="legend">
       <span class="li"><span class="ld" style="background:#e05c5c"></span>Osuus vangeista</span>
       <span class="li"><span class="ld" style="background:#7a8099"></span>Väestöosuus (kansalaisuus)</span>
