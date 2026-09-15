@@ -80,6 +80,17 @@ YOUTH_SEX_ALL = 'SSS'
 YOUTH_AGE_ALL = 'SSS'
 YOUTH_AGE_0_17 = '0-17'
 
+# Nuorisotyöttömyys — työvoimatutkimus (taulu tyti/13aj, 2009–)
+UNEMP_TABLE = f'{PXWEB_BASE}/tyti/13aj.px'
+UNEMP_VAR_SEX = 'sukupuoli_9_20180101'
+UNEMP_VAR_AGE = 'ikaryhma_19_20190101'
+UNEMP_SEX_ALL = 'SSS'
+UNEMP_AGE_YOUTH = '15-24'
+UNEMP_AGE_ALL = '15-74'
+UNEMP_RATE = 'tyti-Tyottomyysaste'      # Työttömyysaste, %
+UNEMP_COUNT = 'tyti-Tyottomat'          # Työttömät, 1000 henkilöä
+UNEMP_EMPRATE = 'tyti-Tyollisyysaste'   # Työllisyysaste, %
+
 # ── TILASTOKESKUKSEN RIKOSNIMIKEKOODIT ───────────────────
 # Koodit ovat muotoa <luku><pykälä><momentti>. Seksuaalirikoslaki uudistui
 # 2023, joten aikasarjan jatkuvuuden vuoksi mukana ovat sekä nykyiset koodit
@@ -94,6 +105,10 @@ CRIME_CODES = {
         '210601',  # Törkeä pahoinpitely 21:6§1
         '210701',  # Lievä pahoinpitely 21:7§
     ],
+    # Pahoinpitelyn osat erittelyä varten (summa = pahoinpitely)
+    'pahoinpitely_perus': ['210501'],
+    'pahoinpitely_torkea': ['210601'],
+    'pahoinpitely_lieva': ['210701'],
     # Henkirikokset (tappo + murha + surma)
     'henkirikos': [
         '210101',  # Tappo 21:1§1
@@ -214,7 +229,7 @@ def pxweb_query(table_url, variable_code, values, year_start, year_end=None):
         return None
 
 
-def parse_jsonstat2(data, years, codes):
+def parse_jsonstat2(data, years, codes, as_float=False):
     """
     Parsii JSON-stat2 -vastauksen ja summaa arvot vuosittain.
 
@@ -267,7 +282,7 @@ def parse_jsonstat2(data, years, codes):
             continue
         yi = (int(flat) // strides[year_dim]) % sizes[year_dim]
         year = keys_per_dim[year_dim][yi]
-        result[year] = result.get(year, 0) + int(val)
+        result[year] = result.get(year, 0) + (float(val) if as_float else int(val))
 
     return result or None
 
@@ -352,6 +367,41 @@ def fetch_youth(age_code, year_start, year_end=None):
         return parse_jsonstat2(r.json(), years, [age_code])
     except Exception as e:
         print(f"  Nuorisodata-virhe: {e}")
+        return None
+
+
+def fetch_unemployment(age_code, content_code):
+    """
+    Hae työvoimatutkimuksen vuositieto (taulu 13aj).
+
+    Työttömyys- ja työllisyysasteet ovat prosenttilukuja, joten ne
+    luetaan desimaalilukuina. Kyseessä on otostutkimuksen estimaatti,
+    ei työnvälitystilaston rekisteriluku.
+    """
+    avail = available_years(UNEMP_TABLE, CRIME_VAR_YEAR)
+    if not avail:
+        return None
+
+    query = {
+        "query": [
+            {"code": CRIME_VAR_YEAR,
+             "selection": {"filter": "item", "values": avail}},
+            {"code": UNEMP_VAR_SEX,
+             "selection": {"filter": "item", "values": [UNEMP_SEX_ALL]}},
+            {"code": UNEMP_VAR_AGE,
+             "selection": {"filter": "item", "values": [age_code]}},
+            {"code": "contentscode",
+             "selection": {"filter": "item", "values": [content_code]}},
+        ],
+        "response": {"format": "json-stat2"},
+    }
+
+    try:
+        r = requests.post(UNEMP_TABLE, json=query, timeout=30)
+        r.raise_for_status()
+        return parse_jsonstat2(r.json(), avail, [age_code], as_float=True)
+    except Exception as e:
+        print(f"  Työttömyysdata-virhe: {e}")
         return None
 
 
@@ -535,6 +585,15 @@ def main():
     print("  Nuoret (alle 18) ja epäillyt yhteensä...")
     nuoriso = fetch_youth(YOUTH_AGE_0_17, years[0], latest_year)
     nuoriso_kaikki = fetch_youth(YOUTH_AGE_ALL, years[0], latest_year)
+    pp_perus = fetch_crime_data('pahoinpitely_perus', years[0], latest_year)
+    pp_torkea = fetch_crime_data('pahoinpitely_torkea', years[0], latest_year)
+    pp_lieva = fetch_crime_data('pahoinpitely_lieva', years[0], latest_year)
+
+    print("  Nuorisotyöttömyys...")
+    unemp_rate = fetch_unemployment(UNEMP_AGE_YOUTH, UNEMP_RATE)
+    unemp_count = fetch_unemployment(UNEMP_AGE_YOUTH, UNEMP_COUNT)
+    unemp_rate_all = fetch_unemployment(UNEMP_AGE_ALL, UNEMP_RATE)
+    unemp_emp = fetch_unemployment(UNEMP_AGE_YOUTH, UNEMP_EMPRATE)
     
     # ── 4. Koosta arrayt ──
     print("\n[4/6] Koostetaan data-arrayt...")
@@ -570,6 +629,13 @@ def main():
     seks_yht_arr = to_array(seks_yht)
     nuoriso_arr = to_array(nuoriso)
     nuoriso_kaikki_arr = to_array(nuoriso_kaikki)
+    pp_perus_arr = to_array(pp_perus)
+    pp_torkea_arr = to_array(pp_torkea)
+    pp_lieva_arr = to_array(pp_lieva)
+    unemp_rate_arr = to_array(unemp_rate)
+    unemp_count_arr = to_array(unemp_count)
+    unemp_rate_all_arr = to_array(unemp_rate_all)
+    unemp_emp_arr = to_array(unemp_emp)
     
     # Per 100k
     pahoinpitely_p100k = calc_per100k(pahoinpitely_arr, pop)
@@ -613,6 +679,12 @@ def main():
         content = update_trend_pct(content, 'vakivalta', pahoinpitely_arr[0], pahoinpitely_arr[-1])
     if pahoinpitely_p100k:
         content = update_data_object(content, 'vakivalta', 'p100k', pahoinpitely_p100k, is_float=True)
+    if pp_perus_arr:
+        content = update_data_object(content, 'vakivalta', 'ppPerus', pp_perus_arr)
+    if pp_torkea_arr:
+        content = update_data_object(content, 'vakivalta', 'ppTorkea', pp_torkea_arr)
+    if pp_lieva_arr:
+        content = update_data_object(content, 'vakivalta', 'ppLieva', pp_lieva_arr)
     
     # Henkirikokset
     if henkirikos_arr:
@@ -635,6 +707,16 @@ def main():
         content = update_data_object(content, 'nuoriso', 'p100k', nuoriso_p100k, is_float=True)
     if nuoriso_share:
         content = update_data_object(content, 'nuoriso', 'yShare', nuoriso_share, is_float=True)
+
+    if unemp_rate_arr:
+        content = update_data_object(content, 'tyottomyys', 'aste1524', unemp_rate_arr, is_float=True)
+        content = update_trend_pct(content, 'tyottomyys', unemp_rate_arr[0], unemp_rate_arr[-1])
+    if unemp_count_arr:
+        content = update_data_object(content, 'tyottomyys', 'maara1524', unemp_count_arr, is_float=True)
+    if unemp_rate_all_arr:
+        content = update_data_object(content, 'tyottomyys', 'aste1574', unemp_rate_all_arr, is_float=True)
+    if unemp_emp_arr:
+        content = update_data_object(content, 'tyottomyys', 'tyollisyys1524', unemp_emp_arr, is_float=True)
     
     # Seksuaalirikokset
     if raiskaus_arr:
@@ -654,7 +736,7 @@ def main():
     )
     
     # Päivitä COVERAGE-vuodet
-    for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot', 'nuoriso']:
+    for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot', 'nuoriso', 'tyottomyys']:
         content = re.sub(
             rf"({panel}:\s*\{{years:')[^']+(')",
             rf"\g<1>{years[0]}–{latest_year}\g<2>",

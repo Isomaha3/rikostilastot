@@ -125,6 +125,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="p-syntyperä" class="panel"></div>
   <div id="p-ennakko2025" class="panel"></div>
   <div id="p-ika" class="panel"></div>
+  <div id="p-tyottomyys" class="panel"></div>
 </div>
 
 <nav class="botnav" id="botnav" style="display:none">
@@ -140,10 +141,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="bn" data-p="syntyperä" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Syntyperä</button>
   <button class="bn" data-p="ennakko2025" onclick="go(this)"><div class="bn-dot" style="background:#3dba8c"></div>2025 uudet</button>
   <button class="bn" data-p="ika" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Ikä &amp; tausta</button>
+  <button class="bn" data-p="tyottomyys" onclick="go(this)"><div class="bn-dot" style="background:#e8c23a"></div>Nuorisotyöttömyys</button>
 </nav>
 
 <script>
-const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'2025 ennakkotiedot (Q1–Q3)',ika:'Ikäjakauma & tausta'};
+const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'2025 ennakkotiedot (Q1–Q3)',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys'};
 const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 
 function fi(n){return Math.round(n).toLocaleString('fi-FI');}
@@ -222,6 +224,7 @@ const COVERAGE = {
   perhe:       {years:'2009–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Tilasto julkaistaan kerran vuodessa, ei neljännesvuosittain.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/157p'},
   maahanmuuttajat:{years:'2015–2024', note:'Luvut ovat arvioita Tilastokeskuksen aineistojen pohjalta, ei suoraan rajapinnasta.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/13z4'},
   kansalaisuus:{years:'2024', note:'Yhden vuoden poikkileikkaus. Kansalaisuuskohtaista aikasarjaa ei julkaista suoraan.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/13je'},
+  tyottomyys:  {years:'2016–2025', note:'Työvoimatutkimuksen vuositieto. Otospohjainen estimaatti, ei työnvälitystilaston rekisteriluku.', src:'Tilastokeskus, StatFin-taulu tyti/13aj (automaattinen)'},
   vangit:      {years:'2010–2025', note:'Rise-data on virallista. Päivittäinen tilanne 6.3.2026: 24,0 %. Koko vuoden 2025 tilasto julkaistaan 2026.', src:'Rikosseuraamuslaitos — ei saatavilla StatFin-rajapinnasta'},
   'syntyperä': {years:'2015–2025', note:'Rise-data on virallista. Väestöosuusluvut Tilastokeskukselta.'}
 };
@@ -234,10 +237,11 @@ function dataBox(id){
 
 // ── RENDER GENERIC CRIME ────────────────────────────────
 const DATA={
-  vakivalta:{col:'#e05c5c',counts:[32972,33053,33150,33426,32778,33620,37647,40712,40466,44013],p100k:[599.13,599.53,600.77,604.96,592.32,605.96,676.62,726.50,718.00,778.59],trendPct:33.5,trend:'nouseva',analysis:'Pahoinpitelyt ovat kääntyneet selvään nousuun 2020-luvulla; kasvu on ollut nopeinta vuodesta 2021 alkaen. Luvut sisältävät vain täytetyt teot (RL 21:5–7), eivät yrityksiä.'},
+  vakivalta:{col:'#e05c5c',counts:[32972,33053,33150,33426,32778,33620,37647,40712,40466,44013],ppPerus:[22314,22572,22849,23431,22935,23708,26971,29398,29074,32354],ppTorkea:[1281,1291,1313,1299,1408,1360,1397,1464,1314,1355],ppLieva:[9377,9190,8988,8696,8435,8552,9279,9850,10078,10304],p100k:[599.13,599.53,600.77,604.96,592.32,605.96,676.62,726.50,718.00,778.59],trendPct:33.5,trend:'nouseva',analysis:'Pahoinpitelyt ovat kääntyneet selvään nousuun 2020-luvulla; kasvu on ollut nopeinta vuodesta 2021 alkaen. Luvut sisältävät vain täytetyt teot (RL 21:5–7), eivät yrityksiä.'},
   henki:{col:'#9b7de8',counts:[76,72,87,72,86,83,79,57,89,80],p100k:[1.38,1.31,1.58,1.30,1.55,1.50,1.42,1.02,1.58,1.42],trendPct:5.3,trend:'nouseva',analysis:'Henkirikoksia tapahtuu vähän, joten vuosivaihtelu on suurta eikä yksittäisen vuoden muutos kerro trendistä. Mukana ovat tappo, murha ja surma (RL 21:1–3), ei yrityksiä.'},
   ryostot:{col:'#4f8ef7',counts:[1409,1391,1448,1518,1690,1610,1963,2206,2141,2007],p100k:[25.60,25.23,26.24,27.47,30.54,29.02,35.28,39.37,37.99,35.50],trendPct:42.4,trend:'nouseva',analysis:'Ryöstöt kääntyivät nousuun vuoden 2019 jälkeen ja ovat viime vuosina asettuneet noin kahden tuhannen tasolle. Luvut sisältävät vain täytetyt teot (RL 31:1–2), eivät yrityksiä.'},
-  nuoriso:{col:'#e06898',counts:[12500,13220,12402,13108,15599,17186,18593,21711,21427,22411],p100k:[227.14,239.79,224.76,237.24,281.89,309.76,334.17,387.43,380.18,396.45],yShare:[9.00,10.50,9.70,10.60,11.30,12.10,13.60,15.30,14.80,14.60],trendPct:79.3,trend:'nouseva',analysis:'Alle 18-vuotiaiden osuus rikoslakirikoksista epäillyistä on noussut noin 9 prosentista 15 prosenttiin. Luvut ovat epäiltyjä henkilöitä, eivät rikoksia: kukin epäilty on laskettu vuodessa kerran vuoden törkeimmän rikoksensa mukaan. Muutokset ilmoitusalttiudessa ja kirjaamiskäytännöissä vaikuttavat tilastoituihin lukuihin.'}
+  nuoriso:{col:'#e06898',counts:[12500,13220,12402,13108,15599,17186,18593,21711,21427,22411],p100k:[227.14,239.79,224.76,237.24,281.89,309.76,334.17,387.43,380.18,396.45],yShare:[9.00,10.50,9.70,10.60,11.30,12.10,13.60,15.30,14.80,14.60],trendPct:79.3,trend:'nouseva',analysis:'Alle 18-vuotiaiden osuus rikoslakirikoksista epäillyistä on noussut noin 9 prosentista 15 prosenttiin. Luvut ovat epäiltyjä henkilöitä, eivät rikoksia: kukin epäilty on laskettu vuodessa kerran vuoden törkeimmän rikoksensa mukaan. Muutokset ilmoitusalttiudessa ja kirjaamiskäytännöissä vaikuttavat tilastoituihin lukuihin.'},
+  tyottomyys:{col:'#e8c23a',aste1524:[20.50,20.00,17.30,17.70,21.00,17.10,14.20,16.20,18.80,21.80],maara1524:[66.00,65.00,55.00,56.00,64.00,53.00,45.00,53.00,61.00,72.00],aste1574:[8.90,8.70,7.50,6.80,7.70,7.70,6.80,7.20,8.40,9.70],tyollisyys1524:[40.20,41.30,42.30,42.80,39.60,42.60,44.80,44.50,41.80,40.90],trendPct:6.3,trend:'nouseva',analysis:'Nuorten 15–24-vuotiaiden työttömyysaste on kääntynyt 2020-luvun alun pohjalukemista selvään nousuun. Nuorisotyöttömyys on rakenteellisesti noin kaksi kertaa koko väestön tasoa korkeampi, koska opiskelu ja työuran alku lisäävät liikkuvuutta työmarkkinoilla. Luvut ovat työvoimatutkimuksen otospohjaisia estimaatteja, eivät työnvälitystilaston rekisterilukuja.'}
 };
 
 function renderCrime(id){
@@ -260,17 +264,26 @@ function renderCrime(id){
     hbars([{l:'Alle 15v',v:14.2,c:d.col,fmt:'14,2 %'},{l:'15–17v',v:31.4,c:d.col,fmt:'31,4 %'},{l:'18–19v',v:54.4,c:d.col,fmt:'54,4 %'}])+
     '</div>';
   }
+  if(id==='vakivalta' && d.ppPerus){
+    const tot=d.counts[9];
+    const osat=[{l:'Pahoinpitely (RL 21:5)',v:d.ppPerus[9]},
+                {l:'Törkeä pahoinpitely (21:6)',v:d.ppTorkea[9]},
+                {l:'Lievä pahoinpitely (21:7)',v:d.ppLieva[9]}];
+    agExtra=`<div class="card"><div class="ctitle">Mistä luku ${fi(tot)} koostuu (${Y[9]})</div>`+
+    `<div class="csub">Viranomaisten tietoon tulleet rikosilmoitukset — vain täytetyt teot, yritykset eivät sisälly</div>`+
+    hbars(osat.map(o=>({l:o.l,v:o.v,c:d.col,
+      fmt:fi(o.v)+' · '+(o.v/tot*100).toFixed(1).replace('.',',')+' %'})))+
+    '</div>';
+  }
 
   el.innerHTML=`
   ${dataBox(id)}
-  ${id==='nuoriso'?'<div class="ibox"><strong>Miksi 2015 näyttää korkealta?</strong> Lastensuojelulaki muuttui huhtikuussa 2015 — ilmoitusvelvollisuus laajeni ja koulut alkoivat ilmoittaa herkemmin rikosepäilyistä. Tilastoitu kasvu ei tarkoita että rikollisuus todella kasvoi yhtä paljon.</div>':''}
-  ${id==='vakivalta'?'<div class="ibox"><strong>Miksi 2015 näyttää korkealta?</strong> Lievien pahoinpitelyjen syyteoikeuden muutos (2011) nosti tilastoituja lukuja. Vuosi 2015 on vertailujakson lähtövuosi — pitkä trendi on silti laskeva.</div>':''}
-  <div class="metrics">
-    <div class="mc"><div class="mlabel">Tapauksia 2024</div><div class="mval r">${fi(lat)}</div><div class="msub">${chgH} vs. 2023</div></div>
+      <div class="metrics">
+    <div class="mc"><div class="mlabel">Tapauksia ${Y[9]}</div><div class="mval r">${fi(lat)}</div><div class="msub">${chgH} vs. ${Y[8]}</div></div>
     <div class="mc"><div class="mlabel">Per 100 000</div><div class="mval">${d.p100k[9].toFixed(1)}</div></div>
-    <div class="mc mc3"><div class="mlabel">Muutos 2015–2024</div><div class="mval">${tH}</div><div class="msub">${d.trend}</div></div>
+    <div class="mc mc3"><div class="mlabel">Muutos ${Y[0]}–${Y[9]}</div><div class="mval">${tH}</div><div class="msub">${d.trend}</div></div>
   </div>
-  <div class="card"><div class="ctitle">Vuositrendi 2015–2024</div><div class="csub">Viranomaisten tietoon tulleet tapaukset</div>${lc}</div>
+  <div class="card"><div class="ctitle">Vuositrendi ${Y[0]}–${Y[9]}</div><div class="csub">Viranomaisten tietoon tulleet tapaukset</div>${lc}</div>
   ${agExtra}
   <div class="card"><div class="ctitle">${id==='nuoriso'?'Osuus kaikista epäillyistä':'Per 100 000 asukasta'}</div>${lc2}</div>
   <div class="abox">${d.analysis}</div>`;
@@ -551,6 +564,31 @@ function render(id){
   else if(id==='syntyperä') renderSyntyperä();
   else if(id==='ennakko2025') renderEnnakko2025();
   else if(id==='ika') renderIka();
+  else if(id==='tyottomyys') renderTyottomyys();
+}
+
+// ── NUORISOTYÖTTÖMYYS ───────────────────────────────────
+function renderTyottomyys(){
+  const d=DATA.tyottomyys;const el=document.getElementById('p-tyottomyys');
+  const lat=d.aste1524[9],prv=d.aste1524[8];
+  const chg=lat-prv;
+  const chgH=chg>0?`<span class="tu">+${chg.toFixed(1)} %-yks.</span>`:`<span class="td">${chg.toFixed(1)} %-yks.</span>`;
+  const kaikki=[...d.aste1524,...d.aste1574];
+  const lc=lineChart([{data:d.aste1524,color:d.col,fill:true},{data:d.aste1574,color:'#4a5068',fill:false}],
+                     Math.min(...kaikki)*0.85,Math.max(...kaikki)*1.05,v=>v.toFixed(1)+'%');
+  const lc2=lineChart([{data:d.maara1524,color:d.col,fill:true}],
+                      Math.min(...d.maara1524)*0.85,Math.max(...d.maara1524)*1.05,v=>v.toFixed(0));
+  const suhde=(d.aste1524[9]/d.aste1574[9]).toFixed(1);
+  el.innerHTML=`
+  ${dataBox('tyottomyys')}
+  <div class="metrics">
+    <div class="mc"><div class="mlabel">Työttömyysaste 15–24v ${Y[9]}</div><div class="mval r">${d.aste1524[9].toFixed(1)} %</div><div class="msub">${chgH} vs. ${Y[8]}</div></div>
+    <div class="mc"><div class="mlabel">Työttömiä 15–24v</div><div class="mval">${fi(Math.round(d.maara1524[9]*1000))}</div></div>
+    <div class="mc mc3"><div class="mlabel">Koko väestö 15–74v</div><div class="mval">${d.aste1574[9].toFixed(1)} %</div><div class="msub">nuorilla ${suhde}× korkeampi</div></div>
+  </div>
+  <div class="card"><div class="ctitle">Työttömyysaste ${Y[0]}–${Y[9]}</div><div class="csub">Tumma viiva: koko väestö 15–74-vuotiaat</div>${lc}</div>
+  <div class="card"><div class="ctitle">Työttömien määrä 15–24v</div><div class="csub">1 000 henkilöä</div>${lc2}</div>
+  <div class="abox">${d.analysis}</div>`;
 }
 
 // ── ALOITUSNÄKYMÄ ────────────────────────────────────────
