@@ -45,201 +45,253 @@ START_YEAR = 2015
 # PxWeb API base
 PXWEB_BASE = 'https://pxdata.stat.fi/PxWeb/api/v1/fi/StatFin'
 
-# Rikostilastotaulu — poliisin tietoon tulleet rikokset
-CRIME_TABLE = f'{PXWEB_BASE}/rpk/statfin_rpk_pxt_11cg.px'
+# Rikostilastotaulu — tietoon tulleet rikokset rikosnimikkeittäin (2006–)
+# HUOM: Tilastokeskus vaihtoi taulujen URL-muodon. Vanha muoto
+# 'statfin_rpk_pxt_11cg.px' vastaa nykyään HTTP 400, ja taulu 11cg on
+# poistettu kokonaan. Nykymuoto on pelkkä taulutunnus.
+CRIME_TABLE = f'{PXWEB_BASE}/rpk/13gw.px'
 
 # Väestötaulu — vuoden lopun väkiluku
-POP_TABLE = f'{PXWEB_BASE}/vaerak/statfin_vaerak_pxt_11ra.px'
+POP_TABLE = f'{PXWEB_BASE}/vaerak/11ra.px'
+
+# ── TAULUJEN MUUTTUJAKOODIT ──────────────────────────────
+# Myös muuttujien nimet vaihtuivat: ennen 'Vuosi' ja 'Rikosnimike'.
+CRIME_VAR_CRIME = 'rikokset_15_20190102'   # Rikos
+CRIME_VAR_YEAR = 'timeperiod_y'            # Vuosi
+CRIME_VAR_AUTH = 'rikokset_34_20180101'    # Viranomainen
+CRIME_AUTH_ALL = 'SSS'                     # Viranomaiset yhteensä
+CRIME_CONTENT = 'rikokset_lkm'             # Viranomaisten tietoon tulleet rikokset
+
+POP_VAR_AREA = 'alue_23_20260101'          # Alue
+POP_AREA_ALL = 'SSS'                       # KOKO MAA
+POP_VAR_YEAR = 'timeperiod_y'              # Vuosi
+POP_CONTENT = 'vaerak-vaesto'              # Väestö 31.12.
 
 # ── TILASTOKESKUKSEN RIKOSNIMIKEKOODIT ───────────────────
-# Nämä ovat Tilastokeskuksen PxWeb-taulukon koodeja.
-# Jos koodit muuttuvat, aja ensin discover_codes() tarkistaaksesi.
+# Koodit ovat muotoa <luku><pykälä><momentti>. Seksuaalirikoslaki uudistui
+# 2023, joten aikasarjan jatkuvuuden vuoksi mukana ovat sekä nykyiset koodit
+# että vanhan lain '_2022'-päätteiset vastineet.
+# Yritykset on jätetty pois — mukana vain täytetyt teot, kuten ennenkin.
+# Jos koodit muuttuvat, aja: python update_stats.py --discover
 
 CRIME_CODES = {
-    # Pahoinpitelyt yhteensä (RL 21:5-7 + 21:11)
+    # Pahoinpitelyt yhteensä (RL 21:5-7)
     'pahoinpitely': [
-        '0520',  # Pahoinpitely (RL 21:5)
-        '0530',  # Törkeä pahoinpitely (RL 21:6)
-        '0540',  # Lievä pahoinpitely (RL 21:7)
+        '210501',  # Pahoinpitely 21:5§1
+        '210601',  # Törkeä pahoinpitely 21:6§1
+        '210701',  # Lievä pahoinpitely 21:7§
     ],
     # Henkirikokset (tappo + murha + surma)
     'henkirikos': [
-        '0110',  # Tappo (RL 21:1)
-        '0120',  # Murha (RL 21:2)
-        '0130',  # Surma (RL 21:3)
+        '210101',  # Tappo 21:1§1
+        '210201',  # Murha 21:2§1
+        '210301',  # Surma 21:3§1
     ],
     # Ryöstöt
     'ryosto': [
-        '1000',  # Ryöstö (RL 31:1)
-        '1010',  # Törkeä ryöstö (RL 31:2)
+        '310101',  # Ryöstö 31:1§1
+        '310201',  # Törkeä ryöstö 31:2§1
     ],
-    # Seksuaalirikokset — raiskaukset
+    # Raiskaukset — uusi ja vanha laki yhdessä
     'raiskaus': [
-        '0300',  # Raiskaus (RL 20:1) — vanha laki
-        '0310',  # Törkeä raiskaus (RL 20:2) — vanha laki
-        '2000',  # Raiskaus (RL 20:1) — uusi laki 2023+
+        '200101',       # Raiskaus 20:1§1-2 (2023-)
+        '200201',       # Törkeä raiskaus 20:2§1 (2023-)
+        '200101_2022',  # Raiskaus 20:1§1-2 (-2022)
+        '2001A3_2022',  # Raiskaus, 3 mom 20:1§3 (-2022)
+        '200201_2022',  # Törkeä raiskaus 20:2§1 (-2022)
     ],
-    # Seksuaalirikokset — lapsiin kohdistuvat
+    # Lapsiin kohdistuvat seksuaalirikokset
     'lapsi_seksuaali': [
-        '0330',  # Lapsen seksuaalinen hyväksikäyttö — vanha
-        '0340',  # Törkeä lapsen seks. hyväksikäyttö — vanha
-        '2010',  # Seksuaalinen kajoaminen lapseen — uusi 2023+
-        '2020',  # Törkeä seksuaalinen kajoaminen lapseen — uusi
-        '2030',  # Lapsenraiskaus — uusi 2023+
-        '2040',  # Törkeä lapsenraiskaus — uusi 2023+
+        '201201',       # Lapsenraiskaus 20:12§1 (2023-)
+        '201301',       # Törkeä lapsenraiskaus 20:13§1 (2023-)
+        '201401',       # Seksuaalinen kajoaminen lapseen 20:14§1
+        '201501',       # Törkeä seksuaalinen kajoaminen lapseen 20:15§1
+        '201601',       # Lapsen seksuaalinen hyväksikäyttö 20:16§1
+        '200601_2022',  # Lapsen seksuaalinen hyväksikäyttö 20:6§1-2 (-2022)
+        '200701_2022',  # Törkeä lapsen seks. hyväksikäyttö 20:7§1 (-2022)
+        '2007B1_2022',  # Törkeä lapsenraiskaus 20:7b§1 (-2022)
     ],
     # Seksuaalinen ahdistelu
     'ahdistelu': [
-        '0360',  # Seksuaalinen ahdistelu
+        '200601',       # Seksuaalinen ahdistelu 20:6§1-2 (2023-)
+        '2005A1_2022',  # Seksuaalinen ahdistelu 20:5a§1 (-2022)
     ],
-    # Koko seksuaalirikosluku (RL 20)
+    # Koko seksuaalirikosluku (RL 20) — taulun oma summarivi
     'seksuaali_yht': [
-        '0299',  # Seksuaalirikokset yhteensä (koko 20 luku)
+        '20LUKU',  # 20 Luku. Seksuaalirikoksista
     ],
 }
 
 # ── APUFUNKTIOT ──────────────────────────────────────────
 
+_YEAR_CACHE = {}
+
+
+def available_years(table_url, year_var):
+    """
+    Palauttaa taulussa oikeasti olevat vuodet.
+
+    PxWeb vastaa 400, jos kyselyssä pyydetään vuotta jota taulussa ei ole.
+    Koska skripti ajetaan vuosittain, pyydetty loppuvuosi on säännöllisesti
+    tuoreempi kuin julkaistu data — siksi vuodet suodatetaan metadatan
+    perusteella ennen kyselyä.
+    """
+    key = (table_url, year_var)
+    if key in _YEAR_CACHE:
+        return _YEAR_CACHE[key]
+
+    found = []
+    try:
+        r = requests.get(table_url, timeout=30)
+        r.raise_for_status()
+        for var in r.json().get('variables', []):
+            if var.get('code') == year_var:
+                found = list(var.get('values', []))
+                break
+    except Exception as e:
+        print(f"  Metadata-virhe: {e}")
+
+    _YEAR_CACHE[key] = found
+    return found
+
+
 def pxweb_query(table_url, variable_code, values, year_start, year_end=None):
     """
     Hae dataa PxWeb API:sta.
-    
-    Palauttaa dict: {vuosi: arvo} tai {vuosi: {koodi: arvo}}
+
+    Palauttaa dict: {vuosi: summa}, jossa annetut koodit on laskettu yhteen.
     """
     years = [str(y) for y in range(year_start, (year_end or datetime.now().year) + 1)]
-    
+
+    avail = available_years(table_url, CRIME_VAR_YEAR)
+    if avail:
+        years = [y for y in years if y in avail]
+    if not years:
+        print("  Ei pyydettyjä vuosia saatavilla taulussa.")
+        return None
+
     query = {
         "query": [
             {
                 "code": variable_code,
-                "selection": {
-                    "filter": "item",
-                    "values": values
-                }
+                "selection": {"filter": "item", "values": values},
             },
             {
-                "code": "Vuosi",
-                "selection": {
-                    "filter": "item",
-                    "values": years
-                }
-            }
+                "code": CRIME_VAR_YEAR,
+                "selection": {"filter": "item", "values": years},
+            },
+            {
+                "code": CRIME_VAR_AUTH,
+                "selection": {"filter": "item", "values": [CRIME_AUTH_ALL]},
+            },
+            {
+                "code": "contentscode",
+                "selection": {"filter": "item", "values": [CRIME_CONTENT]},
+            },
         ],
-        "response": {
-            "format": "json-stat2"
-        }
+        "response": {"format": "json-stat2"},
     }
-    
-    # Jos taulussa on Tiedot-muuttuja, valitaan "Ilmoitettuja" (tietoon tulleet)
-    query["query"].append({
-        "code": "Tiedot",
-        "selection": {
-            "filter": "item",
-            "values": ["ilm_rikoksia"]
-        }
-    })
-    
+
     try:
         r = requests.post(table_url, json=query, timeout=30)
         r.raise_for_status()
-        data = r.json()
-        return parse_jsonstat2(data, years, values)
+        return parse_jsonstat2(r.json(), years, values)
     except Exception as e:
         print(f"  API-virhe: {e}")
-        # Yritä ilman Tiedot-valintaa
-        query["query"] = query["query"][:2]
-        try:
-            r = requests.post(table_url, json=query, timeout=30)
-            r.raise_for_status()
-            data = r.json()
-            return parse_jsonstat2(data, years, values)
-        except Exception as e2:
-            print(f"  Toinenkin yritys epäonnistui: {e2}")
-            return None
+        return None
 
 
 def parse_jsonstat2(data, years, codes):
     """
-    Parsii JSON-stat2 -vastauksen.
-    Palauttaa: {vuosi: summa} kun koodit summataan yhteen.
+    Parsii JSON-stat2 -vastauksen ja summaa arvot vuosittain.
+
+    Ulottuvuuksien järjestystä ei oleteta: se luetaan vastauksen 'id'- ja
+    'size'-kentistä, ja vuosiulottuvuus tunnistetaan 'role.time'-tiedosta.
+    Kaikki muut ulottuvuudet (rikosnimikkeet) summataan yhteen.
     """
-    values = data.get('value', [])
-    dims = data.get('dimension', {})
-    sizes = data.get('size', [])
-    
-    if not values:
+    values = data.get('value')
+    ids = data.get('id') or []
+    sizes = data.get('size') or []
+    dims = data.get('dimension') or {}
+
+    if values is None or not ids or len(ids) != len(sizes):
         return None
-    
+
+    # Kunkin ulottuvuuden kategoria-avaimet oikeassa järjestyksessä
+    keys_per_dim = []
+    for did in ids:
+        index = dims.get(did, {}).get('category', {}).get('index', {})
+        if isinstance(index, dict):
+            ordered = sorted(index.items(), key=lambda kv: kv[1])
+            keys_per_dim.append([k for k, _ in ordered])
+        else:
+            keys_per_dim.append(list(index))
+
+    # Vuosiulottuvuus: ensisijaisesti role.time, muuten arvojen perusteella
+    year_dim = None
+    for did in (data.get('role') or {}).get('time') or []:
+        if did in ids:
+            year_dim = ids.index(did)
+            break
+    if year_dim is None:
+        for i, keys in enumerate(keys_per_dim):
+            if any(k in years for k in keys):
+                year_dim = i
+                break
+    if year_dim is None:
+        return None
+
+    # Litteä indeksi -> koordinaatit (row-major)
+    strides = [1] * len(sizes)
+    for i in range(len(sizes) - 2, -1, -1):
+        strides[i] = strides[i + 1] * sizes[i + 1]
+
+    items = values.items() if isinstance(values, dict) else enumerate(values)
+
     result = {}
-    
-    # Yksinkertainen tapaus: yksi koodi per vuosi
-    if len(codes) == 1 and len(sizes) <= 3:
-        for i, year in enumerate(years):
-            if i < len(values) and values[i] is not None:
-                result[year] = int(values[i])
-        return result
-    
-    # Monimutkaisempi: useita koodeja, summataan per vuosi
-    n_codes = len(codes)
-    n_years = len(years)
-    
-    for yi, year in enumerate(years):
-        total = 0
-        all_none = True
-        for ci in range(n_codes):
-            idx = ci * n_years + yi
-            if idx < len(values) and values[idx] is not None:
-                total += int(values[idx])
-                all_none = False
-        if not all_none:
-            result[year] = total
-    
-    return result
+    for flat, val in items:
+        if val is None:
+            continue
+        yi = (int(flat) // strides[year_dim]) % sizes[year_dim]
+        year = keys_per_dim[year_dim][yi]
+        result[year] = result.get(year, 0) + int(val)
+
+    return result or None
 
 
 def get_population(year_start, year_end=None):
     """Hae Suomen väkiluku vuosittain."""
     years = [str(y) for y in range(year_start, (year_end or datetime.now().year) + 1)]
-    
+
+    avail = available_years(POP_TABLE, POP_VAR_YEAR)
+    if avail:
+        years = [y for y in years if y in avail]
+    if not years:
+        print("  Ei pyydettyjä vuosia saatavilla väestötaulussa.")
+        return None
+
     query = {
         "query": [
             {
-                "code": "Alue",
-                "selection": {
-                    "filter": "item",
-                    "values": ["SSS"]  # Koko maa
-                }
+                "code": POP_VAR_AREA,
+                "selection": {"filter": "item", "values": [POP_AREA_ALL]},
             },
             {
-                "code": "Vuosi",
-                "selection": {
-                    "filter": "item",
-                    "values": years
-                }
+                "code": POP_VAR_YEAR,
+                "selection": {"filter": "item", "values": years},
             },
             {
-                "code": "Sukupuoli",
-                "selection": {
-                    "filter": "item",
-                    "values": ["SSS"]  # Yhteensä
-                }
-            }
+                "code": "contentscode",
+                "selection": {"filter": "item", "values": [POP_CONTENT]},
+            },
         ],
-        "response": {
-            "format": "json-stat2"
-        }
+        "response": {"format": "json-stat2"},
     }
-    
+
     try:
         r = requests.post(POP_TABLE, json=query, timeout=30)
         r.raise_for_status()
-        data = r.json()
-        values = data.get('value', [])
-        result = {}
-        for i, year in enumerate(years):
-            if i < len(values) and values[i] is not None:
-                result[year] = int(values[i])
-        return result
+        return parse_jsonstat2(r.json(), years, [POP_AREA_ALL])
     except Exception as e:
         print(f"  Väestödata-virhe: {e}")
         return None
@@ -267,7 +319,7 @@ def fetch_crime_data(category, year_start, year_end=None):
     if not codes:
         print(f"  Tuntematon kategoria: {category}")
         return None
-    return pxweb_query(CRIME_TABLE, 'Rikosnimike', codes, year_start, year_end)
+    return pxweb_query(CRIME_TABLE, CRIME_VAR_CRIME, codes, year_start, year_end)
 
 
 # ── HTML-PÄIVITYS ────────────────────────────────────────
