@@ -129,6 +129,7 @@ NAT_CRIME = '101T504X406'            # vain rikoslakirikokset
 
 # Rikostyyppiryhmät syntyperävertailuun (13zk)
 CRIME_GROUPS = ['201T223', '231T241', '201_202_205', '101T161']
+AGE_GROUPS = ['15-17', '18-20', '21-24', '25-29', '30-39', '40-49', '50-59', '60-69']
 # = Väkivalta, Seksuaali, Henkirikokset, Omaisuus (sama järjestys kuin RTNAMES)
 
 # ── TILASTOKESKUKSEN RIKOSNIMIKEKOODIT ───────────────────
@@ -592,6 +593,29 @@ def fetch_crime_group_rates(origin_code, year):
             return None
     return out
 
+def fetch_age_rates(origin_code, year):
+    """Epäillyt per 100 000 ikäryhmittäin ja syntyperittäin (13zk)."""
+    out = []
+    for age in AGE_GROUPS:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": [age]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [SYNT_CRIME_ALL]}},
+            {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin_code]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": [SYNT_CONTENT]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            v = r.json().get("value", [None])[0]
+            out.append(round((v or 0) * 10))
+        except Exception as e:
+            print(f"  Ikäryhmädata-virhe ({age}): {e}")
+            return None
+    return out
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -837,6 +861,8 @@ def main():
     nat_rates = fetch_nationality_rates(str(latest_year))
     rt_foreign_n = fetch_crime_group_rates(SYNT_FOREIGN, str(latest_year))
     rt_domestic_n = fetch_crime_group_rates(SYNT_DOMESTIC, str(latest_year))
+    age_foreign = fetch_age_rates(SYNT_FOREIGN, str(latest_year))
+    age_domestic = fetch_age_rates(SYNT_DOMESTIC, str(latest_year))
     pop_for_o = fetch_pop_origin(SYNT_FOREIGN, [str(latest_year)])
     pop_dom_o = fetch_pop_origin(SYNT_DOMESTIC, [str(latest_year)])
     ly = str(latest_year)
@@ -1033,6 +1059,10 @@ def main():
         content = update_const_array(content, 'RTU', rt_foreign, is_float=True)
     if rt_domestic:
         content = update_const_array(content, 'RTK', rt_domestic, is_float=True)
+    if age_foreign:
+        content = update_const_array(content, 'AGEU', age_foreign)
+    if age_domestic:
+        content = update_const_array(content, 'AGEK', age_domestic)
     
     # Seksuaalirikokset
     if raiskaus_arr:

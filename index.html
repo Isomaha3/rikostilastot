@@ -406,6 +406,9 @@ function renderPerhe(){
 function renderMaahanmuuttajat(){
   const el=document.getElementById('p-maahanmuuttajat');
   const IP=[12534,12614,13555,12219,10573,8138,7494,7767,8102,8242];
+  const AGEL=['15–17','18–20','21–24','25–29','30–39','40–49','50–59','60–69'];
+  const AGEU=[14788,20238,15685,12930,10275,7412,5303,2781];
+  const AGEK=[13034,17964,14585,15079,11153,7982,4699,2160];
   const RTNAMES=['Väkivalta','Seksuaali','Henkirikokset','Omaisuus'];
   const RTCOL=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7'];
   const RTU=[1041.80,170.90,1.40,2314.50];
@@ -417,7 +420,7 @@ function renderMaahanmuuttajat(){
   ],1000,3200);
   el.innerHTML=`
   ${dataBox('maahanmuuttajat')}
-  <div class="ibox"><strong>Suhteutettu vertailu:</strong> Luvut per 100 000 ko. ryhmässä. Maahanmuuttajataustaisilla on nuorempi ikärakenne ja heikompi sosioekonominen asema — nämä selittävät osan erosta.</div>
+  <div class="ibox"><strong>Suhteutettu vertailu:</strong> Luvut per 100 000 ko. ryhmässä. Ulkomaalaistaustainen väestö on ikärakenteeltaan nuorempi, ja nuoret ovat kaikissa väestöryhmissä yliedustettuina rikostilastoissa — tämä näkyy alla olevassa ikäryhmävertailussa.</div>
   <div class="metrics">
     <div class="mc"><div class="mlabel">Maahanmuuttajat / 100k</div><div class="mval r">${fi(IP[IP.length-1])}</div></div>
     <div class="mc"><div class="mlabel">Kantaväestö / 100k</div><div class="mval">${fi(NP[NP.length-1])}</div></div>
@@ -438,7 +441,12 @@ function renderMaahanmuuttajat(){
       </div>
     </div>
   </div>
-  <div class="abox">Maahanmuuttajataustaisten rikosepäiltyjen määrä per 100 000 on noin 2x kantaväestöön nähden. Sosioekonomiset tekijät selittävät osan erosta, mutta eivät kaikkea.</div>`;
+    <div class="card"><div class="ctitle">Sama vertailu ikäryhmittäin — ${Y[9]}</div>
+    <div class="csub">Epäillyt per 100 000 omassa ikä- ja syntyperäryhmässä</div>
+    ${hbars(AGEL.map((l,i)=>({l:l+" v",v:AGEU[i]/(AGEK[i]||1),c:(AGEU[i]/(AGEK[i]||1))>=1?"#e05c5c":"#3dba8c",fmt:(AGEU[i]/(AGEK[i]||1)).toFixed(2)+"×"})))}
+    <div class="csub" style="margin-top:8px">Punainen = ulkomaalaistaustaisilla korkeampi, vihreä = kantaväestöllä korkeampi</div>
+  </div>
+  <div class="abox">Ulkomaalaistaustaisten rikosepäiltyjen määrä per 100 000 on ${(IP[9]/NP[9]).toFixed(1)}× kantaväestöön nähden. Ero vaihtelee voimakkaasti rikostyypeittäin: väkivaltarikoksissa ${(RTU[0]/RTK[0]).toFixed(1)}×, mutta omaisuusrikoksissa vain ${(RTU[3]/RTK[3]).toFixed(1)}×. Kun verrataan samanikäisiä, ero kapenee selvästi ja kääntyy 25–49-vuotiailla päinvastaiseksi. Luvut kuvaavat rikoksista epäiltyjä, eivät tuomittuja.</div>`;
 }
 
 // ── KANSALAISUUKSITTAIN ─────────────────────────────────
