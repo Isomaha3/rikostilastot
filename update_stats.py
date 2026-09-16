@@ -95,7 +95,9 @@ UNEMP_EMPRATE = 'tyti-Tyollisyysaste'   # Työllisyysaste, %
 PERHE_TABLE = f'{PXWEB_BASE}/rpk/13rc.px'
 PERHE_SYNT_TABLE = f'{PXWEB_BASE}/rpk/14cf.px'
 PERHE_CONTENT = 'uhri_tork'        # uhrit vakavimman rikoksen mukaan
-PERHE_WINDOW = 16                  # dashboardin perhepaneelin pituus
+PERHE_WINDOW = 16
+# Tekijasuhde aikuisiin uhreihin (13rc), samassa jarjestyksessa kuin PSL
+PERHE_REL = [['51T56'], ['60_70'], ['30_31_80T82', '11T13', '41_42'], ['21T23'], ['75', '99']]                  # dashboardin perhepaneelin pituus
 
 # Epäillyt syntyperän mukaan, väestöön suhteutettuna (13zk)
 SYNT_TABLE = f'{PXWEB_BASE}/rpk/13zk.px'
@@ -130,6 +132,17 @@ NAT_CRIME = '101T504X406'            # vain rikoslakirikokset
 # Rikostyyppiryhmät syntyperävertailuun (13zk)
 CRIME_GROUPS = ['201T223', '231T241', '201_202_205', '101T161']
 AGE_GROUPS = ['15-17', '18-20', '21-24', '25-29', '30-39', '40-49', '50-59', '60-69']
+
+# Ennakkotiedot kuukausittain (13j2). Kumulatiivinen vuosisumma, joten
+# viimeisin kuukausi antaa suoraan kuluvan vuoden kertyman.
+PRELIM_TABLE = f'{PXWEB_BASE}/rpk/13j2.px'
+PRELIM_CATS = [
+    ['210501', '210601', '210701'],           # Pahoinpitelyt
+    ['20LUKU'],                               # Seksuaalirikokset
+    ['210101', '210201', '210301'],           # Henkirikokset
+    ['310101', '310201'],                     # Ryöstöt
+    ['280101', '280201', '280301'],           # Varkaudet
+]
 # = Väkivalta, Seksuaali, Henkirikokset, Omaisuus (sama järjestys kuin RTNAMES)
 
 # ── TILASTOKESKUKSEN RIKOSNIMIKEKOODIT ───────────────────
@@ -616,6 +629,89 @@ def fetch_age_rates(origin_code, year):
     return out
 
 
+def fetch_prelim():
+    """Ennakkotiedot: kuluva vuosi alusta viimeisimpaan kuukauteen (13j2).
+
+    Palauttaa (nykyinen, edellinen, jaksolappu, vertailulappu) tai None.
+    """
+    try:
+        meta = requests.get(PRELIM_TABLE, timeout=30).json()
+    except Exception as e:
+        print(f"  Ennakkodata-virhe (metadata): {e}")
+        return None
+
+    months = []
+    for v in meta.get("variables", []):
+        if v.get("code") == "timeperiod_m":
+            months = list(v.get("values", []))
+    if not months:
+        return None
+
+    last = months[-1]
+    prev = str(int(last[:4]) - 1) + last[4:]
+    if prev not in months:
+        return None
+
+    def kum(codes, month):
+        body = {"query": [
+            {"code": CRIME_VAR_CRIME, "selection": {"filter": "item", "values": codes}},
+            {"code": "timeperiod_m", "selection": {"filter": "item", "values": [month]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": ["kum_sum"]}},
+        ], "response": {"format": "json-stat2"}}
+        r = requests.post(PRELIM_TABLE, json=body, timeout=30)
+        r.raise_for_status()
+        return sum(x for x in r.json().get("value", []) if x is not None)
+
+    try:
+        cur = [kum(c, last) for c in PRELIM_CATS]
+        pre = [kum(c, prev) for c in PRELIM_CATS]
+    except Exception as e:
+        print(f"  Ennakkodata-virhe: {e}")
+        return None
+
+    kk = int(last[5:])
+    lappu = f"1–{kk}/{last[:4]}"
+    lappu_prev = f"1–{kk}/{prev[:4]}"
+    return cur, pre, lappu, lappu_prev
+
+
+def update_const_string(content, var_name, value):
+    """Paivita yksittainen merkkijonovakio."""
+    pattern = rf"(const {var_name}=')[^']*(')"
+    new_content = re.sub(pattern, rf'\g<1>{value}\g<2>', content)
+    if new_content != content:
+        print(f"  ✓ Päivitetty: {var_name} = {value}")
+        return new_content
+    print(f"  ✗ Ei löytynyt: {var_name}")
+    return content
+
+
+def fetch_perhe_relations(year):
+    """Tekijasuhteen jakauma aikuisiin uhreihin (13rc), prosentteina."""
+    vals = []
+    for codes in PERHE_REL:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "rikokset_77_20220101", "selection": {"filter": "item", "values": codes}},
+            {"code": "rikokset_114_20190101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["18-"]}},
+            {"code": "rikokset_116_20190101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "rikokset_10_20220101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": [PERHE_CONTENT]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(PERHE_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            vals.append(sum(x for x in r.json().get("value", []) if x is not None))
+        except Exception as e:
+            print(f"  Tekijasuhdedata-virhe: {e}")
+            return None
+    kok = sum(vals)
+    if not kok:
+        return None
+    return [round(v / kok * 100, 1) for v in vals]
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -863,6 +959,10 @@ def main():
     rt_domestic_n = fetch_crime_group_rates(SYNT_DOMESTIC, str(latest_year))
     age_foreign = fetch_age_rates(SYNT_FOREIGN, str(latest_year))
     age_domestic = fetch_age_rates(SYNT_DOMESTIC, str(latest_year))
+
+    print("  Ennakkotiedot...")
+    prelim = fetch_prelim()
+    perhe_rel = fetch_perhe_relations(str(latest_year))
     pop_for_o = fetch_pop_origin(SYNT_FOREIGN, [str(latest_year)])
     pop_dom_o = fetch_pop_origin(SYNT_DOMESTIC, [str(latest_year)])
     ly = str(latest_year)
@@ -1063,6 +1163,16 @@ def main():
         content = update_const_array(content, 'AGEU', age_foreign)
     if age_domestic:
         content = update_const_array(content, 'AGEK', age_domestic)
+
+    if prelim:
+        cur, pre, lappu, lappu_prev = prelim
+        content = update_const_array(content, 'ENC', cur)
+        content = update_const_array(content, 'ENP', pre)
+        content = update_const_string(content, 'ENPER', lappu)
+        content = update_const_string(content, 'ENPERP', lappu_prev)
+
+    if perhe_rel:
+        content = update_const_array(content, 'PS2', perhe_rel, is_float=True)
     
     # Seksuaalirikokset
     if raiskaus_arr:

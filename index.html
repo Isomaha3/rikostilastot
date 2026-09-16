@@ -139,13 +139,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="bn" data-p="kansalaisuus" onclick="go(this)"><div class="bn-dot" style="background:#3ab8c8"></div>Kansalaisuus</button>
   <button class="bn" data-p="vangit" onclick="go(this)"><div class="bn-dot" style="background:#9b7de8"></div>Vangit</button>
   <button class="bn" data-p="syntyperä" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Syntyperä</button>
-  <button class="bn" data-p="ennakko2025" onclick="go(this)"><div class="bn-dot" style="background:#3dba8c"></div>2025 uudet</button>
+  <button class="bn" data-p="ennakko2025" onclick="go(this)"><div class="bn-dot" style="background:#3dba8c"></div>Ennakko</button>
   <button class="bn" data-p="ika" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Ikä &amp; tausta</button>
   <button class="bn" data-p="tyottomyys" onclick="go(this)"><div class="bn-dot" style="background:#e8c23a"></div>Nuorisotyöttömyys</button>
 </nav>
 
 <script>
-const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'2025 ennakkotiedot (Q1–Q3)',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys'};
+const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys'};
 const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 
 function fi(n){return Math.round(n).toLocaleString('fi-FI');}
@@ -371,6 +371,9 @@ function renderPerhe(){
   const PM=[1172,1435,1743,1453,1367,1766,1731,1605,1766,1840,1581,1670,1701,1790,1753,1862];
   const FP=[6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,10.5,11.0,11.5,13.0,14.5,16.0,18.8,18.0];
   const PP=[3.5,3.7,4.0,4.2,4.5,4.7,5.0,5.2,5.4,5.6,5.8,6.0,6.5,7.5,9.5,11.0];
+  const PSL=['Nykyinen puoliso','Entinen puoliso','Muu sukulainen','Sisarus','Muu'];
+  const PSC=['#e05c5c','#e8a23a','#9b7de8','#3dba8c','#7a8099'];
+  const PS2=[47.30,22.60,15.90,5.20,9.10];
   const PB=[10.20,9.40,10.50,11.00,11.40,11.70,13.00,12.90,13.90,15.10,14.70,16.50,16.40,19.10,18.60,19.60];
   const PBV=[4.40,4.80,5.20,5.50,5.90,6.20,6.60,7.00,7.30,7.70,8.00,8.50,9.10,10.20,11.10,11.70];
   const lcFP=lineChart([
@@ -396,10 +399,10 @@ function renderPerhe(){
     <div class="legend"><span class="li"><span class="ld" style="background:#e05c8a"></span>Uhrit</span><span class="li"><span class="ld" style="background:#7a8099"></span>Väestö</span></div>
     ${lcFP}
   </div>
-  <div class="card"><div class="ctitle">Tekijäsuhde aikuisiin uhreihin — 2024</div>
-    ${hbars([{l:'Nykyinen puoliso',v:45,c:'#e05c5c',fmt:'45 %'},{l:'Entinen puoliso',v:29,c:'#e8a23a',fmt:'29 %'},{l:'Muu sukulainen',v:15,c:'#9b7de8',fmt:'15 %'},{l:'Sisarus',v:7,c:'#3dba8c',fmt:'7 %'},{l:'Muu',v:4,c:'#7a8099',fmt:'4 %'}])}
+  <div class="card"><div class="ctitle">Tekijäsuhde aikuisiin uhreihin — ${PYR[PYR.length-1]}</div>
+    ${hbars(PSL.map((l,i)=>({l,v:PS2[i],c:PSC[i],fmt:PS2[i].toFixed(0)+' %'})))}
   </div>
-  <div class="abox">Uhreja 12 500 vuonna 2024 — 53 % enemmän kuin 2009. Alaikäisten uhrien kasvu +153 % vs. 2009. Ulkomaalaistaustaisten uhrien osuus (18 %) selvästi yli väestöosuuden (11 %). Käsittelyaika pidentynyt 60 päivästä 178 päivään.</div>`;
+  <div class="abox">Uhreja ${fi(PV[PV.length-1])} vuonna ${PYR[PYR.length-1]} — ${(()=>{const c=(PV[PV.length-1]-PV[0])/PV[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} % verrattuna vuoteen ${PYR[0]}. Alaikäisten uhrien muutos samalla jaksolla ${(()=>{const c=(PM[PM.length-1]-PM[0])/PM[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} %. Ulkomaalaistaustaisten uhrien osuus ${PB[PB.length-1].toFixed(1)} % on yli heidän väestöosuutensa (${PBV[PBV.length-1].toFixed(1)} %). Luvut kattavat vain viranomaisten tietoon tulleet tapaukset.</div>`;
 }
 
 // ── MAAHANMUUTTAJAT ─────────────────────────────────────
@@ -844,18 +847,21 @@ function renderIka(){
 
 // ── 2025 ENNAKKOTIEDOT ───────────────────────────────────
 // Lähde: Tilastokeskus, rikos- ja pakkokeinotilasto 2025 Q3 (julk. 17.10.2025)
-// Luvut ovat tammi–syyskuun 2025 ennakkotietoja — ei vertailukelpoisia koko vuoden tilastoihin
+// Rullaava ennakkojakso taulusta rpk/13j2 — ei vertailukelpoinen koko vuoden tilastoihin
 function renderEnnakko2025(){
   const el=document.getElementById('p-ennakko2025');
 
-  // Q1–Q3 2025 vs Q1–Q3 2024 (Tilastokeskus 17.10.2025)
-  const cats=[
-    {l:'Pahoinpitelyt',v25:32100,v24:30900,c:'#e05c5c',note:'Kasvu etenkin yksityisasunnoissa (+5,6 %)'},
-    {l:'Seksuaalirikokset',v25:7800,v24:7100,c:'#e8a23a',note:'Kasvutrendi jatkuu'},
-    {l:'Henkirikokset',v25:61,v24:68,c:'#9b7de8',note:'Lasku — mutta yritykset kasvoivat +33 kpl'},
-    {l:'Ryöstöt',v25:null,v24:2000,c:'#4f8ef7',note:'Q3 data ei eritelty erikseen'},
-    {l:'Varkaudet',v25:108000,v24:96600,c:'#3dba8c',note:'Merkittävä kasvu +9,7 % — ei dashboardissa erikseen'},
-  ].filter(c=>c.v25!==null);
+  // Rullaava ennakkovertailu: kuluva vuosi alusta viimeisimpaan
+  // julkaistuun kuukauteen, verrattuna edellisen vuoden samaan jaksoon.
+  // Luvut haetaan taulusta rpk/13j2 (ennakkotieto, kumulatiivinen vuosisumma).
+  const ENL=['Pahoinpitelyt','Seksuaalirikokset','Henkirikokset','Ryöstöt','Varkaudet'];
+  const ENCOL=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7','#3dba8c'];
+  const ENC=[23032,4759,42,952,67170];
+  const ENP=[20526,4845,45,864,64286];
+  const ENPER='1–6/2026';
+  const ENPERP='1–6/2025';
+  const cats=ENL.map((l,i)=>({l,v25:ENC[i],v24:ENP[i],c:ENCOL[i],note:''}))
+    .filter(c=>c.v25>0&&c.v24>0);
 
   const maxV=Math.max(...cats.map(c=>Math.max(c.v25,c.v24)));
 
@@ -870,14 +876,14 @@ function renderEnnakko2025(){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Q1–Q3 2024</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">${ENPERP}</div>
           <div style="height:8px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:3px">
             <div style="height:100%;width:${(c.v24/maxV*100).toFixed(1)}%;background:${c.c}55;border-radius:3px"></div>
           </div>
           <div style="font-size:12px;color:var(--muted)">${fi(c.v24)}</div>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Q1–Q3 2025</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">${ENPER}</div>
           <div style="height:8px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:3px">
             <div style="height:100%;width:${(c.v25/maxV*100).toFixed(1)}%;background:${c.c};border-radius:3px"></div>
           </div>
@@ -890,9 +896,8 @@ function renderEnnakko2025(){
 
   el.innerHTML=`
   <div class="ibox amber">
-    <strong>Huomio: ennakkotieto, osavuosi</strong> — Nämä luvut kattavat tammi–syyskuun 2025 (Q1–Q3). Ne eivät ole vertailukelpoisia dashboardin vuositilastoihin (2015–2024). Tilastokeskus julkaisee koko vuoden 2025 tilaston arviolta kesällä 2026.
-  </div>
-  <div style="font-size:11px;color:var(--dim);margin-bottom:14px">Lähde: Tilastokeskus, rikos- ja pakkokeinotilasto 2025, 3. vuosineljännes (julk. 17.10.2025)</div>
+    <strong>Huomio: ennakkotieto, osavuosi</strong> — Nämä luvut kattavat jakson ${ENPER} ja niitä verrataan edellisen vuoden samaan jaksoon (${ENPERP}). Ne eivät ole vertailukelpoisia dashboardin vuositilastoihin (${Y[0]}–${Y[9]}), jotka kattavat koko vuoden. Ennakkotieto voi myös tarkentua lopullisessa tilastossa.</div>
+  <div style="font-size:11px;color:var(--dim);margin-bottom:14px">Lähde: Tilastokeskus, rikos- ja pakkokeinotilasto, ennakkotieto (taulu rpk/13j2)</div>
   ${rows}
   <div class="abox">Vuoden 2025 ennakkotiedot osoittavat huolestuttavia trendejä: pahoinpitelyt ovat kääntyneet kasvuun (+3,8 %) 2024 laskun jälkeen, seksuaalirikokset jatkavat kasvuaan, ja varkaudet ovat kasvaneet peräti 9,7 % — mikä on poikkeuksellisen suuri muutos. Henkirikokset ovat laskeneet (61 vs. 68), mutta henkirikoksen yritykset kasvoivat 33 tapauksella.</div>`;
 }
