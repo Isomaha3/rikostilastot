@@ -592,6 +592,13 @@ function render(id){
 // ── NUORISOTYÖTTÖMYYS ───────────────────────────────────
 function renderTyottomyys(){
   const d=DATA.tyottomyys;const el=document.getElementById('p-tyottomyys');
+  // Tuorein ennakkotieto: 12 kk liukuva keskiarvo kuukausisarjasta (tyti/135y).
+  // Kuukausiluvut ovat voimakkaasti kausivaihtelevia (opiskelijoiden kesatyot),
+  // joten yksittaista kuukautta ei voi verrata vuositilastoon.
+  const TY12=22.5;
+  const TY12P=20.1;
+  const TY12PER='8/2025–7/2026';
+  const TY12PERP='8/2024–7/2025';
   const lat=d.aste1524[9],prv=d.aste1524[8];
   const chg=lat-prv;
   const chgH=chg>0?`<span class="tu">+${chg.toFixed(1)} %-yks.</span>`:`<span class="td">${chg.toFixed(1)} %-yks.</span>`;
@@ -607,6 +614,9 @@ function renderTyottomyys(){
     <div class="mc"><div class="mlabel">Työttömyysaste 15–24v ${Y[9]}</div><div class="mval r">${d.aste1524[9].toFixed(1)} %</div><div class="msub">${chgH} vs. ${Y[8]}</div></div>
     <div class="mc"><div class="mlabel">Työttömiä 15–24v</div><div class="mval">${fi(Math.round(d.maara1524[9]*1000))}</div></div>
     <div class="mc mc3"><div class="mlabel">Koko väestö 15–74v</div><div class="mval">${d.aste1574[9].toFixed(1)} %</div><div class="msub">nuorilla ${suhde}× korkeampi</div></div>
+  </div>
+  <div class="metrics">
+    <div class="mc mc3"><div class="mlabel">Tuorein ennakkotieto — nuoret 15–24v</div><div class="mval r">${TY12>0?TY12.toFixed(1)+" %":"—"}</div><div class="msub">${TY12PER}, 12 kk liukuva keskiarvo${TY12>0&&TY12P>0?" · "+((TY12-TY12P)>=0?"+":"")+(TY12-TY12P).toFixed(1)+" %-yks. vs. "+TY12PERP:""}</div></div>
   </div>
   <div class="card"><div class="ctitle">Työttömyysaste ${Y[0]}–${Y[9]}</div><div class="csub">Tumma viiva: koko väestö 15–74-vuotiaat</div>${lc}</div>
   <div class="card"><div class="ctitle">Työttömien määrä 15–24v</div><div class="csub">1 000 henkilöä</div>${lc2}</div>
@@ -855,10 +865,10 @@ function renderEnnakko2025(){
   // Rullaava ennakkovertailu: kuluva vuosi alusta viimeisimpaan
   // julkaistuun kuukauteen, verrattuna edellisen vuoden samaan jaksoon.
   // Luvut haetaan taulusta rpk/13j2 (ennakkotieto, kumulatiivinen vuosisumma).
-  const ENL=['Pahoinpitelyt','Seksuaalirikokset','Henkirikokset','Ryöstöt','Varkaudet'];
-  const ENCOL=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7','#3dba8c'];
-  const ENC=[23032,4759,42,952,67170];
-  const ENP=[20526,4845,45,864,64286];
+  const ENL=['Pahoinpitelyt','Raiskaukset','Lapsiin kohdistuvat','Seksuaalinen ahdistelu','Henkirikokset','Ryöstöt','Varkaudet'];
+  const ENCOL=['#e05c5c','#e8a23a','#e06898','#9b7de8','#8fb84a','#4f8ef7','#3dba8c'];
+  const ENC=[23032,959,1542,760,42,952,67170];
+  const ENP=[20526,1037,1397,672,45,864,64286];
   const ENPER='1–6/2026';
   const ENPERP='1–6/2025';
   const cats=ENL.map((l,i)=>({l,v25:ENC[i],v24:ENP[i],c:ENCOL[i],note:''}))

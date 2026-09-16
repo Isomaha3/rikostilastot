@@ -138,7 +138,10 @@ AGE_GROUPS = ['15-17', '18-20', '21-24', '25-29', '30-39', '40-49', '50-59', '60
 PRELIM_TABLE = f'{PXWEB_BASE}/rpk/13j2.px'
 PRELIM_CATS = [
     ['210501', '210601', '210701'],           # Pahoinpitelyt
-    ['20LUKU'],                               # Seksuaalirikokset
+    ['200101', '200201', '200101_2022', '2001A3_2022', '200201_2022'],  # Raiskaukset
+    ['201201', '201301', '201401', '201501', '201601',
+     '200601_2022', '200701_2022', '2007B1_2022'],     # Lapsiin kohdistuvat
+    ['200601', '2005A1_2022'],                # Seksuaalinen ahdistelu
     ['210101', '210201', '210301'],           # Henkirikokset
     ['310101', '310201'],                     # Ryöstöt
     ['280101', '280201', '280301'],           # Varkaudet
@@ -725,6 +728,51 @@ def fetch_pop_foreignborn(years):
     ], years)
 
 
+def fetch_unemp_rolling():
+    """Nuorisotyottomyys: 12 kk liukuva keskiarvo kuukausisarjasta (135y).
+
+    Kuukausiluvut heittelevat voimakkaasti kausiluontoisesti, joten
+    yksittaista kuukautta ei voi verrata vuositilastoon.
+    """
+    table = f'{PXWEB_BASE}/tyti/135y.px'
+    try:
+        meta = requests.get(table, timeout=30).json()
+    except Exception as e:
+        print(f"  Kuukausidata-virhe: {e}")
+        return None
+    months = []
+    for v in meta.get("variables", []):
+        if v.get("code") == "timeperiod_m":
+            months = list(v.get("values", []))
+    if len(months) < 24:
+        return None
+    sel = months[-24:]
+    body = {"query": [
+        {"code": "timeperiod_m", "selection": {"filter": "item", "values": sel}},
+        {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "ikaryhma_19_20190101", "selection": {"filter": "item", "values": ["15-24"]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": [UNEMP_RATE]}},
+    ], "response": {"format": "json-stat2"}}
+    try:
+        r = requests.post(table, json=body, timeout=30)
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        print(f"  Kuukausidata-virhe: {e}")
+        return None
+    idx = data["dimension"]["timeperiod_m"]["category"]["index"]
+    order = sorted(idx, key=lambda k: idx[k])
+    vals = [data["value"][order.index(m)] for m in sel]
+    uusi = [v for v in vals[12:] if v is not None]
+    vanha = [v for v in vals[:12] if v is not None]
+    if not uusi or not vanha:
+        return None
+    def lappu(a, b):
+        return f"{a[5:].lstrip(chr(48))}/{a[:4]}–{b[5:].lstrip(chr(48))}/{b[:4]}"
+    return (round(sum(uusi) / len(uusi), 1), round(sum(vanha) / len(vanha), 1),
+            lappu(sel[12], sel[-1]), lappu(sel[0], sel[11]))
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -975,6 +1023,7 @@ def main():
 
     print("  Ennakkotiedot...")
     prelim = fetch_prelim()
+    unemp_roll = fetch_unemp_rolling()
     perhe_rel = fetch_perhe_relations(str(latest_year))
     pop_fb = fetch_pop_foreignborn(synt_years)
     pop_all_s = fetch_pop_origin('SSS', synt_years)
@@ -1192,6 +1241,14 @@ def main():
         content = update_const_array(content, 'ENP', pre)
         content = update_const_string(content, 'ENPER', lappu)
         content = update_const_string(content, 'ENPERP', lappu_prev)
+
+    if unemp_roll:
+        ty12, ty12p, per, perp = unemp_roll
+        content = re.sub(r'const TY12=[\d.]+', f'const TY12={ty12}', content)
+        content = re.sub(r'TY12P=[\d.]+', f'TY12P={ty12p}', content)
+        content = update_const_string(content, 'TY12PER', per)
+        content = update_const_string(content, 'TY12PERP', perp)
+        print(f"  ✓ Päivitetty: TY12 = {ty12} % ({per})")
 
     if perhe_rel:
         content = update_const_array(content, 'PS2', perhe_rel, is_float=True)
