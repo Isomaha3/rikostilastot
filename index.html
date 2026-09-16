@@ -221,7 +221,7 @@ const COVERAGE = {
   henki:       {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.', src:'Tilastokeskus, StatFin-taulu rpk/13gw (automaattinen)'},
   ryostot:     {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.', src:'Tilastokeskus, StatFin-taulu rpk/13gw (automaattinen)'},
   nuoriso:     {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Luvut ovat rikoslakirikoksista epäiltyjä henkilöitä, kukin laskettu vuodessa kerran.', src:'Tilastokeskus, StatFin-taulu rpk/13yq (automaattinen)'},
-  perhe:       {years:'2009–2024', note:'Vuosi 2024 viimeisin täysi vuosi. Tilasto julkaistaan kerran vuodessa, ei neljännesvuosittain.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/157p'},
+  perhe:       {years:'2010–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Uhrien lukumäärä vakavimman rikoksen mukaan.', src:'Tilastokeskus, StatFin-taulut rpk/13rc ja rpk/14cf (automaattinen)'},
   maahanmuuttajat:{years:'2015–2024', note:'Luvut ovat arvioita Tilastokeskuksen aineistojen pohjalta, ei suoraan rajapinnasta.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/13z4'},
   kansalaisuus:{years:'2024', note:'Yhden vuoden poikkileikkaus. Kansalaisuuskohtaista aikasarjaa ei julkaista suoraan.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/13je'},
   tyottomyys:  {years:'2016–2025', note:'Työvoimatutkimuksen vuositieto. Otospohjainen estimaatti, ei työnvälitystilaston rekisteriluku.', src:'Tilastokeskus, StatFin-taulu tyti/13aj (automaattinen)'},
@@ -366,6 +366,7 @@ function renderSeksuaali(){
 // ── PERHEVÄKIVALTA ──────────────────────────────────────
 function renderPerhe(){
   const el=document.getElementById('p-perhe');
+  const fy=y=>String(y).length===2?'20'+y:String(y);
   const PYR=['2010','11','12','13','14','2015','16','17','18','19','2020','21','22','23','24','2025'];
   const PV=[5264,7706,7833,7115,6579,7073,7150,6651,7043,7237,7128,6926,7382,7341,7452,8965];
   const PM=[1172,1435,1743,1453,1367,1766,1731,1605,1766,1840,1581,1670,1701,1790,1753,1862];
@@ -383,14 +384,14 @@ function renderPerhe(){
 
   el.innerHTML=`
   ${dataBox('perhe')}
-  <div class="ibox"><strong>Lähde:</strong> Tilastokeskus, pari- ja lähisuhdeväkivalta (julk. 13.6.2025). Kattaa vain viranomaisten tietoon tulleet. Kansalaisuuskohtaista tekijätilastoa ei julkaista.</div>
+  <div class="ibox"><strong>Lähde:</strong> Tilastokeskus, perhe- ja lähisuhdeväkivalta (taulut rpk/13rc ja rpk/14cf). Kattaa vain viranomaisten tietoon tulleet tapaukset. Kansalaisuuskohtaista tekijätilastoa ei julkaista.</div>
   <div class="metrics">
-    <div class="mc"><div class="mlabel">Uhreja ${PYR[PYR.length-1]}</div><div class="mval r">${fi(PV[PV.length-1])}</div><div class="msub">${(()=>{const a=PV[PV.length-1],b=PV[PV.length-2],c=(a-b)/b*100;return (c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`);})()} vs. ${PYR[PYR.length-2]}</div></div>
+    <div class="mc"><div class="mlabel">Uhreja ${fy(PYR[PYR.length-1])}</div><div class="mval r">${fi(PV[PV.length-1])}</div><div class="msub">${(()=>{const a=PV[PV.length-1],b=PV[PV.length-2],c=(a-b)/b*100;return (c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`);})()} vs. ${fy(PYR[PYR.length-2])}</div></div>
     <div class="mc"><div class="mlabel">Ulkomaalaistaustaiset uhreista</div><div class="mval r">${PB[PB.length-1].toFixed(1)} %</div><div class="msub">väestöosuus ${PBV[PBV.length-1].toFixed(1)} %</div></div>
-    <div class="mc mc3"><div class="mlabel">Kasvu vs. ${PYR[0]}</div><div class="mval r">${(()=>{const a=PV[0],b=PV[PV.length-1];return ((b-a)/a*100>=0?"+":"")+((b-a)/a*100).toFixed(0)+" %";})()}</div><div class="msub">alaikäisten uhrien kasvu ${((PM[PM.length-1]-PM[0])/PM[0]*100>=0?"+":"")}${((PM[PM.length-1]-PM[0])/PM[0]*100).toFixed(0)} %</div></div>
+    <div class="mc mc3"><div class="mlabel">Kasvu vs. ${fy(PYR[0])}</div><div class="mval r">${(()=>{const a=PV[0],b=PV[PV.length-1];return ((b-a)/a*100>=0?"+":"")+((b-a)/a*100).toFixed(0)+" %";})()}</div><div class="msub">alaikäisten uhrien kasvu ${((PM[PM.length-1]-PM[0])/PM[0]*100>=0?"+":"")}${((PM[PM.length-1]-PM[0])/PM[0]*100).toFixed(0)} %</div></div>
   </div>
   <div class="card">
-    <div class="ctitle">Uhrit ${PYR[0]}–${PYR[PYR.length-1]}</div>
+    <div class="ctitle">Uhrit ${fy(PYR[0])}–${fy(PYR[PYR.length-1])}</div>
     <div class="legend"><span class="li"><span class="ld" style="background:#e05c8a"></span>Aikuiset</span><span class="li"><span class="ld" style="background:#e8a23a"></span>Alaikäiset</span></div>
     ${stackedBars(PYR,[{data:PV.map((v,i)=>v-PM[i]),color:'#e05c8a'},{data:PM,color:'#e8a23a'}])}
   </div>
@@ -399,10 +400,10 @@ function renderPerhe(){
     <div class="legend"><span class="li"><span class="ld" style="background:#e05c8a"></span>Uhrit</span><span class="li"><span class="ld" style="background:#7a8099"></span>Väestö</span></div>
     ${lcFP}
   </div>
-  <div class="card"><div class="ctitle">Tekijäsuhde aikuisiin uhreihin — ${PYR[PYR.length-1]}</div>
+  <div class="card"><div class="ctitle">Tekijäsuhde aikuisiin uhreihin — ${fy(PYR[PYR.length-1])}</div>
     ${hbars(PSL.map((l,i)=>({l,v:PS2[i],c:PSC[i],fmt:PS2[i].toFixed(0)+' %'})))}
   </div>
-  <div class="abox">Uhreja ${fi(PV[PV.length-1])} vuonna ${PYR[PYR.length-1]} — ${(()=>{const c=(PV[PV.length-1]-PV[0])/PV[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} % verrattuna vuoteen ${PYR[0]}. Alaikäisten uhrien muutos samalla jaksolla ${(()=>{const c=(PM[PM.length-1]-PM[0])/PM[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} %. Ulkomaalaistaustaisten uhrien osuus ${PB[PB.length-1].toFixed(1)} % on yli heidän väestöosuutensa (${PBV[PBV.length-1].toFixed(1)} %). Luvut kattavat vain viranomaisten tietoon tulleet tapaukset.</div>`;
+  <div class="abox">Uhreja ${fi(PV[PV.length-1])} vuonna ${fy(PYR[PYR.length-1])} — ${(()=>{const c=(PV[PV.length-1]-PV[0])/PV[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} % verrattuna vuoteen ${fy(PYR[0])}. Alaikäisten uhrien muutos samalla jaksolla ${(()=>{const c=(PM[PM.length-1]-PM[0])/PM[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} %. Ulkomaalaistaustaisten uhrien osuus ${PB[PB.length-1].toFixed(1)} % on yli heidän väestöosuutensa (${PBV[PBV.length-1].toFixed(1)} %). Luvut kattavat vain viranomaisten tietoon tulleet tapaukset.</div>`;
 }
 
 // ── MAAHANMUUTTAJAT ─────────────────────────────────────
@@ -507,7 +508,7 @@ function renderSyntyperä(){
   const RY=['2015','16','17','18','19','2020','21','22','23','24','2025'];
   const PP=[15.5,18.0,17.8,17.0,17.0,16.5,17.5,18.0,20.5,22.9,23.7];
   const PK=[4.20,4.40,4.50,4.70,4.80,5.00,5.30,5.80,6.70,7.30,7.70];
-  const PS=[6.0,6.3,6.6,7.0,7.3,7.5,7.7,8.0,8.3,8.5,8.7];
+  const PS=[6.10,6.50,6.80,7.00,7.30,7.60,8.00,8.60,9.60,10.30,10.90];
   const RA=PP.map((p,i)=>+(p/PK[i]).toFixed(1));
   const lc1=lineChart([
     {data:PP,color:'#e05c5c',fill:true,width:2.5},
@@ -544,7 +545,7 @@ function renderSyntyperä(){
     ${lc1}
   </div>
   <div class="card"><div class="ctitle">Yliedustuskerroin vuosittain</div><div class="csub">Vankiosuus ÷ väestöosuus</div>${lc2}</div>
-  <div class="abox">Ulkomaan kansalaisten osuus vankiloissa (23,7 %) on ~4,2x suurempi kuin väestöosuus (~5,7 %). Laajemmalla syntyneet-määritelmällä kerroin ~2,7x. Kuilu ei ole kaventunut — kasvanut tasaisesti 2015 lähtien.</div>`;
+  <div class="abox">Ulkomaan kansalaisten osuus vangeista on ${PP[PP.length-1].toFixed(1)} %, kun heidän väestöosuutensa on ${PK[PK.length-1].toFixed(1)} % — kerroin ${(PP[PP.length-1]/PK[PK.length-1]).toFixed(1)}×. Laajemmalla ulkomailla syntyneiden määritelmällä väestöosuus on ${PS[PS.length-1].toFixed(1)} % ja kerroin ${(PP[PP.length-1]/PS[PS.length-1]).toFixed(1)}×. ${(()=>{const a=PP[0]/PK[0],b=PP[PP.length-1]/PK[PK.length-1];return b<a?`Kerroin on pienentynyt vuodesta ${RY[0]}: ${a.toFixed(1)}× → ${b.toFixed(1)}×, eli vankiosuus on kasvanut hitaammin kuin väestöosuus.`:`Kerroin on kasvanut vuodesta ${RY[0]}: ${a.toFixed(1)}× → ${b.toFixed(1)}×.`;})()} Vankiluvut ovat Rikosseuraamuslaitoksen tietoa, väestöosuudet Tilastokeskuksen.</div>`;
 }
 
 // ── NAV ─────────────────────────────────────────────────

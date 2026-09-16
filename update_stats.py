@@ -712,6 +712,19 @@ def fetch_perhe_relations(year):
     return [round(v / kok * 100, 1) for v in vals]
 
 
+def fetch_pop_foreignborn(years):
+    """Ulkomailla syntyneiden osuuteen tarvittava vaestoluku (159s)."""
+    return _pxpost(POP_ORIGIN_TABLE, [
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "valtio_19_20190101-vaerak-kansa1", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "valtio_19_20190101-vaerak-svaltio", "selection": {"filter": "item", "values": ["ULK"]}},
+        {"code": "kieli_15_20180102", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": SYNT_VAR, "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": ["vaerak-vaesto"]}},
+    ], years)
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -963,6 +976,8 @@ def main():
     print("  Ennakkotiedot...")
     prelim = fetch_prelim()
     perhe_rel = fetch_perhe_relations(str(latest_year))
+    pop_fb = fetch_pop_foreignborn(synt_years)
+    pop_all_s = fetch_pop_origin('SSS', synt_years)
     pop_for_o = fetch_pop_origin(SYNT_FOREIGN, [str(latest_year)])
     pop_dom_o = fetch_pop_origin(SYNT_DOMESTIC, [str(latest_year)])
     ly = str(latest_year)
@@ -1109,6 +1124,8 @@ def main():
             content = update_const_array(content, 'PYR', py, years=True)
             content = update_const_array(content, 'PV', pv)
             content = update_const_array(content, 'PM', pm)
+            content = re.sub(r"(perhe:\s*\{years:')[^']*(')",
+                             rf"\g<1>{py[0]}–{py[-1]}\g<2>", content)
             if perhe_ulk and perhe_kaikki:
                 pb = [round(perhe_ulk.get(y, 0) / perhe_kaikki[y] * 100, 1)
                       for y in py if perhe_kaikki.get(y)]
@@ -1152,6 +1169,11 @@ def main():
               if pop_all_c.get(y) else 0 for y in synt_years]
         content = update_const_array(content, 'PK', pk, is_float=True)
         content = update_const_array(content, 'RY', synt_years, years=True)
+        if pop_fb and pop_all_s:
+            ps = [round(pop_fb.get(y, 0) / pop_all_s[y] * 100, 1)
+                  for y in synt_years if pop_all_s.get(y)]
+            if len(ps) == len(synt_years):
+                content = update_const_array(content, 'PS', ps, is_float=True)
 
     if nat_rates:
         content = update_const_array(content, 'KV', nat_rates)
