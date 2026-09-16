@@ -910,18 +910,23 @@ function installPWA() {
 
 // ── PWA: Service Worker ──────────────────────────────────
 if('serviceWorker' in navigator) {
-  const swCode = `
-const CACHE = 'persutilastot-v1';
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
-});
-self.addEventListener('fetch', e => {
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
-});
-  `;
-  const blob = new Blob([swCode], {type: 'application/javascript'});
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
+  // Huom: service workeria EI voi rekisteroida blob-URLista - selain hylkaa sen.
+  // Siksi tama osoittaa oikeaan sw.js-tiedostoon samassa hakemistossa.
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      let reloading = false;
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if(!sw) return;
+        sw.addEventListener('statechange', () => {
+          if(sw.state === 'installed' && navigator.serviceWorker.controller && !reloading) {
+            reloading = true;
+            location.reload();
+          }
+        });
+      });
+    }).catch(() => {});
+  });
 }
 </script>
 
