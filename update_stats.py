@@ -120,6 +120,17 @@ POP_CITIZEN_TABLE = f'{PXWEB_BASE}/vaerak/11rg.px'
 POP_ORIGIN_TABLE = f'{PXWEB_BASE}/vaerak/159s.px'
 SYNT_WINDOW = 11                   # syntyperäpaneelin pituus
 
+# Kansalaisuuskohtaiset epäillyt väestöön suhteutettuna (13jg)
+NAT_TABLE = f'{PXWEB_BASE}/rpk/13jg.px'
+NAT_CODES = ['706', '368', '004', '008', '566', '642', '504', '643',
+             '233', '752', '246', '764', '276']  # sama järjestys kuin KNAMES
+NAT_CONTENT = 'ep_lkm_tork_vaesto'   # kukin epäilty kerran vuodessa
+NAT_CRIME = '101T504X406'            # vain rikoslakirikokset
+
+# Rikostyyppiryhmät syntyperävertailuun (13zk)
+CRIME_GROUPS = ['201T223', '231T241', '201_202_205', '101T161']
+# = Väkivalta, Seksuaali, Henkirikokset, Omaisuus (sama järjestys kuin RTNAMES)
+
 # ── TILASTOKESKUKSEN RIKOSNIMIKEKOODIT ───────────────────
 # Koodit ovat muotoa <luku><pykälä><momentti>. Seksuaalirikoslaki uudistui
 # 2023, joten aikasarjan jatkuvuuden vuoksi mukana ovat sekä nykyiset koodit
@@ -533,6 +544,54 @@ def fetch_pop_origin(origin_code, years):
     ], years)
 
 
+def fetch_nationality_rates(year):
+    """Epäillyt per 100 000 kansalaisuuden mukaan (13jg)."""
+    out = []
+    for code in NAT_CODES:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "valtio_19_20190101", "selection": {"filter": "item", "values": [code]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [NAT_CRIME]}},
+            {"code": "alue_23_20230101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": [NAT_CONTENT]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(NAT_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            v = r.json().get("value", [None])[0]
+            out.append(round((v or 0) * 10))
+        except Exception as e:
+            print(f"  Kansalaisuusdata-virhe ({code}): {e}")
+            return None
+    return out
+
+
+def fetch_crime_group_rates(origin_code, year):
+    """Epäiltyjen lukumäärä rikostyypeittäin syntyperän mukaan (13zk).
+
+    Lukumäärä eikä valmis suhdeluku, koska taulun suhdeluvun tarkkuus
+    (0,1 / 10 000) peittäisi henkirikosten eron kokonaan.
+    """
+    out = []
+    for grp in CRIME_GROUPS:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [grp]}},
+            {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin_code]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": ["ep_lkm"]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            v = r.json().get("value", [None])[0]
+            out.append(int(v or 0))
+        except Exception as e:
+            print(f"  Rikostyyppidata-virhe ({grp}): {e}")
+            return None
+    return out
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -773,6 +832,18 @@ def main():
     synt_years = [str(y) for y in range(latest_year - SYNT_WINDOW + 1, latest_year + 1)]
     pop_all_c = fetch_pop_citizen("SSS", synt_years)
     pop_for_c = fetch_pop_citizen("ULK", synt_years)
+
+    print("  Kansalaisuuskohtaiset suhdeluvut...")
+    nat_rates = fetch_nationality_rates(str(latest_year))
+    rt_foreign_n = fetch_crime_group_rates(SYNT_FOREIGN, str(latest_year))
+    rt_domestic_n = fetch_crime_group_rates(SYNT_DOMESTIC, str(latest_year))
+    pop_for_o = fetch_pop_origin(SYNT_FOREIGN, [str(latest_year)])
+    pop_dom_o = fetch_pop_origin(SYNT_DOMESTIC, [str(latest_year)])
+    ly = str(latest_year)
+    rt_foreign = ([round(n / pop_for_o[ly] * 100000, 1) for n in rt_foreign_n]
+                  if rt_foreign_n and pop_for_o and pop_for_o.get(ly) else None)
+    rt_domestic = ([round(n / pop_dom_o[ly] * 100000, 1) for n in rt_domestic_n]
+                   if rt_domestic_n and pop_dom_o and pop_dom_o.get(ly) else None)
     
     # ── 4. Koosta arrayt ──
     print("\n[4/6] Koostetaan data-arrayt...")
@@ -955,6 +1026,13 @@ def main():
               if pop_all_c.get(y) else 0 for y in synt_years]
         content = update_const_array(content, 'PK', pk, is_float=True)
         content = update_const_array(content, 'RY', synt_years, years=True)
+
+    if nat_rates:
+        content = update_const_array(content, 'KV', nat_rates)
+    if rt_foreign:
+        content = update_const_array(content, 'RTU', rt_foreign, is_float=True)
+    if rt_domestic:
+        content = update_const_array(content, 'RTK', rt_domestic, is_float=True)
     
     # Seksuaalirikokset
     if raiskaus_arr:

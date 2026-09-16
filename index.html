@@ -299,6 +299,11 @@ function renderSeksuaali(){
   const T=[3326,3336,3859,4409,4531,5484,5591,7451,9607,10372];
   const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]));
   const UR=[19.70,25.50,21.80,24.00,25.70,24.60,21.20,23.50,27.20,23.10];
+  const jaIdx=Y.indexOf('2022')>=0?Y.indexOf('2022'):6;
+  const jakauma=i=>{const muut=Math.max(0,T[i]-R[i]-L[i]-A[i]);
+    return [{l:'Raiskaukset',v:R[i],c:'#e05c5c'},{l:'Lapsiin',v:L[i],c:'#e8a23a'},
+            {l:'Ahdistelu',v:A[i],c:'#9b7de8'},{l:'Muut',v:muut,c:'#4a5068'}]
+      .map(o=>({...o,fmt:(o.v/T[i]*100).toFixed(0)+' %'}));};
   const UV=[4.40,4.50,4.70,4.80,5.00,5.30,5.80,6.70,7.30,7.70];
 
   const lc1=lineChart([
@@ -345,13 +350,13 @@ function renderSeksuaali(){
     ${lc2}
   </div>
   <div class="card">
-    <div class="ctitle">Jakaumamuutos 2022 → 2024</div>
+    <div class="ctitle">Jakaumamuutos ${Y[jaIdx]} → ${Y[9]}</div>
     <div class="twocol" style="margin-top:8px">
-      <div><div style="font-size:10px;color:var(--muted);margin-bottom:7px">2022 (VANHA LAKI)</div>
-        ${hbars([{l:'Raiskaukset',v:30,c:'#e05c5c',fmt:'30 %'},{l:'Lapsiin',v:38,c:'#e8a23a',fmt:'38 %'},{l:'Ahdistelu',v:11,c:'#9b7de8',fmt:'11 %'},{l:'Muut',v:21,c:'#4a5068',fmt:'21 %'}])}
+      <div><div style="font-size:10px;color:var(--muted);margin-bottom:7px">${Y[jaIdx]} (VANHA LAKI)</div>
+        ${hbars(jakauma(jaIdx))}
       </div>
-      <div><div style="font-size:10px;color:var(--muted);margin-bottom:7px">2024 (UUSI LAKI)</div>
-        ${hbars([{l:'Raiskaukset',v:23,c:'#e05c5c',fmt:'23 %'},{l:'Lapsiin',v:56,c:'#e8a23a',fmt:'56 %'},{l:'Ahdistelu',v:12,c:'#9b7de8',fmt:'12 %'},{l:'Muut',v:9,c:'#4a5068',fmt:'9 %'}])}
+      <div><div style="font-size:10px;color:var(--muted);margin-bottom:7px">${Y[9]} (UUSI LAKI)</div>
+        ${hbars(jakauma(9))}
       </div>
     </div>
   </div>
@@ -401,6 +406,10 @@ function renderPerhe(){
 function renderMaahanmuuttajat(){
   const el=document.getElementById('p-maahanmuuttajat');
   const IP=[12534,12614,13555,12219,10573,8138,7494,7767,8102,8242];
+  const RTNAMES=['Väkivalta','Seksuaali','Henkirikokset','Omaisuus'];
+  const RTCOL=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7'];
+  const RTU=[1041.80,170.90,1.40,2314.50];
+  const RTK=[526.30,106.80,1.20,2153.70];
   const NP=[11431,11589,12437,11671,9198,5926,5386,6410,5589,6178];
   const lc=lineChart([
     {data:IP,color:'#3dba8c',fill:true,width:2},
@@ -419,13 +428,13 @@ function renderMaahanmuuttajat(){
     <div class="legend"><span class="li"><span class="ld" style="background:#3dba8c"></span>Maahanmuuttajataustaiset</span><span class="li"><span class="ld" style="background:#7a8099"></span>Kantaväestö</span></div>
     ${lc}
   </div>
-  <div class="card"><div class="ctitle">Rikostyypeittäin per 100 000 — 2024</div>
+  <div class="card"><div class="ctitle">Rikostyypeittäin per 100 000 — ${Y[9]}</div>
     <div class="twocol" style="margin-top:8px">
       <div><div style="font-size:10px;color:var(--muted);margin-bottom:7px">MAAHANMUUTTAJAT</div>
-        ${hbars([{l:'Väkivalta',v:820,c:'#e05c5c'},{l:'Seksuaali',v:195,c:'#e8a23a'},{l:'Henkirikokset',v:48,c:'#9b7de8'},{l:'Omaisuus',v:1250,c:'#4f8ef7'}])}
+        ${hbars(RTNAMES.map((l,i)=>({l,v:RTU[i],c:RTCOL[i],fmt:RTU[i]<10?RTU[i].toFixed(1):fi(Math.round(RTU[i]))})))}
       </div>
       <div><div style="font-size:10px;color:var(--muted);margin-bottom:7px">KANTAVÄESTÖ</div>
-        ${hbars([{l:'Väkivalta',v:380,c:'#e05c5c'},{l:'Seksuaali',v:48,c:'#e8a23a'},{l:'Henkirikokset',v:12,c:'#9b7de8'},{l:'Omaisuus',v:840,c:'#4f8ef7'}])}
+        ${hbars(RTNAMES.map((l,i)=>({l,v:RTK[i],c:RTCOL[i],fmt:RTK[i]<10?RTK[i].toFixed(1):fi(Math.round(RTK[i]))})))}
       </div>
     </div>
   </div>
@@ -435,21 +444,20 @@ function renderMaahanmuuttajat(){
 // ── KANSALAISUUKSITTAIN ─────────────────────────────────
 function renderKansalaisuus(){
   const el=document.getElementById('p-kansalaisuus');
-  const nats=[
-    {l:'Somalia',v:4850,c:'#e05c5c'},{l:'Irak',v:4200,c:'#e8a23a'},{l:'Afganistan',v:3900,c:'#9b7de8'},
-    {l:'Albania',v:3600,c:'#4f8ef7'},{l:'Nigeria',v:3300,c:'#3dba8c'},{l:'Romania',v:2800,c:'#e06898'},
-    {l:'Marokko',v:2600,c:'#3ab8c8'},{l:'Venäjä',v:2100,c:'#8fb84a'},{l:'Viro',v:1980,c:'#c87a3e'},
-    {l:'Ruotsi',v:1320,c:'#534ab7'},{l:'Suomi',v:1450,c:'#7a8099'},{l:'Thaimaa',v:920,c:'#b4b2a9'},{l:'Saksa',v:680,c:'#4a5068'}
-  ].sort((a,b)=>b.v-a.v);
+  const KNAMES=['Somalia','Irak','Afganistan','Albania','Nigeria','Romania','Marokko','Venäjä','Viro','Ruotsi','Suomi','Thaimaa','Saksa'];
+  const KCOL=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7','#3dba8c','#e06898','#3ab8c8','#8fb84a','#c87a3e','#534ab7','#7a8099','#b4b2a9','#4a5068'];
+  const KV=[6778,12085,6331,5105,4614,4393,5234,2694,5663,4126,2589,2260,1576];
+  const nats=KNAMES.map((l,i)=>({l,v:KV[i],c:KCOL[i]})).sort((a,b)=>b.v-a.v);
+  const suomiV=KV[KNAMES.indexOf('Suomi')]||1;
   el.innerHTML=`
   ${dataBox('kansalaisuus')}
   <div class="ibox"><strong>Per 100 000 omassa ryhmässä</strong> — vertailukelpoisin mittari. Suomi (kantaväestö) harmaana viitearvona.</div>
   <div class="metrics">
     <div class="mc"><div class="mlabel">Korkein / 100k</div><div class="mval r">${fi(nats[0].v)}</div><div class="msub">${nats[0].l}</div></div>
-    <div class="mc"><div class="mlabel">Kantaväestö / 100k</div><div class="mval">${fi(1450)}</div></div>
-    <div class="mc mc3"><div class="mlabel">Max yliedustus</div><div class="mval r">${(nats[0].v/1450).toFixed(1)}x</div></div>
+    <div class="mc"><div class="mlabel">Suomen kansalaiset / 100k</div><div class="mval">${fi(suomiV)}</div></div>
+    <div class="mc mc3"><div class="mlabel">Max yliedustus</div><div class="mval r">${(nats[0].v/suomiV).toFixed(1)}×</div></div>
   </div>
-  <div class="card"><div class="ctitle">Rikosepäillyt per 100 000 — 2024</div>
+  <div class="card"><div class="ctitle">Rikosepäillyt per 100 000 — ${Y[9]}</div><div class="csub">Rikoslakirikokset, kukin epäilty laskettu kerran vuodessa</div>
     ${hbars(nats)}
   </div>
   <div class="abox">Kun suhteutetaan rikosepäillyt väestöosuuteen, esiin nousevat merkittävästi yliedustetut ryhmät. Luvut kuvaavat vain poliisin tietoon tulleita. Sosioekonominen asema ja ikärakenne selittävät osan eroista.</div>`;
