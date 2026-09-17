@@ -10,19 +10,21 @@ Käyttö:
     python update_stats.py --dry-run    # Näyttää mitä muuttaisi, ei tallenna
 
 Päivitettävät tilastot (PxWeb API):
-  ✓ Väkivaltarikokset (pahoinpitelyt)
-  ✓ Henkirikokset (tappo + murha)
-  ✓ Ryöstöt
-  ✓ Seksuaalirikokset (raiskaukset, lapsiin kohdistuvat, ahdistelu, ym.)
-  ✓ Väestö per 100 000 -laskentaan
+  ✓ Väkivaltarikokset, henkirikokset, ryöstöt      rpk/13gw
+  ✓ Seksuaalirikokset ja niiden jakauma            rpk/13gw
+  ✓ Nuorisorikollisuus (alle 18v epäillyt)         rpk/13yq
+  ✓ Perhe- ja lähisuhdeväkivalta + tekijäsuhde     rpk/13rc, rpk/14cf
+  ✓ Epäillyt syntyperän ja iän mukaan              rpk/13zk
+  ✓ Kansalaisuuskohtaiset suhdeluvut               rpk/13jg
+  ✓ Raiskausepäillyt kansalaisuuden mukaan         rpk/13je
+  ✓ Ennakkotiedot, rullaava jakso                  rpk/13j2
+  ✓ Nuorisotyöttömyys (vuosi + liukuva 12 kk)      tyti/13aj, tyti/135y
+  ✓ Väestöosuudet ja väkiluku                      vaerak/11ra, 11rg, 159s
 
 EI päivitettävissä automaattisesti (manuaalinen lähde):
-  ✗ Vangit (Rise — ei API:a)
-  ✗ Kansalaisuuskohtaiset tilastot
-  ✗ Syntyperä vs. vangit
-  ✗ Maahanmuuttajat vs. kantaväestö
-  ✗ Perheväkivalta (erillinen julkaisu)
-  ✗ Nuorisorikollisuus (ikäryhmädata eri taulussa, monimutkainen)
+  ✗ Vangit (Rikosseuraamuslaitos — ei StatFin-rajapinnassa)
+  ✗ Nuorison ikäryhmäjakauma (taulun ikäjaottelu poikkeaa)
+  ✗ Ikä- ja sukupuolivakioidut vertailut (erillisjulkaisu 2017–2018)
 
 Lähde: https://pxdata.stat.fi/PxWeb/api/v1/fi/StatFin/rpk/
 """
@@ -1217,12 +1219,16 @@ def main():
         pk = [round(pop_for_c.get(y, 0) / pop_all_c[y] * 100, 1)
               if pop_all_c.get(y) else 0 for y in synt_years]
         content = update_const_array(content, 'PK', pk, is_float=True)
+        content = re.sub(r'const VKS=[\d.]+', f'const VKS={pk[-1]}', content)
+        print(f"  ✓ Päivitetty: VKS = {pk[-1]} %")
         content = update_const_array(content, 'RY', synt_years, years=True)
         if pop_fb and pop_all_s:
             ps = [round(pop_fb.get(y, 0) / pop_all_s[y] * 100, 1)
                   for y in synt_years if pop_all_s.get(y)]
             if len(ps) == len(synt_years):
                 content = update_const_array(content, 'PS', ps, is_float=True)
+                content = re.sub(r'const VSS=[\d.]+', f'const VSS={ps[-1]}', content)
+                print(f"  ✓ Päivitetty: VSS = {ps[-1]} %")
 
     if nat_rates:
         content = update_const_array(content, 'KV', nat_rates)
@@ -1293,13 +1299,10 @@ def main():
     
     print("\n" + "=" * 60)
     print("Valmis!")
-    print("\nMuista: Seuraavat paneelit vaativat manuaalisen päivityksen:")
-    print("  • Vangit (Rise)")
-    print("  • Kansalaisuus")
-    print("  • Syntyperä")
-    print("  • Maahanmuuttajat vs. kantaväestö")
-    print("  • Perheväkivalta")
-    print("  • 2025 ennakkotiedot")
+    print("\nMuista: Seuraavat vaativat yhä manuaalisen päivityksen:")
+    print("  • Vangit (Rikosseuraamuslaitos, ei StatFin-rajapinnassa)")
+    print("  • Nuorison ikäryhmäjakauma")
+    print("  • Ikä- ja sukupuolivakioidut vertailut (2017–2018)")
     print("=" * 60)
 
 
