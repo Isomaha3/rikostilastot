@@ -108,6 +108,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <h1 id="ttitle">Persutilastot</h1>
       <small>Tilastokeskus &amp; Rise · <span id="datarange">2016–2025</span></small>
     </div>
+    <button id="lang-btn" onclick="toggleLang()" title="Suomi / English" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;font-size:12px;font-weight:500;cursor:pointer;margin-left:auto">EN</button>
   </div>
 </div>
 
@@ -363,7 +364,7 @@ function renderSeksuaali(){
       </div>
     </div>
   </div>
-  <div class="abox">Seksuaalirikosten kokonaismäärä on kasvanut ${fi(T[0])}:sta (${Y[0]}) ${fi(T[9])}:een (${Y[9]}). Lapsiin kohdistuvat muuttuivat viimeisimpänä vuonna ${(()=>{const c=(L[9]-L[8])/L[8]*100;return (c>=0?"+":"")+c.toFixed(1);})()} %. Ulkomaan kansalaisten osuus raiskausepäillyistä on ${UR[9].toFixed(1)} %, kun heidän väestöosuutensa on ${UV[9].toFixed(1)} %. Seksuaalirikoslaki uudistui 1.1.2023 ja laajensi rikoslain 20. luvun määritelmiä, joten lukuja ennen ja jälkeen ei voi suoraan verrata.</div>`;
+  <div class="abox">Seksuaalirikokset yhteensä ${Y[0]}–${Y[9]}: ${fi(T[0])} → ${fi(T[9])}. Lapsiin kohdistuvien muutos viimeisimpänä vuonna: ${(()=>{const c=(L[9]-L[8])/L[8]*100;return (c>=0?"+":"")+c.toFixed(1);})()} %. Ulkomaan kansalaisten osuus raiskausepäillyistä: ${UR[9].toFixed(1)} % (väestöosuus ${UV[9].toFixed(1)} %). Seksuaalirikoslaki uudistui 1.1.2023 ja laajensi rikoslain 20. luvun määritelmiä, joten lukuja ennen ja jälkeen ei voi suoraan verrata.</div>`;
 }
 
 // ── PERHEVÄKIVALTA ──────────────────────────────────────
@@ -406,7 +407,7 @@ function renderPerhe(){
   <div class="card"><div class="ctitle">Tekijäsuhde aikuisiin uhreihin — ${fy(PYR[PYR.length-1])}</div>
     ${hbars(PSL.map((l,i)=>({l,v:PS2[i],c:PSC[i],fmt:PS2[i].toFixed(0)+' %'})))}
   </div>
-  <div class="abox">Uhreja ${fi(PV[PV.length-1])} vuonna ${fy(PYR[PYR.length-1])} — ${(()=>{const c=(PV[PV.length-1]-PV[0])/PV[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} % verrattuna vuoteen ${fy(PYR[0])}. Alaikäisten uhrien muutos samalla jaksolla ${(()=>{const c=(PM[PM.length-1]-PM[0])/PM[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} %. Ulkomaalaistaustaisten uhrien osuus ${PB[PB.length-1].toFixed(1)} % on yli heidän väestöosuutensa (${PBV[PBV.length-1].toFixed(1)} %). Luvut kattavat vain viranomaisten tietoon tulleet tapaukset.</div>`;
+  <div class="abox">Uhreja ${fy(PYR[PYR.length-1])}: ${fi(PV[PV.length-1])}. Muutos vuodesta ${fy(PYR[0])}: ${(()=>{const c=(PV[PV.length-1]-PV[0])/PV[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} %. Alaikäisten uhrien muutos samalla jaksolla: ${(()=>{const c=(PM[PM.length-1]-PM[0])/PM[0]*100;return (c>=0?"+":"")+c.toFixed(0);})()} %. Ulkomaalaistaustaisten uhrien osuus: ${PB[PB.length-1].toFixed(1)} % (väestöosuus ${PBV[PBV.length-1].toFixed(1)} %). Luvut kattavat vain viranomaisten tietoon tulleet tapaukset.</div>`;
 }
 
 // ── MAAHANMUUTTAJAT ─────────────────────────────────────
@@ -453,7 +454,7 @@ function renderMaahanmuuttajat(){
     ${hbars(AGEL.map((l,i)=>({l:l+" v",v:AGEU[i]/(AGEK[i]||1),c:(AGEU[i]/(AGEK[i]||1))>=1?"#e05c5c":"#3dba8c",fmt:(AGEU[i]/(AGEK[i]||1)).toFixed(2)+"×"})))}
     <div class="csub" style="margin-top:8px">Punainen = ulkomaalaistaustaisilla korkeampi, vihreä = kantaväestöllä korkeampi</div>
   </div>
-  <div class="abox">Ulkomaalaistaustaisten rikosepäiltyjen määrä per 100 000 on ${(IP[9]/NP[9]).toFixed(1)}× kantaväestöön nähden. Ero vaihtelee voimakkaasti rikostyypeittäin: väkivaltarikoksissa ${(RTU[0]/RTK[0]).toFixed(1)}×, mutta omaisuusrikoksissa vain ${(RTU[3]/RTK[3]).toFixed(1)}×. Kun verrataan samanikäisiä, ero kapenee selvästi ja kääntyy 25–49-vuotiailla päinvastaiseksi. Luvut kuvaavat rikoksista epäiltyjä, eivät tuomittuja.</div>`;
+  <div class="abox">Epäiltyjä per 100 000, ulkomaalaistaustaiset suhteessa kantaväestöön: ${(IP[9]/NP[9]).toFixed(1)}×. Väkivaltarikoksissa: ${(RTU[0]/RTK[0]).toFixed(1)}×. Omaisuusrikoksissa: ${(RTU[3]/RTK[3]).toFixed(1)}×. Samanikäisiä verrattaessa ero kapenee selvästi ja kääntyy 25–49-vuotiailla päinvastaiseksi. Luvut kuvaavat rikoksista epäiltyjä, eivät tuomittuja.</div>`;
 }
 
 // ── KANSALAISUUKSITTAIN ─────────────────────────────────
@@ -502,7 +503,7 @@ function renderVangit(){
       ${hbars([{l:'Väkivalta',v:34,c:'#9b7de8',fmt:'34 %'},{l:'Huumeet',v:23,c:'#e05c5c',fmt:'23 %'},{l:'Omaisuus',v:18,c:'#3dba8c',fmt:'18 %'},{l:'Seksuaali',v:9,c:'#e8a23a',fmt:'9 %'},{l:'Muut',v:16,c:'#7a8099',fmt:'16 %'}])}
     </div>
   </div>
-  <div class="abox">Ulkomaalaisten osuus vangeista on ${PP[PP.length-1].toFixed(1)} % (${PY[PY.length-1]}), mikä on ${(PP[PP.length-1]/VKS).toFixed(1)}× heidän väestöosuuteensa nähden. Huumausainerikokset 49 % ulkomaalaisten tuomioista vs. väkivaltarikokset 34 % kantaväestöllä. Risen mukaan kasvu selittyy kansainvälisen huumekaupan torjunnalla.</div>`;
+  <div class="abox">Ulkomaalaisten osuus vangeista ${PY[PY.length-1]}: ${PP[PP.length-1].toFixed(1)} % (väestöosuus ${VKS.toFixed(1)} %). Yliedustuskerroin: ${(PP[PP.length-1]/VKS).toFixed(1)}×. Huumausainerikokset 49 % ulkomaalaisten tuomioista vs. väkivaltarikokset 34 % kantaväestöllä. Risen mukaan kasvu selittyy kansainvälisen huumekaupan torjunnalla.</div>`;
 }
 
 // ── SYNTYPERÄ ───────────────────────────────────────────
@@ -548,7 +549,7 @@ function renderSyntyperä(){
     ${lc1}
   </div>
   <div class="card"><div class="ctitle">Yliedustuskerroin vuosittain</div><div class="csub">Vankiosuus ÷ väestöosuus</div>${lc2}</div>
-  <div class="abox">Ulkomaan kansalaisten osuus vangeista on ${PP[PP.length-1].toFixed(1)} %, kun heidän väestöosuutensa on ${PK[PK.length-1].toFixed(1)} % — kerroin ${(PP[PP.length-1]/PK[PK.length-1]).toFixed(1)}×. Laajemmalla ulkomailla syntyneiden määritelmällä väestöosuus on ${PS[PS.length-1].toFixed(1)} % ja kerroin ${(PP[PP.length-1]/PS[PS.length-1]).toFixed(1)}×. ${(()=>{const a=PP[0]/PK[0],b=PP[PP.length-1]/PK[PK.length-1];return b<a?`Kerroin on pienentynyt vuodesta ${RY[0]}: ${a.toFixed(1)}× → ${b.toFixed(1)}×, eli vankiosuus on kasvanut hitaammin kuin väestöosuus.`:`Kerroin on kasvanut vuodesta ${RY[0]}: ${a.toFixed(1)}× → ${b.toFixed(1)}×.`;})()} Vankiluvut ovat Rikosseuraamuslaitoksen tietoa, väestöosuudet Tilastokeskuksen.</div>`;
+  <div class="abox">Ulkomaan kansalaisten osuus vangeista: ${PP[PP.length-1].toFixed(1)} % (väestöosuus ${PK[PK.length-1].toFixed(1)} %). Kerroin: ${(PP[PP.length-1]/PK[PK.length-1]).toFixed(1)}×. Ulkomailla syntyneiden väestöosuus: ${PS[PS.length-1].toFixed(1)} %, kerroin: ${(PP[PP.length-1]/PS[PS.length-1]).toFixed(1)}×. ${(()=>{const a=PP[0]/PK[0],b=PP[PP.length-1]/PK[PK.length-1];return b<a?`Kerroin on pienentynyt vuodesta ${RY[0]}: ${a.toFixed(1)}× → ${b.toFixed(1)}×, eli vankiosuus on kasvanut hitaammin kuin väestöosuus.`:`Kerroin on kasvanut vuodesta ${RY[0]}: ${a.toFixed(1)}× → ${b.toFixed(1)}×.`;})()} Vankiluvut ovat Rikosseuraamuslaitoksen tietoa, väestöosuudet Tilastokeskuksen.</div>`;
 }
 
 // ── NAV ─────────────────────────────────────────────────
@@ -963,6 +964,258 @@ if('serviceWorker' in navigator) {
     }).catch(() => {});
   });
 }
+
+// ── KIELIVALINTA ─────────────────────────────────────────
+// Suomi on lahdekieli: kaikki tekstit kirjoitetaan suomeksi renderointi-
+// funktioihin. Englanti tuotetaan kaantamalla renderoidyn DOM:in teksti-
+// solmut. Nain attribuutteihin, luokkanimiin tai lukuihin ei kosketa, ja
+// dynaamiset vuosiluvut ja prosentit sailyvat sellaisinaan.
+let LANG = (() => { try { return localStorage.getItem('lang') || 'fi'; } catch(e) { return 'fi'; } })();
+
+const DICT = {
+// navigaatio ja otsikot
+'Väkivalta':'Violent crime','Seksuaali':'Sexual offences','Henkirikokset':'Homicides',
+'Ryöstöt':'Robberies','Nuoriso':'Youth crime','Perheväkivalta':'Domestic violence',
+'Maahanmuuttajat':'Immigrant background','Kansalaisuus':'Citizenship','Vangit':'Prisoners',
+'Syntyperä':'Origin','Ennakko':'Preliminary','Ikä & tausta':'Age & background',
+'Nuorisotyöttömyys':'Youth unemployment','Väkivaltarikokset':'Violent offences',
+'Seksuaalirikokset':'Sexual offences','Nuorisorikollisuus':'Youth crime',
+'Perhe- ja lähisuhdeväkivalta':'Domestic and intimate partner violence',
+'Maahanmuuttajat vs. kantaväestö':'Immigrant background vs. native population',
+'Kansalaisuuksittain':'By citizenship','Ulkomaalaiset vangit':'Foreign prisoners',
+'Syntyperä vs. vangit':'Origin vs. prisoners','Ennakkotiedot':'Preliminary data',
+'Ikäjakauma & tausta':'Age distribution & background','Persutilastot':'Persutilastot',
+// yleiset mittarit ja otsikkofragmentit
+'Ajanjakso: ':'Period: ','Tapauksia ':'Cases ','Vuositrendi ':'Annual trend ',
+'Per 100 000 asukasta':'Per 100,000 inhabitants','Per 100 000 omassa ryhmässä':'Per 100,000 within each group',
+'Per 100 000 — ':'Per 100,000 — ','Per 100 000':'Per 100,000','Muutos ':'Change ',
+'Yhteensä ':'Total ','Uhreja ':'Victims ','Uhrit ':'Victims ','Uhrit':'Victims',
+'Kasvu vs. ':'Growth vs. ','Kasvu ':'Growth ','Lähde: ':'Source: ','Lähde:':'Source:',
+'Mistä luku ':'Breakdown of ',' koostuu (':' (','Alakategoriat ':'Subcategories ',
+'Stacked — kaikki kategoriat':'Stacked — all categories',
+'Jakaumamuutos ':'Change in distribution ','Kehitys ':'Trend ',
+'Osuus kaikista epäillyistä':'Share of all suspects','Osuus vangeista':'Share of prisoners',
+'Yliedustuskerroin vuosittain':'Overrepresentation ratio by year',
+'Vankiosuus ÷ väestöosuus':'Prisoner share ÷ population share',
+'Yliedustus':'Overrepresentation','Max yliedustus':'Max overrepresentation',
+'Korkein / 100k':'Highest / 100k','Kantaväestö / 100k':'Native population / 100k',
+'Suomen kansalaiset / 100k':'Finnish citizens / 100k','Maahanmuuttajat / 100k':'Immigrant background / 100k',
+'Väestöosuus (kansalaisuus)':'Population share (citizenship)',
+'Väestöosuus (syntyneet)':'Population share (country of birth)',
+'Väestöosuus':'Population share','väestöosuus ':'population share ','Väestö':'Population',
+'Viranomaisten tietoon tulleet tapaukset':'Offences known to the authorities',
+'Viranomaisten tietoon tulleet rikosilmoitukset — vain täytetyt teot, yritykset eivät sisälly':
+ 'Offences known to the authorities — completed offences only, attempts excluded',
+'Rikoslakirikokset, kukin epäilty laskettu kerran vuodessa':
+ 'Penal Code offences; each suspect counted once per year',
+'suhteessa kantaväestöön':'relative to the native population',
+'nouseva':'rising','laskeva':'falling','vakaa':'stable',
+// kategoriat ja ryhmat
+'Pahoinpitelyt':'Assaults','Raiskaukset':'Rapes','Lapsiin kohdistuvat':'Against children',
+'Lapsiin':'Children','Seksuaalinen ahdistelu':'Sexual harassment','Ahdistelu':'Harassment',
+'Varkaudet':'Thefts','Omaisuus':'Property','Huumeet':'Narcotics','Muut':'Other','Muu':'Other',
+'Pahoinpitely (RL 21:5)':'Assault (PC 21:5)','Törkeä pahoinpitely (21:6)':'Aggravated assault (21:6)',
+'Lievä pahoinpitely (21:7)':'Petty assault (21:7)',
+'Nykyinen puoliso':'Current partner','Entinen puoliso':'Former partner',
+'Muu sukulainen':'Other relative','Sisarus':'Sibling',
+'Aikuiset':'Adults','Alaikäiset':'Minors','Alle 15v':'Under 15',
+'Kantaväestö':'Native population','Ulkomaalaistaustainen':'Immigrant background',
+'Ulkomaalaistaustaiset':'Immigrant background','Maahanmuuttajataustaiset':'Immigrant background',
+'Ulkomaal.':'Foreign','Muut ulkom.':'Other foreign','KANTAVÄESTÖ':'NATIVE POPULATION',
+'MAAHANMUUTTAJAT':'IMMIGRANT BACKGROUND','SUOMEN KANSALAISET':'FINNISH CITIZENS',
+'ULKOMAAN KANSALAISET':'FOREIGN CITIZENS',
+// maat
+'Somalia':'Somalia','Irak':'Iraq','Afganistan':'Afghanistan','Albania':'Albania',
+'Nigeria':'Nigeria','Romania':'Romania','Marokko':'Morocco','Venäjä':'Russia',
+'Viro':'Estonia','Ruotsi':'Sweden','Suomi':'Finland','Thaimaa':'Thailand',
+'Saksa':'Germany','Liettua':'Lithuania',
+// tyottomyys
+'Työttömyysaste 15–24v ':'Unemployment rate 15–24 ','Työttömyysaste ':'Unemployment rate ',
+'Työttömiä 15–24v':'Unemployed 15–24','Työttömien määrä 15–24v':'Number of unemployed 15–24',
+'Koko väestö 15–74v':'Total population 15–74','1 000 henkilöä':'thousand persons',
+'Tumma viiva: koko väestö 15–74-vuotiaat':'Dark line: total population aged 15–74',
+'Tuorein ennakkotieto — nuoret 15–24v':'Latest preliminary figure — ages 15–24',
+'12 kk liukuva keskiarvo':'12-month rolling average','nuorilla ':'youth ',
+'× korkeampi':'× higher',
+// perhe ja ika
+'Tekijäsuhde aikuisiin uhreihin — ':'Perpetrator relationship, adult victims — ',
+'Ulkomaalaistaustaiset uhreista':'Victims with immigrant background',
+'Ulkomaalaistaustaisten uhrien osuus vs. väestöosuus':
+ 'Share of victims with immigrant background vs. population share',
+'alaikäisten uhrien kasvu ':'change in minor victims ',
+'Ikäryhmäjakauma ':'Age distribution ','Sama vertailu ikäryhmittäin — ':'Same comparison by age group — ',
+'Epäillyt per 100 000 omassa ikä- ja syntyperäryhmässä':
+ 'Suspects per 100,000 within each age and origin group',
+'Punainen = ulkomaalaistaustaisilla korkeampi, vihreä = kantaväestöllä korkeampi':
+ 'Red = higher among immigrant background, green = higher among native population',
+'Rikosepäillyt per 100 000 — ':'Suspects per 100,000 — ',
+'Rikostyypeittäin per 100 000 — ':'By offence type per 100,000 — ',
+'Rikostyypit — ulkomaalaiset':'Offence types — foreign citizens',
+'Rikostyypit — kantaväestö':'Offence types — native population',
+'Ulkomaalaistaustaisia epäiltyjä ':'Suspects with immigrant background ',
+'Suomalaistaustaisia epäiltyjä ':'Suspects with Finnish background ',
+'Ulkomaalaistaustaisten osuus kaikista epäillyistä':'Share of all suspects with immigrant background',
+'Ikäjakauma epäillyistä — ulkomaalaistaustainen vs. kantaväestö':
+ 'Age distribution of suspects — immigrant background vs. native population',
+// vangit
+'Ulkomaalaisia ':'Foreign nationals ','Tilanne ':'As of ',
+'Ulkomaalaisten osuus vangeista ':'Foreign nationals as a share of prisoners ',
+'Kansalaisuuksittain — ':'By citizenship — ','Miksi ei syntyperää?':'Why not by origin?',
+'vangeista · ':'of prisoners · ','hlöä':'persons',
+// ennakko
+'Huomio: ennakkotieto, osavuosi':'Note: preliminary, partial year','Huomio:':'Note:',
+'Lainmuutoshuomio:':'Note on the law change:','Suhteutettu vertailu:':'Rate comparison:',
+'(VANHA LAKI)':'(OLD LAW)','(UUSI LAKI)':'(NEW LAW)',
+'Raiskausepäillyistä':'Of rape suspects',
+'Ulkomaalaisten osuus raiskausepäillyistä':'Foreign nationals as a share of rape suspects',
+'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.':'The latest full year is shown in the period above. Updated automatically from the Statistics Finland API.',
+'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Huom: seksuaalirikoslaki muuttui 1.1.2023 — lukuja ei voi suoraan verrata ennen/jälkeen.':'The latest full year is shown in the period above. Note: the sexual offences act changed on 1 Jan 2023 — figures before and after are not directly comparable.',
+'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Luvut ovat rikoslakirikoksista epäiltyjä henkilöitä, kukin laskettu vuodessa kerran.':'The latest full year is shown in the period above. Figures are persons suspected of Penal Code offences, each counted once per year.',
+'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Uhrien lukumäärä vakavimman rikoksen mukaan.':'The latest full year is shown in the period above. Victims counted by their most serious offence.',
+'Työvoimatutkimuksen vuositieto. Otospohjainen estimaatti, ei työnvälitystilaston rekisteriluku.':'Annual figure from the Labour Force Survey. A sample-based estimate, not a register figure from employment services.',
+'Luvut ovat arvioita Tilastokeskuksen aineistojen pohjalta, ei suoraan rajapinnasta.':'Figures are estimates based on Statistics Finland material, not taken directly from the API.',
+'Yhden vuoden poikkileikkaus. Kansalaisuuskohtaista aikasarjaa ei julkaista suoraan.':'A single-year snapshot. No time series by citizenship is published directly.',
+'Rise-data on virallista. Päivittäinen tilanne 6.3.2026: 24,0 %. Koko vuoden 2025 tilasto julkaistaan 2026.':'Data from the Criminal Sanctions Agency is official. Daily figure on 6 Mar 2026: 24.0%. The full-year 2025 statistic is published in 2026.',
+'Tilastokeskus, StatFin-taulu ':'Statistics Finland, StatFin table ',
+'Tilastokeskus, StatFin-taulut ':'Statistics Finland, StatFin tables ',
+'(automaattinen)':'(automated)',
+'Käsin ylläpidetty — saatavilla myös taulusta ':'Manually maintained — also available from table ',
+'Rikosseuraamuslaitos — ei saatavilla StatFin-rajapinnasta':'Criminal Sanctions Agency — not available from the StatFin API',
+'Tilastokeskus, rikos- ja pakkokeinotilasto, ennakkotieto (taulu ':'Statistics Finland, statistics on offences and coercive measures, preliminary (table ',
+'Tilastokeskus, perhe- ja lähisuhdeväkivalta (taulut rpk/13rc ja rpk/14cf). Kattaa vain viranomaisten tietoon tulleet tapaukset. Kansalaisuuskohtaista tekijätilastoa ei julkaista.':'Statistics Finland, domestic and intimate partner violence (tables rpk/13rc and rpk/14cf). Covers only offences known to the authorities. No perpetrator statistics by citizenship are published.',
+'Ikä- ja sukupuolivakioitu · Lähde: Tilastokeskus 2017–2018':'Age- and sex-standardised · Source: Statistics Finland 2017–2018',
+'Tilastokeskus Tieto&trendit 2023 — Espoo esimerkkinä, vaihtelu kaupungeittain suuri':'Statistics Finland Tieto&trendit 2023 — Espoo as an example; variation between cities is large',
+'Tilastokeskus rikos- ja pakkokeinotilasto. Ikäjakauma on laskettu julkisista tilastoista. Seksuaalirikossuhdeluvut ovat Tilastokeskuksen ikä- ja sukupuolivakioituja lukuja vuosilta 2017–2018 — viimeisin julkaistu tätä yksityiskohtainen vertailu.':'Statistics Finland statistics on offences and coercive measures. The age distribution is calculated from public statistics. The sexual offence ratios are Statistics Finland\'s age- and sex-standardised figures for 2017–2018 — the most recent comparison published at this level of detail.',
+'Pahoinpitelyt ovat kääntyneet selvään nousuun 2020-luvulla; kasvu on ollut nopeinta vuodesta 2021 alkaen. Luvut sisältävät vain täytetyt teot (RL 21:5–7), eivät yrityksiä.':'Assaults have turned clearly upward in the 2020s, with the fastest growth from 2021 onward. Figures cover completed offences only (Penal Code 21:5–7), not attempts.',
+'Henkirikoksia tapahtuu vähän, joten vuosivaihtelu on suurta eikä yksittäisen vuoden muutos kerro trendistä. Mukana ovat tappo, murha ja surma (RL 21:1–3), ei yrityksiä.':'Homicides are few, so year-to-year variation is large and a single year\'s change says little about the trend. Includes manslaughter, murder and killing (Penal Code 21:1–3), not attempts.',
+'Ryöstöt kääntyivät nousuun vuoden 2019 jälkeen ja ovat viime vuosina asettuneet noin kahden tuhannen tasolle. Luvut sisältävät vain täytetyt teot (RL 31:1–2), eivät yrityksiä.':'Robberies turned upward after 2019 and have settled at around two thousand per year. Figures cover completed offences only (Penal Code 31:1–2), not attempts.',
+'Alle 18-vuotiaiden osuus rikoslakirikoksista epäillyistä on noussut noin 9 prosentista 15 prosenttiin. Luvut ovat epäiltyjä henkilöitä, eivät rikoksia: kukin epäilty on laskettu vuodessa kerran vuoden törkeimmän rikoksensa mukaan. Muutokset ilmoitusalttiudessa ja kirjaamiskäytännöissä vaikuttavat tilastoituihin lukuihin.':'The share of under-18s among those suspected of Penal Code offences has risen from about 9% to 15%. Figures are persons, not offences: each suspect is counted once per year by their most serious offence. Changes in reporting propensity and recording practice affect the recorded figures.',
+'Nuorten 15–24-vuotiaiden työttömyysaste on kääntynyt 2020-luvun alun pohjalukemista selvään nousuun. Nuorisotyöttömyys on rakenteellisesti noin kaksi kertaa koko väestön tasoa korkeampi, koska opiskelu ja työuran alku lisäävät liikkuvuutta työmarkkinoilla. Luvut ovat työvoimatutkimuksen otospohjaisia estimaatteja, eivät työnvälitystilaston rekisterilukuja.':'The unemployment rate for 15–24-year-olds has turned clearly upward from the lows of the early 2020s. Youth unemployment is structurally about twice the level of the total population, because studying and the start of a career increase movement in the labour market. Figures are sample-based estimates from the Labour Force Survey, not register figures from employment services.',
+'Luvut per 100 000 ko. ryhmässä. Ulkomaalaistaustainen väestö on ikärakenteeltaan nuorempi, ja nuoret ovat kaikissa väestöryhmissä yliedustettuina rikostilastoissa — tämä näkyy alla olevassa ikäryhmävertailussa.':'Figures are per 100,000 within each group. The population with an immigrant background is younger, and young people are overrepresented in crime statistics in every population group — this is visible in the age comparison below.',
+'Luvut ovat epäiltyjä per 100 000 kunkin kansalaisuusryhmän omassa väestössä, joten ryhmien koko ei vaikuta vertailuun. Mukana ovat vain rikoslakirikokset ja kukin epäilty on laskettu vuodessa kerran. Luvut kuvaavat epäilyjä, eivät tuomioita, ja kattavat vain viranomaisten tietoon tulleet tapaukset. Ryhmien ikä- ja sukupuolirakenne poikkeaa toisistaan, mitä nämä luvut eivät vakioi.':'Figures are suspects per 100,000 within each citizenship group\'s own population, so group size does not affect the comparison. Only Penal Code offences are included and each suspect is counted once per year. The figures show suspicions, not convictions, and cover only offences known to the authorities. The age and sex structure of the groups differs, which these figures do not standardise for.',
+'Seksuaalirikoslaki uudistui 1.1.2023. Raiskauksen määritelmä muuttui suostumusperusteiseksi. Lukuja ennen ja jälkeen 2023 ei voi suoraan verrata.':'The sexual offences act was reformed on 1 Jan 2023. The definition of rape became consent-based. Figures before and after 2023 are not directly comparable.',
+'Nämä luvut ovat ikä- ja sukupuolivakioituja — eli ne ottavat huomioon että maahanmuuttajaväestö on nuorempaa. Luvut kuvaavat rikosepäilyjä, ei tuomioita.':'These figures are age- and sex-standardised — that is, they account for the immigrant population being younger. The figures show crime suspicions, not convictions.',
+'vertailukelpoisin mittari. Suomi (kantaväestö) harmaana viitearvona.':'the most comparable measure. Finland (native population) shown in grey as a reference.',
+'Rise julkaisee vankilatilastot kansalaisuuden mukaan. Ulkomaan kansalaisia on ':'The Criminal Sanctions Agency publishes prison statistics by citizenship. Foreign citizens make up ',
+'% väestöstä ja ulkomailla syntyneitä ':'% of the population and foreign-born ',
+'Ennakkotiedot perustuvat rikosilmoituksen kirjaamisajankohtaan ja voivat tarkentua lopullisessa tilastossa, joten yksittäisen jakson muutosta ei kannata tulkita trendiksi.':'Preliminary figures are based on when the report was recorded and may be revised in the final statistics, so a single period\'s change should not be read as a trend.',
+'Jaksolla ':'In the period ',
+'suurin suhteellinen muutos edellisvuoden vastaavaan jaksoon nähden oli ':'the largest relative change compared with the same period a year earlier was ',
+'Nämä luvut kattavat jakson ':'These figures cover the period ',
+'ja niitä verrataan edellisen vuoden samaan jaksoon (':'and are compared with the same period a year earlier (',
+'Ne eivät ole vertailukelpoisia dashboardin vuositilastoihin (':'They are not comparable with the annual statistics on this dashboard (',
+'jotka kattavat koko vuoden. Ennakkotieto voi myös tarkentua lopullisessa tilastossa.':'which cover the full year. Preliminary figures may also be revised in the final statistics.',
+'Ulkomaalaistaustaisten epäiltyjen ikärakenne on selvästi nuorempi kuin kantaväestön — painottuu alle 30-vuotiaisiin.':'The age structure of suspects with an immigrant background is clearly younger than that of the native population, concentrated below age 30.',
+'Tärkeää huomata: valtaosa — 99 % — ulkomaalaistaustaisistakin nuorista ei ole syyllistynyt rikoksiin.':'Importantly: the vast majority — 99% — of young people with an immigrant background have not committed offences.'
+,
+'Seksuaalirikokset yhteensä ':'Total sexual offences ',
+'Lapsiin kohdistuvien muutos viimeisimpänä vuonna: ':'Change in offences against children, latest year: ',
+'Ulkomaan kansalaisten osuus raiskausepäillyistä: ':'Foreign citizens as a share of rape suspects: ',
+'(väestöosuus ':'(population share ',
+'Seksuaalirikoslaki uudistui 1.1.2023 ja laajensi rikoslain 20. luvun määritelmiä, joten lukuja ennen ja jälkeen ei voi suoraan verrata.':'The sexual offences act was reformed on 1 Jan 2023 and broadened the definitions in Chapter 20 of the Penal Code, so figures before and after are not directly comparable.',
+'Muutos vuodesta ':'Change since ',
+'Alaikäisten uhrien muutos samalla jaksolla: ':'Change in minor victims over the same period: ',
+'Ulkomaalaistaustaisten uhrien osuus: ':'Share of victims with an immigrant background: ',
+'Luvut kattavat vain viranomaisten tietoon tulleet tapaukset.':'Figures cover only offences known to the authorities.',
+'Epäiltyjä per 100 000, ulkomaalaistaustaiset suhteessa kantaväestöön: ':'Suspects per 100,000, immigrant background relative to native population: ',
+'Väkivaltarikoksissa: ':'Violent offences: ',
+'Omaisuusrikoksissa: ':'Property offences: ',
+'Samanikäisiä verrattaessa ero kapenee selvästi ja kääntyy 25–49-vuotiailla päinvastaiseksi. Luvut kuvaavat rikoksista epäiltyjä, eivät tuomittuja.':'When comparing people of the same age the gap narrows sharply and reverses among 25–49-year-olds. Figures show persons suspected of offences, not convicted.',
+'Ulkomaalaisten osuus vangeista ':'Foreign nationals as a share of prisoners ',
+'Yliedustuskerroin: ':'Overrepresentation ratio: ',
+'Huumausainerikokset ':'Narcotics offences ',
+'% ulkomaalaisten tuomioista vs. väkivaltarikokset ':'% of convictions of foreign nationals vs. violent offences ',
+'% kantaväestöllä. Risen mukaan kasvu selittyy kansainvälisen huumekaupan torjunnalla.':'% among the native population. According to the Criminal Sanctions Agency the growth is explained by efforts against international drug trafficking.',
+'Ulkomaan kansalaisten osuus vangeista: ':'Foreign citizens as a share of prisoners: ',
+'Kerroin: ':'Ratio: ',
+'Ulkomailla syntyneiden väestöosuus: ':'Population share of the foreign-born: ',
+'kerroin: ':'ratio: ',
+'Kerroin on pienentynyt vuodesta ':'The ratio has decreased since ',
+'Kerroin on kasvanut vuodesta ':'The ratio has increased since ',
+'eli vankiosuus on kasvanut hitaammin kuin väestöosuus.':'that is, the prisoner share has grown more slowly than the population share.',
+'Vankiluvut ovat Rikosseuraamuslaitoksen tietoa, väestöosuudet Tilastokeskuksen.':'Prisoner figures are from the Criminal Sanctions Agency, population shares from Statistics Finland.',
+'Rise-data on virallista. Väestöosuusluvut Tilastokeskukselta.':'Data from the Criminal Sanctions Agency is official. Population shares from Statistics Finland.',
+'% (Tilastokeskus).':'% (Statistics Finland).',
+'Seksuaalirikoksissa yliedustus on suurin: irakilaiset miehet epäiltynä ':'Overrepresentation is largest for sexual offences: Iraqi men were suspected ',
+'x useammin kuin suomalaiset miehet ikä- ja sukupuolivakioituna. Nuorten (alle 18v) osalta noin ':'times more often than Finnish men, age- and sex-standardised. Among under-18s, about ',
+'% ulkomaalaistaustaista nuorta on epäiltynä pahoinpitelystä tai ryöstöstä vuosittain, kantaväestöllä ':'% of young people with an immigrant background are suspected of assault or robbery each year, against ',
+'Osuus oman ryhmän epäillyistä ikäryhmittäin (%) — ':'Share of each group\'s own suspects by age group (%) — ',
+'Seksuaalirikosepäillyt — yliedustuskerroin (Suomi = 1x)':'Sexual offence suspects — overrepresentation ratio (Finland = 1x)',
+'Nuoret ulkomaalaistaustaisten rikoksissa — avainluvut':'Young people with an immigrant background — key figures',
+'Pahoinp./ryöstö epäily — ulkomaalaistaustainen nuori':'Assault/robbery suspicion — youth with immigrant background',
+'Pahoinp./ryöstö epäily — suomalaistaustainen nuori':'Assault/robbery suspicion — youth with Finnish background',
+'Kasvussa — ulkomaalaistaustaisten osuus noussut':'Rising — share with immigrant background has grown',
+'Korkein rikollisuusaste molemmissa ryhmissä':'Highest offending rate in both groups',
+'Kantaväestöllä enemmän vanhempia epäiltyjä':'More older suspects among the native population',
+'Huumausainerikokset korostuvat':'Narcotics offences stand out',
+'Ryöstöt ja pahoinpitelyt yliedustettuina':'Robberies and assaults overrepresented',
+'Osuus alle 18v ryöstöepäillyistä':'Share of under-18 robbery suspects',
+'Osuus alle 18v väestöstä':'Share of the under-18 population',
+'kaikista':'of all'
+};
+const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
+
+// Alkuperaiset suomenkieliset tekstit talteen, jotta staattinen valikko ja
+// ylapalkki voidaan palauttaa kielta vaihdettaessa. Paneelit renderoidaan
+// uudelleen, joten niiden osalta tama on vain varmistus.
+const ORIG = new WeakMap();
+
+function translateTree(root){
+  if (!root) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (w.nextNode()) nodes.push(w.currentNode);
+  for (const n of nodes){
+    if (LANG === 'fi'){
+      if (ORIG.has(n)) n.textContent = ORIG.get(n);
+      continue;
+    }
+    const base = ORIG.has(n) ? ORIG.get(n) : n.textContent;
+    if (!/[a-zäöÄÖ]/.test(base)) continue;
+    let t = base;
+    for (const k of DKEYS){ if (t.indexOf(k) !== -1) t = t.split(k).join(DICT[k]); }
+    if (t !== n.textContent){
+      if (!ORIG.has(n)) ORIG.set(n, base);
+      n.textContent = t;
+    }
+  }
+}
+
+function applyLang(){
+  translateTree(document.querySelector('.topbar'));
+  translateTree(document.querySelector('nav.botnav'));
+  translateTree(document.querySelector('.content'));
+  const b = document.getElementById('lang-btn');
+  if (b) b.textContent = LANG === 'fi' ? 'EN' : 'FI';
+  document.documentElement.lang = LANG;
+}
+
+function toggleLang(){
+  LANG = LANG === 'fi' ? 'en' : 'fi';
+  try { localStorage.setItem('lang', LANG); } catch(e) {}
+  // Suomeksi palattaessa naytto rakennetaan uudelleen lahdekielesta.
+  const active = document.querySelector('.panel.active');
+  const id = active ? active.id.replace('p-','') : 'home';
+  // Muut paneelit tyhjennetaan, jotta ne rakentuvat lahdekielesta kun niihin
+  // seuraavan kerran siirrytaan - muuten niihin jaisi edellisen kielen teksti.
+  document.querySelectorAll('.panel').forEach(p => { if (p !== active) p.innerHTML = ''; });
+  if (id === 'home'){ if (typeof renderHome === 'function') renderHome(); }
+  else if (typeof render === 'function'){ render(id); }
+  applyLang();
+}
+
+// Renderoinnin jalkeen kaannos ajetaan aina uudelleen.
+(function(){
+  const wrap = name => {
+    const orig = window[name];
+    if (typeof orig !== 'function') return;
+    window[name] = function(){ const r = orig.apply(this, arguments); applyLang(); return r; };
+  };
+  ['render','renderHome','go','goHome'].forEach(wrap);
+  document.addEventListener('DOMContentLoaded', applyLang);
+  if (document.readyState !== 'loading') applyLang();
+})();
+
 </script>
 
 <!-- PWA install button -->
