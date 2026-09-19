@@ -134,6 +134,10 @@ NAT_CRIME = '101T504X406'            # vain rikoslakirikokset
 # Rikostyyppiryhmät syntyperävertailuun (13zk)
 CRIME_GROUPS = ['201T223', '231T241', '201_202_205', '101T161']
 AGE_GROUPS = ['15-17', '18-20', '21-24', '25-29', '30-39', '40-49', '50-59', '60-69']
+NUORI_GROUPS = ['0-14', '15-17', '18-20']   # nuorisopaneelin ikajakauma
+# Seksuaalirikosepaillyt kansalaisuuksittain (13jg), sama jarjestys kuin SXL
+SEX_NATS = ['368', '004', '706', '504', '566', 'ULK', '246']
+SEX_GROUP = '231T241'   # 13 Seksuaalirikokset
 
 # Ennakkotiedot kuukausittain (13j2). Kumulatiivinen vuosisumma, joten
 # viimeisin kuukausi antaa suoraan kuluvan vuoden kertyman.
@@ -775,6 +779,56 @@ def fetch_unemp_rolling():
             lappu(sel[12], sel[-1]), lappu(sel[0], sel[11]))
 
 
+def fetch_youth_agemix(year):
+    """Alle 21v epailtyjen ikajakauma prosentteina (13zk)."""
+    vals = []
+    for age in NUORI_GROUPS:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": [age]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [YOUTH_CRIME_RL]}},
+            {"code": SYNT_VAR, "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": [YOUTH_CONTENT]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            vals.append(r.json().get("value", [0])[0] or 0)
+        except Exception as e:
+            print(f"  Ikajakauma-virhe ({age}): {e}")
+            return None
+    kok = sum(vals)
+    return [round(v / kok * 100, 1) for v in vals] if kok else None
+
+
+def fetch_sex_ratios(year):
+    """Seksuaalirikosepaillyt per 100 000 kansalaisuuksittain, Suomi = 1 (13jg).
+
+    Ei ika- eika sukupuolivakioitu: rajapinta ei tarjoa vakioitua lukua.
+    """
+    raw = []
+    for code in SEX_NATS:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "valtio_19_20190101", "selection": {"filter": "item", "values": [code]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [SEX_GROUP]}},
+            {"code": "alue_23_20230101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": [NAT_CONTENT]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(NAT_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            raw.append((r.json().get("value", [0])[0] or 0) * 10)
+        except Exception as e:
+            print(f"  Seksuaalisuhdeluku-virhe ({code}): {e}")
+            return None
+    base = raw[-1]   # Suomi on listan viimeinen
+    if not base:
+        return None
+    return [round(v / base, 1) for v in raw]
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -1018,6 +1072,8 @@ def main():
 
     print("  Kansalaisuuskohtaiset suhdeluvut...")
     nat_rates = fetch_nationality_rates(str(latest_year))
+    youth_mix = fetch_youth_agemix(str(latest_year))
+    sex_ratios = fetch_sex_ratios(str(latest_year))
     rt_foreign_n = fetch_crime_group_rates(SYNT_FOREIGN, str(latest_year))
     rt_domestic_n = fetch_crime_group_rates(SYNT_DOMESTIC, str(latest_year))
     age_foreign = fetch_age_rates(SYNT_FOREIGN, str(latest_year))
@@ -1232,6 +1288,10 @@ def main():
 
     if nat_rates:
         content = update_const_array(content, 'KV', nat_rates)
+    if youth_mix:
+        content = update_const_array(content, 'NIK', youth_mix, is_float=True)
+    if sex_ratios:
+        content = update_const_array(content, 'SXR', sex_ratios, is_float=True)
     if rt_foreign:
         content = update_const_array(content, 'RTU', rt_foreign, is_float=True)
     if rt_domestic:

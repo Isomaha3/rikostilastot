@@ -262,10 +262,13 @@ function renderCrime(id){
   const c2min=Math.min(...c2data)*0.9, c2max=Math.max(...c2data)*1.05;
   const lc2=lineChart([{data:c2data,color:d.col,fill:true}],c2min,c2max,id==='nuoriso'?v=>v.toFixed(1)+'%':v=>v.toFixed(1));
 
+  const NIKL=['0–14 v','15–17 v','18–20 v'];
+  const NIK=[27.50,32.90,39.70];   // osuudet alle 21v epaillyista, %
   let agExtra='';
   if(id==='nuoriso'){
-    agExtra=`<div class="card"><div class="ctitle">Ikäryhmäjakauma 2024</div>`+
-    hbars([{l:'Alle 15v',v:14.2,c:d.col,fmt:'14,2 %'},{l:'15–17v',v:31.4,c:d.col,fmt:'31,4 %'},{l:'18–19v',v:54.4,c:d.col,fmt:'54,4 %'}])+
+    agExtra=`<div class="card"><div class="ctitle">Ikäryhmäjakauma ${Y[9]}</div>`+
+    `<div class="csub">Osuus alle 21-vuotiaista rikoslakirikoksista epäillyistä</div>`+
+    hbars(NIKL.map((l,i)=>({l,v:NIK[i],c:d.col,fmt:NIK[i].toFixed(1).replace('.',',')+' %'})))+
     '</div>';
   }
   if(id==='vakivalta' && d.ppPerus){
@@ -790,17 +793,13 @@ function renderIka(){
     {l:'60+v',     ulk:3,  suom:14, note:'Kantaväestöllä enemmän vanhempia epäiltyjä'},
   ];
 
-  // Seksuaalirikosten yliedustus kansalaisuuksittain — ikä- ja sukupuolivakioitu
-  // Lähde: Tilastokeskus 2019 (vuosien 2017–2018 data, viimeisin julkaistu ikävakioitu vertailu)
-  const sexCrimeRatio=[
-    {l:'Irak',     v:12.8, c:'#e05c5c'},
-    {l:'Afganistan',v:8.2, c:'#e8a23a'},
-    {l:'Somalia',  v:6.1,  c:'#9b7de8'},
-    {l:'Marokko',  v:5.4,  c:'#4f8ef7'},
-    {l:'Nigeria',  v:4.2,  c:'#3dba8c'},
-    {l:'Muut ulkom.',v:2.8,c:'#3ab8c8'},
-    {l:'Suomi',    v:1.0,  c:'#7a8099'},
-  ];
+  // Seksuaalirikosepäillyt per 100 000 omassa kansalaisuusryhmässä.
+  // Haetaan taulusta rpk/13jg. HUOM: ei ikä- eikä sukupuolivakioitu.
+  const SXL=['Irak','Afganistan','Somalia','Marokko','Nigeria','Ulkomaat yhteensä','Suomi'];
+  const SXC=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7','#3dba8c','#3ab8c8','#7a8099'];
+  const SXR=[14.60,10.10,7.40,9.00,3.60,2.50,1.00];
+  const sexCrimeRatio=SXL.map((l,i)=>({l,v:SXR[i],c:SXC[i]}))
+    .filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
 
   const maxRatio=Math.max(...sexCrimeRatio.map(r=>r.v));
   const maxAge=Math.max(...ageGroups.map(g=>Math.max(g.ulk,g.suom)));
@@ -841,8 +840,8 @@ function renderIka(){
 
   <div class="card">
     <div class="ctitle">Seksuaalirikosepäillyt — yliedustuskerroin (Suomi = 1x)</div>
-    <div class="csub">Ikä- ja sukupuolivakioitu · Lähde: Tilastokeskus 2017–2018</div>
-    <div class="ibox amber" style="margin-bottom:12px"><strong>Huomio:</strong> Nämä luvut ovat ikä- ja sukupuolivakioituja — eli ne ottavat huomioon että maahanmuuttajaväestö on nuorempaa. Luvut kuvaavat rikosepäilyjä, ei tuomioita.</div>
+    <div class="csub">Epäillyt per 100 000 omassa kansalaisuusryhmässä · ${Y[9]}</div>
+    <div class="ibox amber" style="margin-bottom:12px"><strong>Huomio:</strong> Nämä luvut eivät ole ikä- eivätkä sukupuolivakioituja. Ryhmien ikä- ja sukupuolirakenne poikkeaa toisistaan, ja vakiointi pienentäisi eroja selvästi. Luvut kuvaavat rikoksista epäiltyjä, eivät tuomittuja.</div>
     ${hbars(sexCrimeRatio.map(r=>({l:r.l,v:r.v,c:r.c,fmt:r.v.toFixed(1)+'x'})))}
   </div>
 
@@ -1152,6 +1151,20 @@ const DICT = {
 'Osuus alle 18v ryöstöepäillyistä':'Share of under-18 robbery suspects',
 'Osuus alle 18v väestöstä':'Share of the under-18 population',
 'kaikista':'of all'
+,
+'Osuus alle 21-vuotiaista rikoslakirikoksista epäillyistä':'Share of under-21s suspected of Penal Code offences',
+'Epäillyt per 100 000 omassa kansalaisuusryhmässä · ':'Suspects per 100,000 within their own citizenship group · ',
+'Nämä luvut eivät ole ikä- eivätkä sukupuolivakioituja. Ryhmien ikä- ja sukupuolirakenne poikkeaa toisistaan, ja vakiointi pienentäisi eroja selvästi. Luvut kuvaavat rikoksista epäiltyjä, eivät tuomittuja.':'These figures are not age- or sex-standardised. The age and sex structure of the groups differs, and standardising would narrow the gaps considerably. The figures show persons suspected of offences, not convicted.',
+'Ulkomaat yhteensä':'All foreign citizens',
+'0–14 v':'0–14 yrs',
+'15–17 v':'15–17 yrs',
+'18–20 v':'18–20 yrs',
+'21–24 v':'21–24 yrs',
+'25–29 v':'25–29 yrs',
+'30–39 v':'30–39 yrs',
+'40–49 v':'40–49 yrs',
+'50–59 v':'50–59 yrs',
+'60–69 v':'60–69 yrs'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 
