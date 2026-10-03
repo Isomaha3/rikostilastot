@@ -135,6 +135,9 @@ NAT_CRIME = '101T504X406'            # vain rikoslakirikokset
 CRIME_GROUPS = ['201T223', '231T241', '201_202_205', '101T161']
 AGE_GROUPS = ['15-17', '18-20', '21-24', '25-29', '30-39', '40-49', '50-59', '60-69']
 NUORI_GROUPS = ['0-14', '15-17', '18-20']   # nuorisopaneelin ikajakauma
+# Vakivaltarikoksista epaillyt ikaryhmittain (13zk), sama jarjestys kuin VAGEL
+VIOL_AGES = ['0-14', '15-17', '18-20', '21-24', '25-29', '30-39', '40-49', '50-59']
+VIOL_GROUP = '201T223'   # 12 Henkeen ja terveyteen kohdistuneet rikokset
 # Seksuaalirikosepaillyt kansalaisuuksittain (13jg), sama jarjestys kuin SXL
 SEX_NATS = ['368', '004', '706', '504', '566', 'ULK', '246']
 SEX_GROUP = '231T241'   # 13 Seksuaalirikokset
@@ -829,6 +832,28 @@ def fetch_sex_ratios(year):
     return [round(v / base, 1) for v in raw]
 
 
+def fetch_violence_by_age(year):
+    """Vakivaltarikoksista epaillyt ikaryhmittain (13zk)."""
+    out = []
+    for age in VIOL_AGES:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": [age]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [VIOL_GROUP]}},
+            {"code": SYNT_VAR, "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": [YOUTH_CONTENT]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            out.append(int(r.json().get("value", [0])[0] or 0))
+        except Exception as e:
+            print(f"  Vakivalta-ikadata-virhe ({age}): {e}")
+            return None
+    return out
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -1073,6 +1098,8 @@ def main():
     print("  Kansalaisuuskohtaiset suhdeluvut...")
     nat_rates = fetch_nationality_rates(str(latest_year))
     youth_mix = fetch_youth_agemix(str(latest_year))
+    viol_age_first = fetch_violence_by_age(str(years[0]))
+    viol_age_last = fetch_violence_by_age(str(latest_year))
     sex_ratios = fetch_sex_ratios(str(latest_year))
     rt_foreign_n = fetch_crime_group_rates(SYNT_FOREIGN, str(latest_year))
     rt_domestic_n = fetch_crime_group_rates(SYNT_DOMESTIC, str(latest_year))
@@ -1290,6 +1317,9 @@ def main():
         content = update_const_array(content, 'KV', nat_rates)
     if youth_mix:
         content = update_const_array(content, 'NIK', youth_mix, is_float=True)
+    if viol_age_first and viol_age_last:
+        content = update_const_array(content, 'VAGE0', viol_age_first)
+        content = update_const_array(content, 'VAGE1', viol_age_last)
     if sex_ratios:
         content = update_const_array(content, 'SXR', sex_ratios, is_float=True)
     if rt_foreign:
