@@ -621,10 +621,10 @@ function renderTyottomyys(){
   // Tuorein ennakkotieto: 12 kk liukuva keskiarvo kuukausisarjasta (tyti/135y).
   // Kuukausiluvut ovat voimakkaasti kausivaihtelevia (opiskelijoiden kesatyot),
   // joten yksittaista kuukautta ei voi verrata vuositilastoon.
-  const TY12=22.6;
-  const TY12P=20.4;
-  const TY12PER='9/2025–8/2026';
-  const TY12PERP='9/2024–8/2025';
+  const TY12=23.0;
+  const TY12P=20.5;
+  const TY12PER='10/2025–9/2026';
+  const TY12PERP='10/2024–9/2025';
   const lat=d.aste1524[9],prv=d.aste1524[8];
   const chg=lat-prv;
   const chgH=chg>0?`<span class="tu">+${chg.toFixed(1)} %-yks.</span>`:`<span class="td">${chg.toFixed(1)} %-yks.</span>`;
@@ -889,10 +889,10 @@ function renderEnnakko2025(){
   // Luvut haetaan taulusta rpk/13j2 (ennakkotieto, kumulatiivinen vuosisumma).
   const ENL=['Pahoinpitelyt','Raiskaukset','Lapsiin kohdistuvat','Seksuaalinen ahdistelu','Henkirikokset','Ryöstöt','Varkaudet'];
   const ENCOL=['#e05c5c','#e8a23a','#e06898','#9b7de8','#8fb84a','#4f8ef7','#3dba8c'];
-  const ENC=[23032,959,1542,760,42,952,67170];
-  const ENP=[20526,1037,1397,672,45,864,64286];
-  const ENPER='1–6/2026';
-  const ENPERP='1–6/2025';
+  const ENC=[35614,1526,2922,1161,56,1517,107139];
+  const ENP=[32087,1572,2176,1047,56,1425,104394];
+  const ENPER='1–9/2026';
+  const ENPERP='1–9/2025';
   const cats=ENL.map((l,i)=>({l,v25:ENC[i],v24:ENP[i],c:ENCOL[i],note:''}))
     .filter(c=>c.v25>0&&c.v24>0);
 
