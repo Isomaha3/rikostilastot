@@ -1,7 +1,7 @@
 // Persutilastot - service worker
 // Verkko ensin, valimuisti vain varalle. Nain uusi julkaisu nakyy heti
 // eika asennettuun sovellukseen jaa vanhaa versiota kiinni.
-const CACHE = 'persutilastot-v2';
+const CACHE = 'persutilastot-v3';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -24,8 +24,14 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  // Itse sivu haetaan aina verkosta HTTP-valimuisti ohittaen. GitHub Pages
+  // lahettaa Cache-Control: max-age=600, joten tavallinen fetch voisi
+  // palauttaa jopa 10 minuuttia vanhan sivun vaikka strategia on
+  // verkko-ensin. Muut tiedostot (kuvakkeet) haetaan normaalisti.
+  const isPage = req.mode === 'navigate' || req.destination === 'document';
+  const hae = isPage ? fetch(new Request(req.url, { cache: 'no-store' })) : fetch(req);
   e.respondWith(
-    fetch(req)
+    hae
       .then(res => {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
