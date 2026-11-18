@@ -171,6 +171,11 @@ CRIME_CODES = {
         '210601',  # Törkeä pahoinpitely 21:6§1
         '210701',  # Lievä pahoinpitely 21:7§
     ],
+    # Varkausrikokset (RL 28:1-3)
+    'varkaus': ['280101', '280201', '280301'],
+    'varkaus_perus': ['280101'],
+    'varkaus_torkea': ['280201'],
+    'varkaus_napistys': ['280301'],
     # Pahoinpitelyn osat erittelyä varten (summa = pahoinpitely)
     'pahoinpitely_perus': ['210501'],
     'pahoinpitely_torkea': ['210601'],
@@ -1064,6 +1069,11 @@ def main():
     pp_perus = fetch_crime_data('pahoinpitely_perus', years[0], latest_year)
     pp_torkea = fetch_crime_data('pahoinpitely_torkea', years[0], latest_year)
     pp_lieva = fetch_crime_data('pahoinpitely_lieva', years[0], latest_year)
+    print("  Varkausrikokset...")
+    varkaus = fetch_crime_data('varkaus', years[0], latest_year)
+    vk_perus = fetch_crime_data('varkaus_perus', years[0], latest_year)
+    vk_torkea = fetch_crime_data('varkaus_torkea', years[0], latest_year)
+    vk_napistys = fetch_crime_data('varkaus_napistys', years[0], latest_year)
 
     print("  Nuorisotyöttömyys...")
     unemp_rate = fetch_unemployment(UNEMP_AGE_YOUTH, UNEMP_RATE)
@@ -1157,6 +1167,11 @@ def main():
     pp_perus_arr = to_array(pp_perus)
     pp_torkea_arr = to_array(pp_torkea)
     pp_lieva_arr = to_array(pp_lieva)
+    varkaus_arr = to_array(varkaus)
+    vk_perus_arr = to_array(vk_perus)
+    vk_torkea_arr = to_array(vk_torkea)
+    vk_napistys_arr = to_array(vk_napistys)
+    varkaus_p100k = calc_per100k(varkaus_arr, pop)
     unemp_rate_arr = to_array(unemp_rate)
     unemp_count_arr = to_array(unemp_count)
     unemp_rate_all_arr = to_array(unemp_rate_all)
@@ -1210,6 +1225,18 @@ def main():
         content = update_data_object(content, 'vakivalta', 'ppTorkea', pp_torkea_arr)
     if pp_lieva_arr:
         content = update_data_object(content, 'vakivalta', 'ppLieva', pp_lieva_arr)
+
+    if varkaus_arr:
+        content = update_data_object(content, 'varkaudet', 'counts', varkaus_arr)
+        content = update_trend_pct(content, 'varkaudet', varkaus_arr[0], varkaus_arr[-1])
+    if varkaus_p100k:
+        content = update_data_object(content, 'varkaudet', 'p100k', varkaus_p100k, is_float=True)
+    if vk_perus_arr:
+        content = update_data_object(content, 'varkaudet', 'vkPerus', vk_perus_arr)
+    if vk_torkea_arr:
+        content = update_data_object(content, 'varkaudet', 'vkTorkea', vk_torkea_arr)
+    if vk_napistys_arr:
+        content = update_data_object(content, 'varkaudet', 'vkNapistys', vk_napistys_arr)
     
     # Henkirikokset
     if henkirikos_arr:
@@ -1367,7 +1394,7 @@ def main():
     )
     
     # Päivitä COVERAGE-vuodet
-    for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot', 'nuoriso', 'tyottomyys']:
+    for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot', 'nuoriso', 'tyottomyys', 'varkaudet']:
         content = re.sub(
             rf"({panel}:\s*\{{years:')[^']+(')",
             rf"\g<1>{years[0]}–{latest_year}\g<2>",
