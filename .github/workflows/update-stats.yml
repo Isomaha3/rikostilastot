@@ -1,10 +1,12 @@
 name: Päivitä rikostilastot
 
 on:
-  # Ajaa automaattisesti joka vuosi 15. kesäkuuta klo 08:00
-  # (Tilastokeskus julkaisee vuositilaston yleensä toukokuussa)
+  # Ajetaan kuukausittain 20. päivä klo 08:00 UTC.
+  # Vuositilastot päivittyvät kerran vuodessa, mutta ennakkotiedot ja
+  # työvoimatutkimuksen kuukausisarja päivittyvät kuukausittain. Vuosittainen
+  # ajo jätti ne jälkeen.
   schedule:
-    - cron: '0 8 15 6 *'
+    - cron: '0 8 20 * *'
 
   # Mahdollistaa myös manuaalisen ajamisen GitHub-sivulta
   workflow_dispatch:
