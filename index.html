@@ -97,13 +97,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .landing .start-btn:active{transform:scale(.97);}
 .landing .credits{margin-top:32px;font-size:11px;color:var(--dim);line-height:1.7;}
 .landing .credits strong{color:var(--muted);}
+.home-wrap{max-width:560px;margin:0 auto;padding:0 16px 32px;display:flex;flex-direction:column;gap:26px;text-align:left}
+.home-sec{display:flex;flex-direction:column;gap:10px}
+.home-head{display:flex;justify-content:space-between;align-items:baseline}
+.home-head h2{font-size:17px;font-weight:700;margin:0}
+.home-head button{background:none;border:none;font:inherit;font-size:12px;color:#7fb0ff;cursor:pointer;padding:8px 0}
+.home-sec h3{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin:0}
+.home-top{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;color:var(--text);text-align:left;cursor:pointer;font:inherit;width:100%}
+.ht-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.ht-rank{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ht-name{font-size:15px;font-weight:600}
+.ht-sub{font-size:12px;color:var(--muted)}
+.ht-note{font-size:11px;color:var(--amber)}
+.ht-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.ht-pct{font-size:26px;font-weight:700;line-height:1}
+.home-fine{font-size:11px;color:var(--muted)}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.home-tile{display:flex;flex-direction:column;gap:6px;padding:12px;min-height:92px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.home-tile:hover,.home-top:hover{border-color:rgba(255,255,255,.22)}
+.tl-name{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
+.tl-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.tl-val{font-size:19px;font-weight:700;margin-top:auto}
+.tl-sub{font-size:11px;color:var(--muted)}
+.tl-sub.up{color:#f07a7a}.tl-sub.down{color:#4fd1a0}
+.home-credits{font-size:11px;color:var(--muted);text-align:center;line-height:1.7}
+.pnav{max-width:560px;margin:8px auto 24px;padding:0 16px}
+.pnav-pos{font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px}
+.pnav-row{display:flex;gap:10px}
+.pnav-row button{flex:1;min-height:44px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--text);font:inherit;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:10px">
-    <button id="back-btn" onclick="goHome()" style="display:none;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:0;line-height:1">←</button>
+    <button id="back-btn" onclick="goHome()" style="display:none;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:8px 12px;line-height:1;border:1px solid var(--border);border-radius:8px">☰ Valikko</button>
     <div>
       <h1 id="ttitle">Persutilastot</h1>
       <small>Tilastokeskus &amp; Rise · <span id="datarange">2016–2025</span></small>
@@ -132,6 +160,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="p-kasvu" class="panel"></div>
 </div>
 
+<div id="pnav" class="pnav" style="display:none"></div>
 <nav class="botnav" id="botnav" style="display:none">
   <button class="bn active" data-p="vakivalta" onclick="go(this)"><div class="bn-dot" style="background:#e05c5c"></div>Väkivalta</button>
   <button class="bn" data-p="seksuaali" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Seksuaali</button>
@@ -606,6 +635,7 @@ function goHome(){
   document.getElementById('p-home').classList.add('active');
   document.getElementById('ttitle').textContent='Persutilastot';
   document.getElementById('back-btn').style.display='none';
+  const pnh=document.getElementById('pnav'); if(pnh) pnh.style.display='none';
   document.getElementById('botnav').style.display='none';
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -619,7 +649,8 @@ function go(el){
   document.getElementById('p-'+id).classList.add('active');
   document.getElementById('ttitle').textContent=TITLES[id]||id;
   document.getElementById('back-btn').style.display='block';
-  document.getElementById('botnav').style.display='flex';
+  document.getElementById('botnav').style.display='none';
+  const pn=document.getElementById('pnav'); if(pn){ pn.innerHTML=panelNav(id); pn.style.display=pn.innerHTML?'block':'none'; }
   window.scrollTo({top:0,behavior:'smooth'});
   const panel=document.getElementById('p-'+id);
   if(!panel.dataset.done){
@@ -798,13 +829,8 @@ function renderHome(){
     </div>
     <h2>Persutilastot</h2>
     <p class="tagline">Suvun WhatsApp-ryhmän virallinen lähde.</p>
-    <button class="start-btn" onclick="goTo('vakivalta')">No katotaas sitte &#x2192;</button>
-    <div class="credits">
-      <strong>Lähteet</strong><br>
-      Tilastokeskus &middot; Rise (Rikosseuraamuslaitos)<br>
-      Data: 2010&ndash;2025 &middot; Eurostat &middot; Päivittyy vuosittain
-    </div>
-  </div>`;
+    <button class="start-btn" onclick="document.getElementById('home-top3').scrollIntoView({behavior:'smooth'})">No katotaas sitte &#x2193;</button>
+  </div>${homeExtras()}`;
 }
 
 function goTo(id){
@@ -1024,6 +1050,72 @@ function renderKasvu(){
       <div class="csub" style="margin-top:6px">Vihreä = vähentynyt. Palkin pituus kuvaa muutoksen suuruutta.</div>
     </div>
     <div class="abox">Vertailu perustuu lukumääriin, ei väestöön suhteutettuihin lukuihin; väestö kasvoi samalla jaksolla noin 3 %. Luvut ovat viranomaisten tietoon tulleita tapauksia, joten myös ilmoitusalttius ja lakimuutokset vaikuttavat kasvuun.</div>`;
+}
+
+// ── ETUSIVUN VALIKKO JA TOP 3 ───────────────────────────
+// Valikon ryhmat ja jarjestys. Ruutujen luvut luetaan sivun omista
+// taulukoista, joten ne paivittyvat samalla kun tilastot paivittyvat.
+const MENU=[
+  {g:'Rikokset',ids:['vakivalta','seksuaali','henki','ryostot','varkaudet','perhe','nuoriso']},
+  {g:'Tausta ja vankilat',ids:['maahanmuuttajat','kansalaisuus','ika','vangit','syntyperä']},
+  {g:'Muut',ids:['ennakko2025','eurostat','tyottomyys','kasvu']}
+];
+const MENU_ORDER=MENU.flatMap(function(m){return m.ids;});
+function kvStr(fn,name){
+  var m=fn.toString().match(new RegExp("const "+name+"='([^']*)'"));
+  return m?m[1]:'';
+}
+function hSpark(vals,c){
+  var w=120,h=34,p=3,mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),r=(mx-mn)||1;
+  var pts=vals.map(function(v,i){return [(p+i*(w-2*p)/(vals.length-1)).toFixed(1),(p+(h-2*p)*(1-(v-mn)/r)).toFixed(1)];});
+  var l=pts[pts.length-1];
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true"><polyline points="'+pts.map(function(q){return q.join(',');}).join(' ')+'" fill="none" stroke="'+c+'" stroke-width="2" stroke-linejoin="round"/><circle cx="'+l[0]+'" cy="'+l[1]+'" r="3" fill="'+c+'"/></svg>';
+}
+function tileInfo(id){
+  var n=Y.length, f1=function(x){return x.toFixed(1).replace('.',',');};
+  var yoy=function(a){var c=(a[a.length-1]-a[a.length-2])/a[a.length-2]*100;return {v:fi(a[a.length-1]),s:(c>=0?'+':'−')+f1(Math.abs(c))+' % vs. '+Y[n-2],d:c>=0?1:-1};};
+  try{
+    if(DATA[id]&&DATA[id].counts) return yoy(DATA[id].counts);
+    if(id==='seksuaali') return yoy(kvArr(renderSeksuaali,'T'));
+    if(id==='perhe') return yoy(kvArr(renderPerhe,'PV'));
+    if(id==='maahanmuuttajat'){var a=kvArr(renderMaahanmuuttajat,'IP'),b=kvArr(renderMaahanmuuttajat,'NP');return {v:f1(a[a.length-1]/b[b.length-1])+'×',s:'epäiltyjä vs. kantaväestö',d:0};}
+    if(id==='kansalaisuus'){var k=kvArr(renderKansalaisuus,'KV');var km=renderKansalaisuus.toString().match(/const KNAMES=\[([^\]]+)\]/);var nm=km?km[1].split(',').map(function(x){return x.replace(/'/g,'').trim();}):[];var su=k[nm.indexOf('Suomi')]||0;return {v:fi(Math.max.apply(null,k)),s:'korkein / 100 000 (Suomi '+fi(su)+')',d:0};}
+    if(id==='ika'){var e=kvArr(renderIka,'EU'),es=kvArr(renderIka,'ES'),L=e.length-1;return {v:f1(e[L]/(e[L]+es[L])*100)+' %',s:'ulkomaalaistaustaisia epäillyistä',d:0};}
+    if(id==='vangit'){var t=kvArr(renderVangit,'VT'),u=kvArr(renderVangit,'VU');return {v:fi(t[t.length-1]),s:'vankia, '+fi(u[u.length-1])+' ulkomaalaista',d:0};}
+    if(id==='syntyperä'){var pp=kvArr(renderSyntyperä,'PP'),pk=kvArr(renderSyntyperä,'PK');return {v:f1(pp[pp.length-1]/pk[pk.length-1])+'×',s:'yliedustus vangeissa',d:0};}
+    if(id==='ennakko2025'){var ec=kvArr(renderEnnakko2025,'ENC'),ep=kvArr(renderEnnakko2025,'ENP');var ch=(ec[0]-ep[0])/ep[0]*100;return {v:kvStr(renderEnnakko2025,'ENPER'),s:'pahoinpitelyt '+(ch>=0?'+':'−')+f1(Math.abs(ch))+' %',d:ch>=0?1:-1};}
+    if(id==='eurostat'){var L2=EUS.years.length-1;return {v:f1(EUS.v.FI[L2])+' %',s:'Suomi, EU '+f1(EUS.v.EU27_2020[L2])+' % ('+EUS.years[L2]+')',d:0};}
+    if(id==='tyottomyys'){var a2=DATA.tyottomyys.aste1524;return {v:f1(a2[a2.length-1])+' %',s:'15–24-vuotiaat '+Y[n-1],d:0};}
+    if(id==='kasvu') return {v:kasvuSarjat().length+' tilastoa',s:'koko kasvuvertailu',d:0};
+  }catch(err){}
+  return {v:'',s:'',d:0};
+}
+function homeExtras(){
+  var S=kasvuSarjat(), top=S.slice(0,3), y0=Y[0], y1=Y[Y.length-1], yP=Y[Y.length-2];
+  var sg=function(v){return (v>=0?'+':'−')+Math.abs(v).toFixed(0)+' %';};
+  var sg1=function(v){return (v>=0?'+':'−')+Math.abs(v).toFixed(1).replace('.',',')+' %';};
+  var h='<div class="home-wrap"><section id="home-top3" class="home-sec"><div class="home-head"><h2>Eniten kasvaneet '+y0+'–'+y1+'</h2><button data-id="kasvu" onclick="goTo(this.dataset.id)">Kaikki →</button></div>';
+  top.forEach(function(s,i){
+    h+='<button class="home-top" data-id="'+s.id+'" onclick="goTo(this.dataset.id)"><div class="ht-main"><div class="ht-rank">'+(i+1)+'. eniten kasvanut</div><div class="ht-name">'+s.l+'</div><div class="ht-sub">'+y0+': '+fi(s.first)+' → '+y1+': '+fi(s.lastV)+' · vs. '+yP+' '+sg1(s.yoy)+'</div>'+(s.note?'<div class="ht-note">Huom: lainmuutos 2023 selittää osan kasvusta</div>':'')+'</div><div class="ht-side"><div class="ht-pct" style="color:'+s.c+'">'+sg(s.pct)+'</div>'+hSpark(s.d,s.c)+'</div></button>';
+  });
+  h+='<div class="home-fine">Järjestys lasketaan automaattisesti tuoreimmista luvuista.</div></section>';
+  MENU.forEach(function(m){
+    h+='<section class="home-sec"><h3>'+m.g+'</h3><div class="home-grid">';
+    m.ids.forEach(function(id){
+      var b=document.querySelector('.bn[data-p="'+id+'"]'); if(!b) return;
+      var dot=b.querySelector('.bn-dot'), col=dot?dot.style.background:'#7a8099', t=tileInfo(id);
+      h+='<button class="home-tile" data-id="'+id+'" onclick="goTo(this.dataset.id)"><div class="tl-name"><span class="tl-dot" style="background:'+col+'"></span>'+b.textContent.trim()+'</div><div class="tl-val">'+t.v+'</div><div class="tl-sub'+(t.d>0?' up':t.d<0?' down':'')+'">'+t.s+'</div></button>';
+    });
+    h+='</div></section>';
+  });
+  h+='<div class="home-credits"><strong>Lähteet</strong><br>Tilastokeskus · Rise (Rikosseuraamuslaitos) · Eurostat<br>Data 2010–2025 · päivittyy kuukausittain</div></div>';
+  return h;
+}
+function panelNav(id){
+  var i=MENU_ORDER.indexOf(id); if(i<0) return '';
+  var grp=MENU.find(function(m){return m.ids.indexOf(id)>=0;});
+  var nx=MENU_ORDER[(i+1)%MENU_ORDER.length], b=document.querySelector('.bn[data-p="'+nx+'"]');
+  return '<div class="pnav-pos">'+grp.g+' · '+(grp.ids.indexOf(id)+1)+' / '+grp.ids.length+'</div><div class="pnav-row"><button onclick="goHome()">← Valikkoon</button><button data-id="'+nx+'" onclick="goTo(this.dataset.id)">Seuraava: '+(b?b.textContent.trim():nx)+' →</button></div>';
 }
 
 // ── 2025 ENNAKKOTIEDOT ───────────────────────────────────
