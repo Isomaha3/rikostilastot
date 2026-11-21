@@ -135,7 +135,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:10px">
-    <button id="back-btn" onclick="goHome()" style="display:none;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:8px 12px;line-height:1;border:1px solid var(--border);border-radius:8px">☰ Valikko</button>
+    <button id="back-btn" onclick="goHome()" aria-label="Etusivulle" style="display:none;background:none;color:var(--text);cursor:pointer;font-size:14px;font-weight:500;padding:11px 15px;line-height:1;border:1px solid var(--border);border-radius:10px;min-height:44px;white-space:nowrap">← Etusivu</button>
     <div>
       <h1 id="ttitle">Persutilastot</h1>
       <small>Tilastokeskus &amp; Rise · <span id="datarange">2016–2025</span></small>
@@ -1663,6 +1663,8 @@ const DICT = {
 'Jaa':'Share'
 ,
 'Asenna puhelimeen':'Install on your phone'
+,
+'Etusivu':'Home'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 
