@@ -162,6 +162,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="p-varkaudet" class="panel"></div>
   <div id="p-eurostat" class="panel"></div>
   <div id="p-kasvu" class="panel"></div>
+  <div id="p-ulkkasvu" class="panel"></div>
 </div>
 
 <div id="pnav" class="pnav" style="display:none"></div>
@@ -173,19 +174,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="bn" data-p="varkaudet" onclick="go(this)"><div class="bn-dot" style="background:#c87a3e"></div>Varkaudet</button>
   <button class="bn" data-p="nuoriso" onclick="go(this)"><div class="bn-dot" style="background:#e06898"></div>Nuoriso</button>
   <button class="bn" data-p="perhe" onclick="go(this)"><div class="bn-dot" style="background:#e05c8a"></div>Perheväkivalta</button>
-  <button class="bn" data-p="maahanmuuttajat" onclick="go(this)"><div class="bn-dot" style="background:#3dba8c"></div>Maahanmuuttajat</button>
+  <button class="bn" data-p="maahanmuuttajat" onclick="go(this)"><div class="bn-dot" style="background:#3dba8c"></div>Ulkomaalaistaustaiset</button>
   <button class="bn" data-p="kansalaisuus" onclick="go(this)"><div class="bn-dot" style="background:#3ab8c8"></div>Kansalaisuus</button>
   <button class="bn" data-p="vangit" onclick="go(this)"><div class="bn-dot" style="background:#9b7de8"></div>Vangit</button>
-  <button class="bn" data-p="syntyperä" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Syntyperä</button>
+  <button class="bn" data-p="syntyperä" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Kansalaiset vangeissa</button>
   <button class="bn" data-p="ennakko2025" onclick="go(this)"><div class="bn-dot" style="background:#3dba8c"></div>Ennakko</button>
   <button class="bn" data-p="ika" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Ikä &amp; tausta</button>
   <button class="bn" data-p="tyottomyys" onclick="go(this)"><div class="bn-dot" style="background:#e8c23a"></div>Nuorisotyöttömyys</button>
   <button class="bn" data-p="eurostat" onclick="go(this)"><div class="bn-dot" style="background:#4f8ef7"></div>EU-vertailu</button>
   <button class="bn" data-p="kasvu" onclick="go(this)"><div class="bn-dot" style="background:#e05c5c"></div>Top 3 kasvu</button>
+  <button class="bn" data-p="ulkkasvu" onclick="go(this)"><div class="bn-dot" style="background:#3dba8c"></div>Ulkomaalaiset ja kasvavat rikokset</button>
 </nav>
 
 <script>
-const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys',eurostat:'EU-vertailu: turvallisuus asuinalueella',kasvu:'Eniten kasvaneet tilastot'};
+const TITLES={home:'Persutilastot',vakivalta:'Pahoinpitelyrikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Ulkomaalaistaustaiset vs. suomalaistaustaiset',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Ulkomaan kansalaiset vangeissa',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys',eurostat:'EU-vertailu: turvallisuus asuinalueella',kasvu:'Eniten kasvaneet tilastot',ulkkasvu:'Ulkomaalaiset ja kasvavat rikokset'};
 const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 // Vaestoosuudet, joita seka vangit- etta syntyperapaneeli kayttavat
 const VKS=7.7;   // ulkomaan kansalaisten vaestoosuus, %
@@ -282,10 +284,10 @@ function dataBox(id){
 
 // ── RENDER GENERIC CRIME ────────────────────────────────
 const DATA={
-  vakivalta:{col:'#e05c5c',csub:'Viranomaisten tietoon tulleet väkivaltatapaukset',desc:'Luku on viranomaisten tietoon tulleiden pahoinpitelyrikosten määrä (RL 21:5–7). Mukana vain täytetyt teot, ei yrityksiä. Laskee rikosilmoituksia, ei henkilöitä eikä tuomioita.',counts:[32972,33053,33150,33426,32778,33620,37647,40712,40466,44013],ppPerus:[22314,22572,22849,23431,22935,23708,26971,29398,29074,32354],ppTorkea:[1281,1291,1313,1299,1408,1360,1397,1464,1314,1355],ppLieva:[9377,9190,8988,8696,8435,8552,9279,9850,10078,10304],p100k:[599.13,599.53,600.77,604.96,592.32,605.96,676.62,726.50,718.00,778.59],trendPct:33.5,trend:'nouseva',analysis:'Pahoinpitelyt ovat kääntyneet selvään nousuun 2020-luvulla; kasvu on ollut nopeinta vuodesta 2021 alkaen. Luvut sisältävät vain täytetyt teot (RL 21:5–7), eivät yrityksiä.'},
+  vakivalta:{col:'#e05c5c',csub:'Viranomaisten tietoon tulleet väkivaltatapaukset',desc:'Luku on viranomaisten tietoon tulleiden pahoinpitelyrikosten määrä (RL 21:5–7). Mukana myös yritykset, kuten Tilastokeskuksen virallisissa luvuissa. Laskee rikosilmoituksia, ei henkilöitä eikä tuomioita.',counts:[33769,33847,33951,34247,33710,34523,38603,41815,41498,45221],ppPerus:[22314,22572,22849,23431,22935,23708,26971,29398,29074,32354],ppTorkea:[1281,1291,1313,1299,1408,1360,1397,1464,1314,1355],ppLieva:[9377,9190,8988,8696,8435,8552,9279,9850,10078,10304],ppYritys:[797,794,801,821,932,903,956,1103,1032,1208],p100k:[613.61,613.93,615.29,619.82,609.17,622.23,693.80,746.18,736.31,799.96],trendPct:33.9,trend:'nouseva',analysis:'Pahoinpitelyt ovat kääntyneet selvään nousuun 2020-luvulla; kasvu on ollut nopeinta vuodesta 2021 alkaen. Luvut sisältävät myös yritykset (RL 21:5–7), kuten Tilastokeskuksen tiedotteissa.'},
   henki:{col:'#9b7de8',csub:'Viranomaisten tietoon tulleet henkirikokset',desc:'Luku on viranomaisten tietoon tulleiden henkirikosten määrä: tappo, murha ja surma (RL 21:1–3). Mukana vain täytetyt teot, ei yrityksiä.',counts:[76,72,87,72,86,83,79,57,89,80],p100k:[1.38,1.31,1.58,1.30,1.55,1.50,1.42,1.02,1.58,1.42],trendPct:5.3,trend:'nouseva',analysis:'Henkirikoksia tapahtuu vähän, joten vuosivaihtelu on suurta eikä yksittäisen vuoden muutos kerro trendistä. Mukana ovat tappo, murha ja surma (RL 21:1–3), ei yrityksiä.'},
-  ryostot:{col:'#4f8ef7',csub:'Viranomaisten tietoon tulleet ryöstöt',desc:'Luku on viranomaisten tietoon tulleiden ryöstörikosten määrä (RL 31:1–2). Mukana vain täytetyt teot, ei yrityksiä. Laskee rikosilmoituksia, ei henkilöitä.',counts:[1409,1391,1448,1518,1690,1610,1963,2206,2141,2007],p100k:[25.60,25.23,26.24,27.47,30.54,29.02,35.28,39.37,37.99,35.50],trendPct:42.4,trend:'nouseva',analysis:'Ryöstöt kääntyivät nousuun vuoden 2019 jälkeen ja ovat viime vuosina asettuneet noin kahden tuhannen tasolle. Luvut sisältävät vain täytetyt teot (RL 31:1–2), eivät yrityksiä.'},
-  varkaudet:{col:'#c87a3e',csub:'Viranomaisten tietoon tulleet varkausrikokset',desc:'Luku on viranomaisten tietoon tulleiden varkausrikosten määrä (RL 28:1–3): varkaus, törkeä varkaus ja näpistys. Laskee rikosilmoituksia, ei henkilöitä eikä tuomioita.',counts:[124060,118464,116275,120074,131312,121283,122411,123849,124304,142069],p100k:[2254.29,2148.76,2107.23,2173.17,2372.91,2185.97,2200.07,2210.07,2205.55,2513.21],vkPerus:[58553,55196,53848,56338,62748,55016,54769,54568,54723,58916],vkTorkea:[2718,2336,2513,2300,2108,1711,1800,1681,1820,1720],vkNapistys:[62789,60932,59914,61436,66456,64556,65842,67600,67761,81433],trendPct:14.5,trend:'nouseva',analysis:'Varkausrikokset ovat Suomen yleisin rikosryhmä — niitä kirjataan yli kolminkertaisesti pahoinpitelyihin verrattuna. Kokonaismäärä pysyi pitkään vakaana, mutta kääntyi selvään nousuun viimeisimpänä vuonna. Kasvu tulee näpistyksistä; törkeät varkaudet ovat sen sijaan vähentyneet selvästi.'},
+  ryostot:{col:'#4f8ef7',csub:'Viranomaisten tietoon tulleet ryöstöt',desc:'Luku on viranomaisten tietoon tulleiden ryöstörikosten määrä (RL 31:1–2a): ryöstö, törkeä ryöstö ja törkeän ryöstön valmistelu. Mukana myös yritykset, kuten Tilastokeskuksen virallisissa luvuissa. Laskee rikosilmoituksia, ei henkilöitä.',counts:[1673,1643,1708,1812,2001,1902,2336,2733,2593,2434],p100k:[30.40,29.80,30.95,32.79,36.16,34.28,41.98,48.77,46.01,43.06],trendPct:45.5,trend:'nouseva',analysis:'Ryöstöt kääntyivät nousuun vuoden 2019 jälkeen, olivat korkeimmillaan vuonna 2023 ja ovat sen jälkeen vähentyneet. Luvut sisältävät myös yritykset ja törkeän ryöstön valmistelun (RL 31:1–2a).'},
+  varkaudet:{col:'#c87a3e',csub:'Viranomaisten tietoon tulleet varkausrikokset',desc:'Luku on viranomaisten tietoon tulleiden varkausrikosten määrä (RL 28:1–3): varkaus, törkeä varkaus ja näpistys, myös yritykset. Laskee rikosilmoituksia, ei henkilöitä eikä tuomioita.',counts:[131432,125647,123074,127337,139647,128332,129011,130748,131023,149566],p100k:[2388.24,2279.05,2230.44,2304.62,2523.53,2313.02,2318.69,2333.18,2324.76,2645.84],vkPerus:[58553,55196,53848,56338,62748,55016,54769,54568,54723,58916],vkTorkea:[2718,2336,2513,2300,2108,1711,1800,1681,1820,1720],vkNapistys:[62789,60932,59914,61436,66456,64556,65842,67600,67761,81433],vkYritys:[7372,7183,6799,7263,8335,7049,6600,6899,6719,7497],trendPct:13.8,trend:'nouseva',analysis:'Varkausrikokset ovat Suomen yleisin rikosryhmä — niitä kirjataan yli kolminkertaisesti pahoinpitelyihin verrattuna. Kokonaismäärä pysyi pitkään vakaana, mutta kääntyi selvään nousuun viimeisimpänä vuonna. Kasvu tulee näpistyksistä; törkeät varkaudet ovat sen sijaan vähentyneet selvästi.'},
   nuoriso:{col:'#e06898',csub:'Rikoslakirikoksista epäillyt alle 18-vuotiaat',desc:'Luku on alle 18-vuotiaiden rikoslakirikoksista epäiltyjen henkilöiden määrä. Kukin epäilty on laskettu vuodessa kerran vuoden törkeimmän rikoksensa mukaan — laskee siis henkilöitä, ei rikoksia.',counts:[12500,13220,12402,13108,15599,17186,18593,21711,21427,22411],p100k:[227.14,239.79,224.76,237.24,281.89,309.76,334.17,387.43,380.18,396.45],yShare:[9.00,10.50,9.70,10.60,11.30,12.10,13.60,15.30,14.80,14.60],trendPct:79.3,trend:'nouseva',analysis:'Alle 18-vuotiaiden osuus rikoslakirikoksista epäillyistä on noussut noin 9 prosentista 15 prosenttiin. Luvut ovat epäiltyjä henkilöitä, eivät rikoksia: kukin epäilty on laskettu vuodessa kerran vuoden törkeimmän rikoksensa mukaan. Muutokset ilmoitusalttiudessa ja kirjaamiskäytännöissä vaikuttavat tilastoituihin lukuihin.'},
   tyottomyys:{col:'#e8c23a',aste1524:[20.50,20.00,17.30,17.70,21.00,17.10,14.20,16.20,18.80,21.80],maara1524:[66.00,65.00,55.00,56.00,64.00,53.00,45.00,53.00,61.00,72.00],aste1574:[8.90,8.70,7.50,6.80,7.70,7.70,6.80,7.20,8.40,9.70],tyollisyys1524:[40.20,41.30,42.30,42.80,39.60,42.60,44.80,44.50,41.80,40.90],trendPct:6.3,trend:'nouseva',analysis:'Nuorten 15–24-vuotiaiden työttömyysaste on kääntynyt 2020-luvun alun pohjalukemista selvään nousuun. Nuorisotyöttömyys on rakenteellisesti noin kaksi kertaa koko väestön tasoa korkeampi, koska opiskelu ja työuran alku lisäävät liikkuvuutta työmarkkinoilla. Luvut ovat työvoimatutkimuksen otospohjaisia estimaatteja, eivät työnvälitystilaston rekisterilukuja.'}
 };
@@ -323,6 +325,7 @@ function renderCrime(id){
     const osat=[{l:'Näpistys (RL 28:3)',v:d.vkNapistys[9]},
                 {l:'Varkaus (28:1)',v:d.vkPerus[9]},
                 {l:'Törkeä varkaus (28:2)',v:d.vkTorkea[9]}];
+    if(d.vkYritys) osat.push({l:'Yritykset (28:1–3)',v:d.vkYritys[9]});
     agExtra=`<div class="card"><div class="ctitle">Mistä luku ${fi(tot)} koostuu (${Y[9]})</div>`+
     `<div class="csub">Viranomaisten tietoon tulleet rikosilmoitukset</div>`+
     hbars(osat.map(o=>({l:o.l,v:o.v,c:d.col,
@@ -334,8 +337,9 @@ function renderCrime(id){
     const osat=[{l:'Pahoinpitely (RL 21:5)',v:d.ppPerus[9]},
                 {l:'Törkeä pahoinpitely (21:6)',v:d.ppTorkea[9]},
                 {l:'Lievä pahoinpitely (21:7)',v:d.ppLieva[9]}];
+    if(d.ppYritys) osat.push({l:'Yritykset (21:5–6)',v:d.ppYritys[9]});
     agExtra=`<div class="card"><div class="ctitle">Mistä luku ${fi(tot)} koostuu (${Y[9]})</div>`+
-    `<div class="csub">Viranomaisten tietoon tulleet rikosilmoitukset — vain täytetyt teot, yritykset eivät sisälly</div>`+
+    `<div class="csub">Viranomaisten tietoon tulleet rikosilmoitukset, yritykset mukana</div>`+
     hbars(osat.map(o=>({l:o.l,v:o.v,c:d.col,
       fmt:fi(o.v)+' · '+(o.v/tot*100).toFixed(1).replace('.',',')+' %'})))+
     '</div>';
@@ -677,6 +681,7 @@ function render(id){
   else if(id==='tyottomyys') renderTyottomyys();
   else if(id==='eurostat') renderEurostat();
   else if(id==='kasvu') renderKasvu();
+  else if(id==='ulkkasvu') renderUlkKasvu();
 }
 
 // ── NUORISOTYÖTTÖMYYS ───────────────────────────────────
@@ -1065,9 +1070,10 @@ function renderKasvu(){
 // taulukoista, joten ne paivittyvat samalla kun tilastot paivittyvat.
 const MENU=[
   {g:'Rikokset',ids:['vakivalta','seksuaali','henki','ryostot','varkaudet','perhe','nuoriso']},
-  {g:'Tausta ja vankilat',ids:['maahanmuuttajat','kansalaisuus','ika','vangit','syntyperä']},
+  {g:'Tausta ja vankilat',ids:['ulkkasvu','maahanmuuttajat','kansalaisuus','ika','vangit','syntyperä']},
   {g:'Muut',ids:['ennakko2025','eurostat','tyottomyys','kasvu']}
 ];
+const TILE_NAME={vakivalta:'Pahoinpitelyt',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',perhe:'Perheväkivallan uhrit',nuoriso:'Alle 18-v. epäillyt',ulkkasvu:'Ulkomaalaiset kasvavissa rikoksissa',maahanmuuttajat:'Ulkomaalaistaustaiset epäillyt',kansalaisuus:'Kansalaisuudet',ika:'Ikä & tausta',vangit:'Vangit','syntyperä':'Ulkomaan kansalaiset vangeissa',ennakko2025:'Ennakko',eurostat:'EU-vertailu',tyottomyys:'Nuorisotyöttömyys',kasvu:'Top 3 kasvu'};
 const MENU_ORDER=MENU.flatMap(function(m){return m.ids;});
 function kvStr(fn,name){
   var m=fn.toString().match(new RegExp("const "+name+"='([^']*)'"));
@@ -1086,14 +1092,14 @@ function tileInfo(id){
     if(DATA[id]&&DATA[id].counts) return yoy(DATA[id].counts);
     if(id==='seksuaali') return yoy(kvArr(renderSeksuaali,'T'));
     if(id==='perhe') return yoy(kvArr(renderPerhe,'PV'));
-    if(id==='maahanmuuttajat'){var a=kvArr(renderMaahanmuuttajat,'IP'),b=kvArr(renderMaahanmuuttajat,'NP');return {v:f1(a[a.length-1]/b[b.length-1])+'×',s:'epäiltyjä vs. kantaväestö',d:0};}
-    if(id==='kansalaisuus'){var k=kvArr(renderKansalaisuus,'KV');var km=renderKansalaisuus.toString().match(/const KNAMES=\[([^\]]+)\]/);var nm=km?km[1].split(',').map(function(x){return x.replace(/'/g,'').trim();}):[];var su=k[nm.indexOf('Suomi')]||0;return {v:fi(Math.max.apply(null,k)),s:'korkein / 100 000 (Suomi '+fi(su)+')',d:0};}
-    if(id==='ika'){var e=kvArr(renderIka,'EU'),es=kvArr(renderIka,'ES'),L=e.length-1;return {v:f1(e[L]/(e[L]+es[L])*100)+' %',s:'ulkomaalaistaustaisia epäillyistä',d:0};}
-    if(id==='vangit'){var t=kvArr(renderVangit,'VT'),u=kvArr(renderVangit,'VU');return {v:fi(t[t.length-1]),s:'vankia, '+fi(u[u.length-1])+' ulkomaalaista',d:0};}
-    if(id==='syntyperä'){var pp=kvArr(renderSyntyperä,'PP'),pk=kvArr(renderSyntyperä,'PK');return {v:f1(pp[pp.length-1]/pk[pk.length-1])+'×',s:'yliedustus vangeissa',d:0};}
+    if(id==='maahanmuuttajat'){var a=kvArr(renderMaahanmuuttajat,'IP'),b=kvArr(renderMaahanmuuttajat,'NP');return {v:f1(a[a.length-1]/b[b.length-1])+'×',s:'epäiltyjä väestöön suhteutettuna vs. suomalaistaustaiset, '+Y[n-1],d:0};}
+    if(id==='kansalaisuus'){var k=kvArr(renderKansalaisuus,'KV');var km=renderKansalaisuus.toString().match(/const KNAMES=\[([^\]]+)\]/);var nm=km?km[1].split(',').map(function(x){return x.replace(/'/g,'').trim();}):[];var su=k[nm.indexOf('Suomi')]||0;var mxv=Math.max.apply(null,k);var mxn=nm[k.indexOf(mxv)]||'';return {v:fi(mxv),s:mxn+': epäiltyjä / 100 000 asukasta (Suomi '+fi(su)+'), '+Y[n-1],d:0};}
+    if(id==='ika'){var e=kvArr(renderIka,'EU'),es=kvArr(renderIka,'ES'),L=e.length-1;return {v:f1(e[L]/(e[L]+es[L])*100)+' %',s:'ulkomaalaistaustaisten osuus rikoksista epäillyistä, '+Y[n-1],d:0};}
+    if(id==='vangit'){var t=kvArr(renderVangit,'VT'),u=kvArr(renderVangit,'VU');return {v:fi(t[t.length-1]),s:'vankia '+Y[n-1]+' (keskimäärin), joista '+fi(u[u.length-1])+' ulkomaan kansalaisia',d:0};}
+    if(id==='syntyperä'){var pp=kvArr(renderSyntyperä,'PP'),pk=kvArr(renderSyntyperä,'PK');return {v:f1(pp[pp.length-1]/pk[pk.length-1])+'×',s:'vankiosuus '+f1(pp[pp.length-1])+' % / väestöosuus '+f1(pk[pk.length-1])+' %',d:0};}
     if(id==='ennakko2025'){var ec=kvArr(renderEnnakko2025,'ENC'),ep=kvArr(renderEnnakko2025,'ENP');var ch=(ec[0]-ep[0])/ep[0]*100;return {v:kvStr(renderEnnakko2025,'ENPER'),s:'pahoinpitelyt '+(ch>=0?'+':'−')+f1(Math.abs(ch))+' %',d:ch>=0?1:-1};}
-    if(id==='eurostat'){var L2=EUS.years.length-1;return {v:f1(EUS.v.FI[L2])+' %',s:'Suomi, EU '+f1(EUS.v.EU27_2020[L2])+' % ('+EUS.years[L2]+')',d:0};}
-    if(id==='tyottomyys'){var a2=DATA.tyottomyys.aste1524;return {v:f1(a2[a2.length-1])+' %',s:'15–24-vuotiaat '+Y[n-1],d:0};}
+    if(id==='eurostat'){var L2=EUS.years.length-1;return {v:f1(EUS.v.FI[L2])+' %',s:'kokee asuinalueen rikollisuuden ongelmaksi (EU '+f1(EUS.v.EU27_2020[L2])+' %, '+EUS.years[L2]+')',d:0};}
+    if(id==='tyottomyys'){var a2=DATA.tyottomyys.aste1524;return {v:f1(a2[a2.length-1])+' %',s:'työttömiä 15–24-v. työvoimasta, '+Y[n-1],d:0};}
     if(id==='kasvu') return {v:kasvuSarjat().length+' tilastoa',s:'koko kasvuvertailu',d:0};
   }catch(err){}
   return {v:'',s:'',d:0};
@@ -1111,8 +1117,8 @@ function homeExtras(){
     h+='<section class="home-sec"><h3>'+m.g+'</h3><div class="home-grid">';
     m.ids.forEach(function(id){
       var b=document.querySelector('.bn[data-p="'+id+'"]'); if(!b) return;
-      var dot=b.querySelector('.bn-dot'), col=dot?dot.style.background:'#7a8099', t=tileInfo(id);
-      h+='<button class="home-tile" data-id="'+id+'" onclick="goTo(this.dataset.id)"><div class="tl-name"><span class="tl-dot" style="background:'+col+'"></span>'+b.textContent.trim()+'</div><div class="tl-val">'+t.v+'</div><div class="tl-sub'+(t.d>0?' up':t.d<0?' down':'')+'">'+t.s+'</div>'+(t.t?'<div class="tl-txt">'+t.t+'</div>':'')+'</button>';
+      var dot=b.querySelector('.bn-dot'), col=dot?dot.style.background:'#7a8099', t=tileInfo(id), nm=TILE_NAME[id]||b.textContent.trim();
+      h+='<button class="home-tile" data-id="'+id+'" onclick="goTo(this.dataset.id)"><div class="tl-name"><span class="tl-dot" style="background:'+col+'"></span>'+nm+'</div><div class="tl-val">'+t.v+'</div><div class="tl-sub'+(t.d>0?' up':t.d<0?' down':'')+'">'+t.s+'</div>'+(t.t?'<div class="tl-txt">'+t.t+'</div>':'')+'</button>';
     });
     h+='</div></section>';
   });
@@ -1178,6 +1184,88 @@ function addTulkinta(id){
   if(db) db.insertAdjacentHTML('afterend',box); else el.insertAdjacentHTML('afterbegin',box);
 }
 
+// ── ULKOMAALAISET JA KASVAVAT RIKOKSET ──────────────────
+// Selvitettyihin rikoksiin epaillyt syntyperan (13zk) ja kansalaisuuden (13je)
+// mukaan rikosryhmittain. update_stats.py paivittaa OU_/OK_/CU_/CT_-taulukot.
+function renderUlkKasvu(){
+  const el=document.getElementById('p-ulkkasvu');
+  const OU_PAH=[3320,3273,3134,3390,3917,4467,4296,5263,5705,6534];
+  const OK_PAH=[20364,19404,19346,19103,19577,19406,19823,21430,21712,24388];
+  const CU_PAH=[3332,3296,2905,2965,3295,3577,3381,3940,4149,4617];
+  const CT_PAH=[24783,23723,23276,23226,24297,24480,24739,27316,27967,31417];
+  const OU_SEK=[348,423,443,780,733,720,947,950,1075,1129];
+  const OK_SEK=[1599,1628,1490,1779,1910,2456,2846,2697,3833,5330];
+  const CU_SEK=[508,527,478,860,676,668,810,867,891,917];
+  const CT_SEK=[2198,2237,2052,2760,2833,3295,3949,3792,5032,6555];
+  const OU_RYO=[182,218,198,226,349,295,379,601,677,703];
+  const OK_RYO=[1265,1302,1332,1401,1648,1574,1803,2214,2144,2212];
+  const CU_RYO=[127,161,143,178,240,161,217,389,430,415];
+  const CT_RYO=[1475,1572,1566,1670,2041,1892,2212,2855,2861,2957];
+  const OU_VAR=[3687,3667,3462,3429,3952,3836,4404,5423,6331,7828];
+  const OK_VAR=[44938,40794,39556,42379,49214,44555,42536,47038,48651,59936];
+  const CU_VAR=[6848,6915,6501,5942,5226,4267,5075,6507,6962,7915];
+  const CT_VAR=[53079,49162,47164,49587,56038,50261,49411,55545,57838,70815];
+  const OU_KAI=[25857,25546,27170,27942,32653,35062,35055,41092,46697,51438];
+  const OK_KAI=[266978,254763,253304,255449,292662,287851,260021,310625,269600,296319];
+  const CU_KAI=[33555,33227,34230,34387,33939,33534,34111,38217,42319,44924];
+  const CT_KAI=[311120,297842,297642,300371,339730,334427,307826,365011,330851,360642];
+  var n=Y.length, y0=Y[0], y1=Y[n-1];
+  var PBI=kvArr(renderIka,'PBI')||[], UVK=kvArr(renderSeksuaali,'UV')||[];
+  var popB0=PBI[0], popB1=PBI[PBI.length-1], popC0=UVK[0], popC1=UVK[UVK.length-1];
+  var f1=function(x){return x.toFixed(1).replace('.',',');};
+  var G=[
+    {k:'PAH',l:'Pahoinpitelyrikokset',c:'#e05c5c',u:OU_PAH,t:CT_PAH,cu:CU_PAH},
+    {k:'RYO',l:'Ryöstörikokset',c:'#4f8ef7',u:OU_RYO,t:CT_RYO,cu:CU_RYO},
+    {k:'SEK',l:'Seksuaalirikokset',c:'#e8a23a',u:OU_SEK,t:CT_SEK,cu:CU_SEK,note:'Seksuaalirikoslaki uudistui 2023.'},
+    {k:'VAR',l:'Varkausrikokset',c:'#c87a3e',u:OU_VAR,t:CT_VAR,cu:CU_VAR}
+  ].map(function(g){
+    var sh=g.u.map(function(v,i){return g.t[i]?v/g.t[i]*100:0;});
+    var cs=g.cu.map(function(v,i){return g.t[i]?v/g.t[i]*100:0;});
+    var gr=(g.t[n-1]-g.t[0])/g.t[0]*100;
+    var gs=(g.t[n-1]-g.t[0])!==0?(g.u[n-1]-g.u[0])/(g.t[n-1]-g.t[0])*100:0;
+    return Object.assign(g,{sh:sh,cs:cs,gr:gr,gs:gs,r0:popB0?sh[0]/popB0:0,r1:popB1?sh[n-1]/popB1:0});
+  }).filter(function(g){return g.gr>0;}).sort(function(a,b){return b.gr-a.gr;});
+  var ka={sh0:OU_KAI[0]/CT_KAI[0]*100,sh1:OU_KAI[n-1]/CT_KAI[n-1]*100,gs:(OU_KAI[n-1]-OU_KAI[0])/(CT_KAI[n-1]-CT_KAI[0])*100,cs0:CU_KAI[0]/CT_KAI[0]*100,cs1:CU_KAI[n-1]/CT_KAI[n-1]*100};
+  var tulk=function(g){
+    var t='Ulkomaalaistaustaisten osuus epäillyistä nousi '+f1(g.sh[0])+' %:sta '+f1(g.sh[n-1])+' %:iin, kun heidän väestöosuutensa nousi '+f1(popB0)+' %:sta '+f1(popB1)+' %:iin. ';
+    var d=g.r1-g.r0;
+    if(Math.abs(d)<0.1) t+='Yliedustus on pysynyt ennallaan, noin '+f1(g.r1)+'-kertaisena. ';
+    else if(d>0) t+='Yliedustus on kasvanut '+f1(g.r0)+'-kertaisesta '+f1(g.r1)+'-kertaiseksi. ';
+    else t+='Yliedustus on pienentynyt '+f1(g.r0)+'-kertaisesta '+f1(g.r1)+'-kertaiseksi. ';
+    t+='Noin '+Math.round(g.gs)+' % epäiltyjen määrän kasvusta tuli ulkomaalaistaustaisista.';
+    return t;
+  };
+  var cards=G.map(function(g){
+    return '<div class="card" style="border-left:4px solid '+g.c+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><div><div style="font-size:15px;font-weight:600">'+g.l+'</div>'+
+      '<div class="csub">Epäiltyjä '+fi(g.t[0])+' → '+fi(g.t[n-1])+' ('+(g.gr>=0?'+':'−')+Math.abs(g.gr).toFixed(0)+' %)</div></div>'+
+      '<div style="text-align:right"><div style="font-size:24px;font-weight:700;color:'+g.c+'">'+f1(g.sh[n-1])+' %</div><div class="csub">ulkomaalaistaustaisia '+y1+'</div></div></div>'+
+      '<div class="twocol" style="margin-top:10px">'+
+        '<div><div class="csub">Osuus epäillyistä</div><div style="font-size:14px;font-weight:600">'+f1(g.sh[0])+' % → '+f1(g.sh[n-1])+' %</div></div>'+
+        '<div><div class="csub">Väestöosuus</div><div style="font-size:14px;font-weight:600">'+f1(popB0)+' % → '+f1(popB1)+' %</div></div>'+
+        '<div><div class="csub">Yliedustus (osuus / väestö)</div><div style="font-size:14px;font-weight:600">'+f1(g.r0)+'× → '+f1(g.r1)+'×</div></div>'+
+        '<div><div class="csub">Osuus kasvusta</div><div style="font-size:14px;font-weight:600">'+Math.round(g.gs)+' %</div></div>'+
+      '</div>'+
+      '<div style="margin-top:10px;font-size:12px;line-height:1.5">'+tulk(g)+'</div>'+
+      '<div class="csub" style="margin-top:6px">Ulkomaan kansalaisten osuus samoista epäillyistä: '+f1(g.cs[0])+' % → '+f1(g.cs[n-1])+' % (väestöosuus '+f1(popC0)+' % → '+f1(popC1)+' %).'+(g.note?' '+g.note:'')+'</div>'+
+    '</div>';
+  }).join('');
+  var all=G.flatMap(function(g){return g.sh;}).concat(PBI);
+  var lc=lineChart(G.map(function(g){return {data:g.sh,color:g.c,width:2,fill:false};}).concat(PBI.length===n?[{data:PBI,color:'#7a8099',width:1.5,dash:'4,3',fill:false}]:[]),0,Math.ceil(Math.max.apply(null,all)/5)*5,function(v){return v.toFixed(0)+'%';});
+  el.innerHTML=
+    '<div class="dbox"><div class="dbox-dot"></div><span><strong>Ajanjakso: '+y0+'–'+y1+'</strong> — Selvitettyihin rikoksiin syylliseksi epäillyt. Kukin epäilty lasketaan kerran kussakin rikosryhmässä.<br><span style="opacity:.7">Lähde: Tilastokeskus, StatFin-taulut rpk/13zk (syntyperä) ja rpk/13je (kansalaisuus), väestö vaerak/159s</span></span></div>'+
+    '<div class="ibox"><strong>Käsitteet:</strong> <em>Ulkomaalaistaustainen</em> = molemmat vanhemmat (tai ainoa tiedossa oleva) syntyneet ulkomailla; mukana myös Suomessa syntyneitä ja Suomen kansalaisia. <em>Ulkomaan kansalainen</em> = kansalaisuuden mukaan; mukana myös Suomessa vakituisesti asumattomat. <em>Osuus kasvusta</em> = kuinka suuri osa epäiltyjen määrän kasvusta tuli ulkomaalaistaustaisista.</div>'+
+    '<div class="metrics">'+
+      '<div class="mc"><div class="mlabel">Kaikki rikoslakirikokset '+y1+'</div><div class="mval r">'+f1(ka.sh1)+' %</div><div class="msub">ulkomaalaistaustaisia epäillyistä ('+y0+': '+f1(ka.sh0)+' %)</div></div>'+
+      '<div class="mc"><div class="mlabel">Väestöosuus '+y1+'</div><div class="mval">'+f1(popB1)+' %</div><div class="msub">'+y0+': '+f1(popB0)+' %</div></div>'+
+      '<div class="mc mc3"><div class="mlabel">Osuus epäiltyjen kasvusta</div><div class="mval r">'+Math.round(ka.gs)+' %</div><div class="msub">kaikki rikoslakirikokset '+y0+'–'+y1+'</div></div>'+
+    '</div>'+
+    '<div class="card"><div class="ctitle">Ulkomaalaistaustaisten osuus epäillyistä '+y0+'–'+y1+'</div><div class="csub">Katkoviiva = osuus väestöstä</div>'+
+      '<div class="legend">'+G.map(function(g){return '<span class="li"><span class="ld" style="background:'+g.c+'"></span>'+g.l+'</span>';}).join('')+'<span class="li"><span class="ld" style="background:#7a8099"></span>Väestöosuus</span></div>'+lc+'</div>'+
+    cards+
+    '<div class="abox">Kasvaneissa rikosryhmissä ulkomaalaistaustaisten osuus epäillyistä on noussut, mutta samaan aikaan heidän osuutensa väestöstä on noussut '+f1(popB0)+' %:sta '+f1(popB1)+' %:iin. Yliedustus suhteessa väestöön kertoo, onko kasvu suhteellisesti suurempaa kuin väestökasvu. Luvut koskevat epäiltyjä, eivät tuomittuja, eikä niitä ole vakioitu iän tai sukupuolen mukaan; ulkomaalaistaustainen väestö on keskimäärin nuorempaa ja miesvaltaisempaa, mikä selittää osan erosta. Ulkomaan kansalaisten osuus kaikista epäillyistä: '+f1(ka.cs0)+' % → '+f1(ka.cs1)+' %.</div>';
+}
+
 // ── 2025 ENNAKKOTIEDOT ───────────────────────────────────
 // Lähde: Tilastokeskus, rikos- ja pakkokeinotilasto 2025 Q3 (julk. 17.10.2025)
 // Rullaava ennakkojakso taulusta rpk/13j2 — ei vertailukelpoinen koko vuoden tilastoihin
@@ -1189,8 +1277,8 @@ function renderEnnakko2025(){
   // Luvut haetaan taulusta rpk/13j2 (ennakkotieto, kumulatiivinen vuosisumma).
   const ENL=['Pahoinpitelyt','Raiskaukset','Lapsiin kohdistuvat','Seksuaalinen ahdistelu','Henkirikokset','Ryöstöt','Varkaudet'];
   const ENCOL=['#e05c5c','#e8a23a','#e06898','#9b7de8','#8fb84a','#4f8ef7','#3dba8c'];
-  const ENC=[35614,1526,2922,1161,56,1517,107139];
-  const ENP=[32087,1572,2176,1047,56,1425,104394];
+  const ENC=[36511,1526,2922,1161,56,1834,112193];
+  const ENP=[32989,1572,2176,1047,56,1744,109971];
   const ENPER='1–9/2026';
   const ENPERP='1–9/2025';
   const cats=ENL.map((l,i)=>({l,v25:ENC[i],v24:ENP[i],c:ENCOL[i],note:''}))
@@ -1322,8 +1410,8 @@ const DICT = {
 'Väestöosuus (syntyneet)':'Population share (country of birth)',
 'Väestöosuus':'Population share','väestöosuus ':'population share ','Väestö':'Population',
 'Viranomaisten tietoon tulleet tapaukset':'Offences known to the authorities',
-'Viranomaisten tietoon tulleet rikosilmoitukset — vain täytetyt teot, yritykset eivät sisälly':
- 'Offences known to the authorities — completed offences only, attempts excluded',
+'Viranomaisten tietoon tulleet rikosilmoitukset, yritykset mukana':
+ 'Offences known to the authorities, attempts included',
 'Rikoslakirikokset, kukin epäilty laskettu kerran vuodessa':
  'Penal Code offences; each suspect counted once per year',
 'suhteessa kantaväestöön':'relative to the native population',
@@ -1404,9 +1492,9 @@ const DICT = {
 'Ikä- ja sukupuolivakioitu · Lähde: Tilastokeskus 2017–2018':'Age- and sex-standardised · Source: Statistics Finland 2017–2018',
 'Tilastokeskus Tieto&trendit 2023 — Espoo esimerkkinä, vaihtelu kaupungeittain suuri':'Statistics Finland Tieto&trendit 2023 — Espoo as an example; variation between cities is large',
 'Tilastokeskus rikos- ja pakkokeinotilasto. Ikäjakauma on laskettu julkisista tilastoista. Seksuaalirikossuhdeluvut ovat Tilastokeskuksen ikä- ja sukupuolivakioituja lukuja vuosilta 2017–2018 — viimeisin julkaistu tätä yksityiskohtainen vertailu.':'Statistics Finland statistics on offences and coercive measures. The age distribution is calculated from public statistics. The sexual offence ratios are Statistics Finland\'s age- and sex-standardised figures for 2017–2018 — the most recent comparison published at this level of detail.',
-'Pahoinpitelyt ovat kääntyneet selvään nousuun 2020-luvulla; kasvu on ollut nopeinta vuodesta 2021 alkaen. Luvut sisältävät vain täytetyt teot (RL 21:5–7), eivät yrityksiä.':'Assaults have turned clearly upward in the 2020s, with the fastest growth from 2021 onward. Figures cover completed offences only (Penal Code 21:5–7), not attempts.',
+'Pahoinpitelyt ovat kääntyneet selvään nousuun 2020-luvulla; kasvu on ollut nopeinta vuodesta 2021 alkaen. Luvut sisältävät myös yritykset (RL 21:5–7), kuten Tilastokeskuksen tiedotteissa.':'Assaults have turned clearly upward in the 2020s, with the fastest growth from 2021 onward. Figures include attempts (Penal Code 21:5–7), as in Statistics Finland releases.',
 'Henkirikoksia tapahtuu vähän, joten vuosivaihtelu on suurta eikä yksittäisen vuoden muutos kerro trendistä. Mukana ovat tappo, murha ja surma (RL 21:1–3), ei yrityksiä.':'Homicides are few, so year-to-year variation is large and a single year\'s change says little about the trend. Includes manslaughter, murder and killing (Penal Code 21:1–3), not attempts.',
-'Ryöstöt kääntyivät nousuun vuoden 2019 jälkeen ja ovat viime vuosina asettuneet noin kahden tuhannen tasolle. Luvut sisältävät vain täytetyt teot (RL 31:1–2), eivät yrityksiä.':'Robberies turned upward after 2019 and have settled at around two thousand per year. Figures cover completed offences only (Penal Code 31:1–2), not attempts.',
+'Ryöstöt kääntyivät nousuun vuoden 2019 jälkeen, olivat korkeimmillaan vuonna 2023 ja ovat sen jälkeen vähentyneet. Luvut sisältävät myös yritykset ja törkeän ryöstön valmistelun (RL 31:1–2a).':'Robberies turned upward after 2019, peaked in 2023 and have declined since. Figures include attempts and preparation of aggravated robbery (Penal Code 31:1–2a).',
 'Alle 18-vuotiaiden osuus rikoslakirikoksista epäillyistä on noussut noin 9 prosentista 15 prosenttiin. Luvut ovat epäiltyjä henkilöitä, eivät rikoksia: kukin epäilty on laskettu vuodessa kerran vuoden törkeimmän rikoksensa mukaan. Muutokset ilmoitusalttiudessa ja kirjaamiskäytännöissä vaikuttavat tilastoituihin lukuihin.':'The share of under-18s among those suspected of Penal Code offences has risen from about 9% to 15%. Figures are persons, not offences: each suspect is counted once per year by their most serious offence. Changes in reporting propensity and recording practice affect the recorded figures.',
 'Nuorten 15–24-vuotiaiden työttömyysaste on kääntynyt 2020-luvun alun pohjalukemista selvään nousuun. Nuorisotyöttömyys on rakenteellisesti noin kaksi kertaa koko väestön tasoa korkeampi, koska opiskelu ja työuran alku lisäävät liikkuvuutta työmarkkinoilla. Luvut ovat työvoimatutkimuksen otospohjaisia estimaatteja, eivät työnvälitystilaston rekisterilukuja.':'The unemployment rate for 15–24-year-olds has turned clearly upward from the lows of the early 2020s. Youth unemployment is structurally about twice the level of the total population, because studying and the start of a career increase movement in the labour market. Figures are sample-based estimates from the Labour Force Survey, not register figures from employment services.',
 'Luvut per 100 000 ko. ryhmässä. Ulkomaalaistaustainen väestö on ikärakenteeltaan nuorempi, ja nuoret ovat kaikissa väestöryhmissä yliedustettuina rikostilastoissa — tämä näkyy alla olevassa ikäryhmävertailussa.':'Figures are per 100,000 within each group. The population with an immigrant background is younger, and young people are overrepresented in crime statistics in every population group — this is visible in the age comparison below.',
@@ -1486,9 +1574,9 @@ const DICT = {
 '60–69 v':'60–69 yrs'
 ,
 'Mitä luku kuvaa:':'What the figure shows:',
-'Luku on viranomaisten tietoon tulleiden pahoinpitelyrikosten määrä (RL 21:5–7). Mukana vain täytetyt teot, ei yrityksiä. Laskee rikosilmoituksia, ei henkilöitä eikä tuomioita.':'The figure is the number of assault offences known to the authorities (Penal Code 21:5–7). Completed offences only, attempts excluded. It counts reported offences, not persons or convictions.',
+'Luku on viranomaisten tietoon tulleiden pahoinpitelyrikosten määrä (RL 21:5–7). Mukana myös yritykset, kuten Tilastokeskuksen virallisissa luvuissa. Laskee rikosilmoituksia, ei henkilöitä eikä tuomioita.':'The figure is the number of assault offences known to the authorities (Penal Code 21:5–7). Attempts included, as in Statistics Finland's official figures. It counts reported offences, not persons or convictions.',
 'Luku on viranomaisten tietoon tulleiden henkirikosten määrä: tappo, murha ja surma (RL 21:1–3). Mukana vain täytetyt teot, ei yrityksiä.':'The figure is the number of homicides known to the authorities: manslaughter, murder and killing (Penal Code 21:1–3). Completed offences only, attempts excluded.',
-'Luku on viranomaisten tietoon tulleiden ryöstörikosten määrä (RL 31:1–2). Mukana vain täytetyt teot, ei yrityksiä. Laskee rikosilmoituksia, ei henkilöitä.':'The figure is the number of robbery offences known to the authorities (Penal Code 31:1–2). Completed offences only, attempts excluded. It counts reported offences, not persons.',
+'Luku on viranomaisten tietoon tulleiden ryöstörikosten määrä (RL 31:1–2a): ryöstö, törkeä ryöstö ja törkeän ryöstön valmistelu. Mukana myös yritykset, kuten Tilastokeskuksen virallisissa luvuissa. Laskee rikosilmoituksia, ei henkilöitä.':'The figure is the number of robbery offences known to the authorities (Penal Code 31:1–2a): robbery, aggravated robbery and preparation of aggravated robbery. Attempts included, as in Statistics Finland's official figures. It counts reported offences, not persons.',
 'Luku on alle 18-vuotiaiden rikoslakirikoksista epäiltyjen henkilöiden määrä. Kukin epäilty on laskettu vuodessa kerran vuoden törkeimmän rikoksensa mukaan — laskee siis henkilöitä, ei rikoksia.':'The figure is the number of persons under 18 suspected of Penal Code offences. Each suspect is counted once per year by their most serious offence — so it counts persons, not offences.'
 ,
 'Epäiltyjen muutos ikäryhmittäin ':'Change in suspects by age group ',
@@ -1508,7 +1596,7 @@ const DICT = {
 'Näpistys (RL 28:3)':'Petty theft (PC 28:3)',
 'Varkaus (28:1)':'Theft (28:1)',
 'Törkeä varkaus (28:2)':'Aggravated theft (28:2)',
-'Luku on viranomaisten tietoon tulleiden varkausrikosten määrä (RL 28:1–3): varkaus, törkeä varkaus ja näpistys. Laskee rikosilmoituksia, ei henkilöitä eikä tuomioita.':'The figure is the number of theft offences known to the authorities (Penal Code 28:1–3): theft, aggravated theft and petty theft. It counts reported offences, not persons or convictions.',
+'Luku on viranomaisten tietoon tulleiden varkausrikosten määrä (RL 28:1–3): varkaus, törkeä varkaus ja näpistys, myös yritykset. Laskee rikosilmoituksia, ei henkilöitä eikä tuomioita.':'The figure is the number of theft offences known to the authorities (Penal Code 28:1–3): theft, aggravated theft and petty theft. It counts reported offences, not persons or convictions.',
 'Varkausrikokset ovat Suomen yleisin rikosryhmä — niitä kirjataan yli kolminkertaisesti pahoinpitelyihin verrattuna. Kokonaismäärä pysyi pitkään vakaana, mutta kääntyi selvään nousuun viimeisimpänä vuonna. Kasvu tulee näpistyksistä; törkeät varkaudet ovat sen sijaan vähentyneet selvästi.':'Theft is the most common offence category in Finland — more than three times as many are recorded as assaults. The total was stable for years but turned clearly upward in the latest year. The growth comes from petty theft; aggravated thefts have fallen markedly.'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);

@@ -146,14 +146,14 @@ SEX_GROUP = '231T241'   # 13 Seksuaalirikokset
 # viimeisin kuukausi antaa suoraan kuluvan vuoden kertyman.
 PRELIM_TABLE = f'{PXWEB_BASE}/rpk/13j2.px'
 PRELIM_CATS = [
-    ['210501', '210601', '210701'],           # Pahoinpitelyt
+    ['210501', '210601', '210701', '210502', '210602'],  # Pahoinpitelyt (ml. yritykset)
     ['200101', '200201', '200101_2022', '2001A3_2022', '200201_2022'],  # Raiskaukset
     ['201201', '201301', '201401', '201501', '201601',
      '200601_2022', '200701_2022', '2007B1_2022'],     # Lapsiin kohdistuvat
     ['200601', '2005A1_2022'],                # Seksuaalinen ahdistelu
     ['210101', '210201', '210301'],           # Henkirikokset
-    ['310101', '310201'],                     # Ryöstöt
-    ['280101', '280201', '280301'],           # Varkaudet
+    ['310101', '310201', '310102', '310202', '3102A1'],  # Ryöstöt (ml. yritykset)
+    ['280101', '280201', '280301', '280102', '280202', '280302'],  # Varkaudet (ml. yritykset)
 ]
 # = Väkivalta, Seksuaali, Henkirikokset, Omaisuus (sama järjestys kuin RTNAMES)
 
@@ -161,7 +161,8 @@ PRELIM_CATS = [
 # Koodit ovat muotoa <luku><pykälä><momentti>. Seksuaalirikoslaki uudistui
 # 2023, joten aikasarjan jatkuvuuden vuoksi mukana ovat sekä nykyiset koodit
 # että vanhan lain '_2022'-päätteiset vastineet.
-# Yritykset on jätetty pois — mukana vain täytetyt teot, kuten ennenkin.
+# Pahoinpitelyissä, ryöstöissä ja varkauksissa mukana myös yritykset, jotta
+# luvut vastaavat Tilastokeskuksen virallisia kokonaislukuja.
 # Jos koodit muuttuvat, aja: python update_stats.py --discover
 
 CRIME_CODES = {
@@ -170,9 +171,12 @@ CRIME_CODES = {
         '210501',  # Pahoinpitely 21:5§1
         '210601',  # Törkeä pahoinpitely 21:6§1
         '210701',  # Lievä pahoinpitely 21:7§
+        '210502',  # Pahoinpitelyn yritys 21:5§2
+        '210602',  # Törkeän pahoinpitelyn yritys 21:6§2
     ],
     # Varkausrikokset (RL 28:1-3)
-    'varkaus': ['280101', '280201', '280301'],
+    'varkaus': ['280101', '280201', '280301', '280102', '280202', '280302'],
+    'varkaus_yritys': ['280102', '280202', '280302'],
     'varkaus_perus': ['280101'],
     'varkaus_torkea': ['280201'],
     'varkaus_napistys': ['280301'],
@@ -180,6 +184,7 @@ CRIME_CODES = {
     'pahoinpitely_perus': ['210501'],
     'pahoinpitely_torkea': ['210601'],
     'pahoinpitely_lieva': ['210701'],
+    'pahoinpitely_yritys': ['210502', '210602'],
     # Henkirikokset (tappo + murha + surma)
     'henkirikos': [
         '210101',  # Tappo 21:1§1
@@ -190,6 +195,9 @@ CRIME_CODES = {
     'ryosto': [
         '310101',  # Ryöstö 31:1§1
         '310201',  # Törkeä ryöstö 31:2§1
+        '310102',  # Ryöstön yritys 31:1§2
+        '310202',  # Törkeän ryöstön yritys 31:2§2
+        '3102A1',  # Törkeän ryöstön valmistelu 31:2a§
     ],
     # Raiskaukset — uusi ja vanha laki yhdessä
     'raiskaus': [
@@ -492,6 +500,34 @@ def _pxpost(table, query_items, years, as_float=False):
     except Exception as e:
         print(f"  Hakuvirhe ({table.rsplit('/', 1)[-1]}): {e}")
         return None
+
+
+# Ulkomaalaiset kasvavissa rikoksissa: epäillyt rikosryhmittäin syntyperän
+# (13zk) ja kansalaisuuden (13je) mukaan. Avain = taulukon pääte sivulla.
+ORIGIN_GROUPS = [('PAH', '211T213'), ('SEK', '231T241'), ('RYO', '121T122'),
+                 ('VAR', '101T103'), ('KAI', '101T504X406')]
+
+
+def fetch_origin_counts(crime, origin, years):
+    """Epäillyt rikosryhmittäin syntyperän mukaan (13zk), kukin kerran ryhmässä."""
+    return _pxpost(SYNT_TABLE, [
+        {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [crime]}},
+        {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": ["ep_lkm"]}},
+    ], years)
+
+
+def fetch_citizen_counts(crime, citizen, years):
+    """Epäillyt rikosryhmittäin kansalaisuuden mukaan (13je)."""
+    return _pxpost(RAPE_TABLE, [
+        {"code": RAPE_VAR_RESID, "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": RAPE_VAR_CITIZEN, "selection": {"filter": "item", "values": [citizen]}},
+        {"code": RAPE_VAR_CRIME, "selection": {"filter": "item", "values": [crime]}},
+        {"code": RAPE_VAR_AREA, "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": ["ep_lkm"]}},
+    ], years)
 
 
 def fetch_perhe_victims(age_code, years):
@@ -1074,6 +1110,8 @@ def main():
     vk_perus = fetch_crime_data('varkaus_perus', years[0], latest_year)
     vk_torkea = fetch_crime_data('varkaus_torkea', years[0], latest_year)
     vk_napistys = fetch_crime_data('varkaus_napistys', years[0], latest_year)
+    pp_yritys = fetch_crime_data('pahoinpitely_yritys', years[0], latest_year)
+    vk_yritys = fetch_crime_data('varkaus_yritys', years[0], latest_year)
 
     print("  Nuorisotyöttömyys...")
     unemp_rate = fetch_unemployment(UNEMP_AGE_YOUTH, UNEMP_RATE)
@@ -1171,6 +1209,8 @@ def main():
     vk_perus_arr = to_array(vk_perus)
     vk_torkea_arr = to_array(vk_torkea)
     vk_napistys_arr = to_array(vk_napistys)
+    pp_yritys_arr = to_array(pp_yritys)
+    vk_yritys_arr = to_array(vk_yritys)
     varkaus_p100k = calc_per100k(varkaus_arr, pop)
     unemp_rate_arr = to_array(unemp_rate)
     unemp_count_arr = to_array(unemp_count)
@@ -1237,6 +1277,10 @@ def main():
         content = update_data_object(content, 'varkaudet', 'vkTorkea', vk_torkea_arr)
     if vk_napistys_arr:
         content = update_data_object(content, 'varkaudet', 'vkNapistys', vk_napistys_arr)
+    if vk_yritys_arr:
+        content = update_data_object(content, 'varkaudet', 'vkYritys', vk_yritys_arr)
+    if pp_yritys_arr:
+        content = update_data_object(content, 'vakivalta', 'ppYritys', pp_yritys_arr)
     
     # Henkirikokset
     if henkirikos_arr:
@@ -1320,6 +1364,19 @@ def main():
         ur = [round(rape_foreign.get(y, 0) / rape_all[y] * 100, 1)
               if rape_all.get(y) else 0 for y in year_strs]
         content = update_const_array(content, 'UR', ur, is_float=True)
+
+    # ── Ulkomaalaiset kasvavissa rikoksissa (13zk, 13je) ──
+    for key, crime in ORIGIN_GROUPS:
+        ou = fetch_origin_counts(crime, SYNT_FOREIGN, year_strs)
+        ok_ = fetch_origin_counts(crime, SYNT_DOMESTIC, year_strs)
+        cu = fetch_citizen_counts(crime, 'ULK', year_strs)
+        ct = fetch_citizen_counts(crime, 'SSS', year_strs)
+        if ou and ok_:
+            content = update_const_array(content, f'OU_{key}', [int(ou.get(y, 0)) for y in year_strs])
+            content = update_const_array(content, f'OK_{key}', [int(ok_.get(y, 0)) for y in year_strs])
+        if cu and ct:
+            content = update_const_array(content, f'CU_{key}', [int(cu.get(y, 0)) for y in year_strs])
+            content = update_const_array(content, f'CT_{key}', [int(ct.get(y, 0)) for y in year_strs])
 
     # ── Ulkomaan kansalaisten väestöosuus (11rg) ──
     if pop_all_c and pop_for_c:
