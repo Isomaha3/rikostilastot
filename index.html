@@ -566,7 +566,7 @@ function renderVangit(){
   ${dataBox('vangit')}
   <div class="metrics">
     <div class="mc"><div class="mlabel">Vankeja 2025</div><div class="mval">${fi(VT[VT.length-1])}</div><div class="msub">päivittäinen keskimäärä</div></div>
-    <div class="mc"><div class="mlabel">Ulkomaalaisia 2025</div><div class="mval r">839</div><div class="msub">23,7 % kaikista</div></div>
+    <div class="mc"><div class="mlabel">Ulkomaalaisia ${PY[PY.length-1]}</div><div class="mval r">${fi(VU[VU.length-1])}</div><div class="msub">${PP[PP.length-1].toFixed(1).replace('.',',')} % · <strong>joka ${['','','toinen','kolmas','neljäs','viides','kuudes','seitsemäs','kahdeksas','yhdeksäs','kymmenes'][Math.round(100/PP[PP.length-1])]||Math.round(100/PP[PP.length-1])+'.'} vanki</strong></div></div>
     <div class="mc mc3"><div class="mlabel">Kasvu 2015→2025</div><div class="mval r">+76 %</div><div class="msub">477 → 839 vankia (keskimäärin)</div></div>
   </div>
   <div class="card"><div class="ctitle">Vangit yhteensä ja ulkomaalaiset 2010–2025</div><div class="csub">Vankien päivittäinen keskimäärä</div><div class="legend"><span class="li"><span class="ld" style="background:#7a8099"></span>Suomen kansalaiset</span><span class="li"><span class="ld" style="background:#e05c5c"></span>Ulkomaalaiset</span></div>${sb}<div class="csub" style="margin-top:6px">Vankeja yhteensä ${fi(VT[0])} (2010) → ${fi(VT[VT.length-1])} (2025), ulkomaalaisia ${fi(VU[0])} → ${fi(VU[VU.length-1])}. Suomen kansalaisia ${fi(VT[0]-VU[0])} → ${fi(VT[VT.length-1]-VU[VU.length-1])}.</div></div>
