@@ -97,7 +97,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .landing .start-btn:active{transform:scale(.97);}
 .landing .credits{margin-top:32px;font-size:11px;color:var(--dim);line-height:1.7;}
 .landing .credits strong{color:var(--muted);}
-.home-wrap{max-width:560px;margin:0 auto;padding:0 16px 32px;display:flex;flex-direction:column;gap:26px;text-align:left}
+.home-wrap{max-width:900px;margin:0 auto;padding:0 16px 32px;display:flex;flex-direction:column;gap:26px;text-align:left}
 .home-sec{display:flex;flex-direction:column;gap:10px}
 .home-head{display:flex;justify-content:space-between;align-items:baseline}
 .home-head h2{font-size:17px;font-weight:700;margin:0}
@@ -110,6 +110,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ht-sub{font-size:12px;color:var(--muted)}
 .ht-note{font-size:11px;color:var(--amber)}
 .ht-src{font-size:11px;color:var(--muted)}
+.ht-txt{font-size:12px;color:var(--text)}
+.tl-txt{font-size:11px;color:var(--text);opacity:.85;line-height:1.35}
+.tulkinta{border-left:3px solid var(--accent)}
 .ht-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .ht-pct{font-size:26px;font-weight:700;line-height:1}
 .home-fine{font-size:11px;color:var(--muted)}
@@ -658,6 +661,7 @@ function go(el){
     panel.dataset.done='1';
     render(id);
   }
+  addTulkinta(id);
 }
 
 function render(id){
@@ -1034,7 +1038,8 @@ function renderKasvu(){
         <span>${y1}: <strong style="color:var(--text,inherit)">${fi(s.lastV)}</strong></span>
         <span>vs. ${yP}: <strong style="color:${s.yoy>=0?'var(--red)':'var(--green)'}">${sg1(s.yoy)}</strong></span>
       </div>
-      <div class="csub" style="margin-top:6px">Lähde: ${s.src}</div>
+      <div style="margin-top:8px;font-size:12px">${trendText(s.d,Y)}</div>
+      <div class="csub" style="margin-top:4px">Lähde: ${s.src}</div>
       ${s.note?'<div class="csub" style="margin-top:4px">Huom: '+s.note+'</div>':''}
     </div>`).join('');
   const mx=Math.max(...top.flatMap(s=>s.idx)), mn=Math.min(100,...top.flatMap(s=>s.idx));
@@ -1076,7 +1081,7 @@ function hSpark(vals,c){
 }
 function tileInfo(id){
   var n=Y.length, f1=function(x){return x.toFixed(1).replace('.',',');};
-  var yoy=function(a){var c=(a[a.length-1]-a[a.length-2])/a[a.length-2]*100;return {v:fi(a[a.length-1]),s:(c>=0?'+':'−')+f1(Math.abs(c))+' % vs. '+Y[n-2],d:c>=0?1:-1};};
+  var yoy=function(a0){var a=a0.slice(-n);var c=(a[n-1]-a[n-2])/a[n-2]*100, lg=(a[n-1]-a[0])/a[0]*100;return {v:fi(a[n-1]),s:(c>=0?'+':'−')+f1(Math.abs(c))+' % vs. '+Y[n-2]+' · '+(lg>=0?'+':'−')+Math.abs(lg).toFixed(0)+' % vs. '+Y[0],d:c>=0?1:-1,t:trendText(a,Y)};};
   try{
     if(DATA[id]&&DATA[id].counts) return yoy(DATA[id].counts);
     if(id==='seksuaali') return yoy(kvArr(renderSeksuaali,'T'));
@@ -1099,7 +1104,7 @@ function homeExtras(){
   var sg1=function(v){return (v>=0?'+':'−')+Math.abs(v).toFixed(1).replace('.',',')+' %';};
   var h='<div class="home-wrap"><section id="home-top3" class="home-sec"><div class="home-head"><h2>Eniten kasvaneet '+y0+'–'+y1+'</h2><button data-id="kasvu" onclick="goTo(this.dataset.id)">Kaikki →</button></div>';
   top.forEach(function(s,i){
-    h+='<button class="home-top" data-id="'+s.id+'" onclick="goTo(this.dataset.id)"><div class="ht-main"><div class="ht-rank">'+(i+1)+'. eniten kasvanut</div><div class="ht-name">'+s.l+'</div><div class="ht-sub">'+y0+': '+fi(s.first)+' → '+y1+': '+fi(s.lastV)+' · vs. '+yP+' '+sg1(s.yoy)+'</div><div class="ht-src">Lähde: '+s.src+'</div>'+(s.note?'<div class="ht-note">Huom: lainmuutos 2023 selittää osan kasvusta</div>':'')+'</div><div class="ht-side"><div class="ht-pct" style="color:'+s.c+'">'+sg(s.pct)+'</div>'+hSpark(s.d,s.c)+'</div></button>';
+    h+='<button class="home-top" data-id="'+s.id+'" onclick="goTo(this.dataset.id)"><div class="ht-main"><div class="ht-rank">'+(i+1)+'. eniten kasvanut</div><div class="ht-name">'+s.l+'</div><div class="ht-sub">'+y0+': '+fi(s.first)+' → '+y1+': '+fi(s.lastV)+' · vs. '+yP+' '+sg1(s.yoy)+'</div><div class="ht-txt">'+trendText(s.d,Y)+'</div><div class="ht-src">Lähde: '+s.src+'</div>'+(s.note?'<div class="ht-note">Huom: lainmuutos 2023 selittää osan kasvusta</div>':'')+'</div><div class="ht-side"><div class="ht-pct" style="color:'+s.c+'">'+sg(s.pct)+'</div>'+hSpark(s.d,s.c)+'</div></button>';
   });
   h+='<div class="home-fine">Prosentti kertoo, kuinka paljon määrä on muuttunut vuodesta '+y0+' vuoteen '+y1+'. Luvut ovat viranomaisten virallisia tilastoja, ja kolmikko lasketaan automaattisesti tuoreimmista luvuista.</div></section>';
   MENU.forEach(function(m){
@@ -1107,7 +1112,7 @@ function homeExtras(){
     m.ids.forEach(function(id){
       var b=document.querySelector('.bn[data-p="'+id+'"]'); if(!b) return;
       var dot=b.querySelector('.bn-dot'), col=dot?dot.style.background:'#7a8099', t=tileInfo(id);
-      h+='<button class="home-tile" data-id="'+id+'" onclick="goTo(this.dataset.id)"><div class="tl-name"><span class="tl-dot" style="background:'+col+'"></span>'+b.textContent.trim()+'</div><div class="tl-val">'+t.v+'</div><div class="tl-sub'+(t.d>0?' up':t.d<0?' down':'')+'">'+t.s+'</div></button>';
+      h+='<button class="home-tile" data-id="'+id+'" onclick="goTo(this.dataset.id)"><div class="tl-name"><span class="tl-dot" style="background:'+col+'"></span>'+b.textContent.trim()+'</div><div class="tl-val">'+t.v+'</div><div class="tl-sub'+(t.d>0?' up':t.d<0?' down':'')+'">'+t.s+'</div>'+(t.t?'<div class="tl-txt">'+t.t+'</div>':'')+'</button>';
     });
     h+='</div></section>';
   });
@@ -1119,6 +1124,56 @@ function panelNav(id){
   var grp=MENU.find(function(m){return m.ids.indexOf(id)>=0;});
   var nx=MENU_ORDER[(i+1)%MENU_ORDER.length], b=document.querySelector('.bn[data-p="'+nx+'"]');
   return '<div class="pnav-pos">'+grp.g+' · '+(grp.ids.indexOf(id)+1)+' / '+grp.ids.length+'</div><div class="pnav-row"><button onclick="goHome()">← Valikkoon</button><button data-id="'+nx+'" onclick="goTo(this.dataset.id)">Seuraava: '+(b?b.textContent.trim():nx)+' →</button></div>';
+}
+
+// ── AUTOMAATTINEN TULKINTA ──────────────────────────────
+// Kirjoittaa lyhyen tulkinnan sarjan pitkasta ja lyhyesta kehityksesta,
+// jotta yksittaisen vuoden muutos ei anna vaaraa kuvaa. Lasketaan aina
+// sivun ajantasaisista luvuista.
+function trendText(a,yrs){
+  if(!a||a.length<3) return '';
+  var n=a.length, y0=yrs[yrs.length-n]||yrs[0], last=a[n-1], first=a[0];
+  var lg=(last-first)/first*100, mx=Math.max.apply(null,a), pk=a.indexOf(mx), pkY=yrs[yrs.length-n+pk];
+  var p1=Math.abs(lg)<10?'Suunnilleen samalla tasolla kuin '+y0:(lg>0?'Selvästi enemmän kuin '+y0+' (+'+lg.toFixed(0)+' %)':'Selvästi vähemmän kuin '+y0+' (−'+Math.abs(lg).toFixed(0)+' %)');
+  var down=0,up=0; for(var i=n-1;i>0&&a[i]<a[i-1];i--) down++; for(var j=n-1;j>0&&a[j]>a[j-1];j--) up++;
+  var p2, dir;
+  if(pk===n-1){p2='koko jakson korkein taso'; dir=1;}
+  else if(down>=2){p2='laskenut '+down+' vuotta peräkkäin vuoden '+pkY+' huipusta'; dir=-1;}
+  else if(up>=2){p2='kasvanut '+up+' vuotta peräkkäin'; dir=1;}
+  else if(down===1){p2='laskenut edellisvuodesta'; dir=-1;}
+  else {p2='noussut edellisvuodesta'; dir=1;}
+  var conn=(Math.abs(lg)>=10&&((lg>0&&dir<0)||(lg<0&&dir>0)))?', mutta ':', ';
+  var t=p1+conn+p2+'.';
+  if(mx<200) t+=' Pienet luvut vaihtelevat paljon vuodesta toiseen.';
+  return t;
+}
+function tulkintaSarja(id){
+  try{
+    if(DATA[id]&&DATA[id].counts) return DATA[id].counts;
+    if(id==='seksuaali') return kvArr(renderSeksuaali,'T');
+    if(id==='perhe') return kvArr(renderPerhe,'PV').slice(-Y.length);
+  }catch(e){}
+  return null;
+}
+function ennakkoTxt(id){
+  var map={vakivalta:'Pahoinpitelyt',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkaudet'};
+  if(!map[id]) return '';
+  try{
+    var m=renderEnnakko2025.toString().match(/const ENL=\[([^\]]+)\]/); if(!m) return '';
+    var names=m[1].split(',').map(function(x){return x.replace(/'/g,'').trim();});
+    var i=names.indexOf(map[id]); if(i<0) return '';
+    var c=kvArr(renderEnnakko2025,'ENC')[i], p=kvArr(renderEnnakko2025,'ENP')[i]; if(!c||!p) return '';
+    var ch=(c-p)/p*100;
+    return ' Ennakkotietojen mukaan jaksolla '+kvStr(renderEnnakko2025,'ENPER')+' määrä on '+(ch>=0?'noussut ':'laskenut ')+Math.abs(ch).toFixed(1).replace('.',',')+' % edellisvuoden vastaavasta jaksosta.';
+  }catch(e){ return ''; }
+}
+function addTulkinta(id){
+  var el=document.getElementById('p-'+id); if(!el||el.querySelector('.tulkinta')) return;
+  var a=tulkintaSarja(id); if(!a) return;
+  var t=trendText(a.slice(-Y.length),Y); if(!t) return;
+  var box='<div class="ibox tulkinta"><strong>Tulkinta:</strong> '+t+ennakkoTxt(id)+'</div>';
+  var db=el.querySelector('.dbox');
+  if(db) db.insertAdjacentHTML('afterend',box); else el.insertAdjacentHTML('afterbegin',box);
 }
 
 // ── 2025 ENNAKKOTIEDOT ───────────────────────────────────
