@@ -107,7 +107,7 @@ SYNT_VAR = 'syntypera_101_20180101'
 SYNT_FOREIGN = '2'                 # Ulkomaalaistaustaiset yhteensä
 SYNT_DOMESTIC = '1'                # Suomalaistaustaiset yhteensä
 SYNT_CONTENT = 'ep_lkm_vaesto'     # epäillyt väestön 10 000 kohden
-SYNT_CRIME_ALL = '101T603'
+SYNT_CRIME_ALL = '101T504X406'   # vain rikoslakirikokset; 101T603 sisaltaa rikkomukset, joiden tilastointi muuttui 2021
 
 # Raiskausepäillyt kansalaisuuden mukaan (13je)
 RAPE_TABLE = f'{PXWEB_BASE}/rpk/13je.px'

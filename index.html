@@ -128,6 +128,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="p-ika" class="panel"></div>
   <div id="p-tyottomyys" class="panel"></div>
   <div id="p-varkaudet" class="panel"></div>
+  <div id="p-eurostat" class="panel"></div>
 </div>
 
 <nav class="botnav" id="botnav" style="display:none">
@@ -145,10 +146,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="bn" data-p="ennakko2025" onclick="go(this)"><div class="bn-dot" style="background:#3dba8c"></div>Ennakko</button>
   <button class="bn" data-p="ika" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Ikä &amp; tausta</button>
   <button class="bn" data-p="tyottomyys" onclick="go(this)"><div class="bn-dot" style="background:#e8c23a"></div>Nuorisotyöttömyys</button>
+  <button class="bn" data-p="eurostat" onclick="go(this)"><div class="bn-dot" style="background:#4f8ef7"></div>EU-vertailu</button>
 </nav>
 
 <script>
-const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys'};
+const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys',eurostat:'EU-vertailu: turvallisuus asuinalueella'};
 const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 // Vaestoosuudet, joita seka vangit- etta syntyperapaneeli kayttavat
 const VKS=7.7;   // ulkomaan kansalaisten vaestoosuus, %
@@ -157,7 +159,8 @@ const VSS=10.9;  // ulkomailla syntyneiden vaestoosuus, %
 function fi(n){return Math.round(n).toLocaleString('fi-FI');}
 
 // ── SVG LINE CHART ──────────────────────────────────────
-function lineChart(datasets, yMin, yMax, yFmt){
+function lineChart(datasets, yMin, yMax, yFmt, labels){
+  const XL=labels||Y;
   const W=340,H=140,PL=46,PR=10,PT=10,PB=24;
   const cW=W-PL-PR, cH=H-PT-PB;
   const xStep=cW/(datasets[0].data.length-1);
@@ -190,8 +193,8 @@ function lineChart(datasets, yMin, yMax, yFmt){
 
   // x axis labels — show every other
   let xLabels='';
-  Y.forEach((yr,i)=>{
-    if(i%2===0||i===Y.length-1){
+  XL.forEach((yr,i)=>{
+    if((i%2===0&&!(XL.length>10&&i===XL.length-2))||i===XL.length-1){
       xLabels+=`<text x="${px(i)}" y="${H-4}" text-anchor="middle" font-size="10" fill="#7a8099">${yr}</text>`;
     }
   });
@@ -229,10 +232,10 @@ const COVERAGE = {
   ryostot:     {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Päivittyy automaattisesti Tilastokeskuksen rajapinnasta.', src:'Tilastokeskus, StatFin-taulu rpk/13gw (automaattinen)'},
   nuoriso:     {years:'2016–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Luvut ovat rikoslakirikoksista epäiltyjä henkilöitä, kukin laskettu vuodessa kerran.', src:'Tilastokeskus, StatFin-taulu rpk/13yq (automaattinen)'},
   perhe:       {years:'2010–2025', note:'Viimeisin täysi vuosi näkyy yllä olevassa vuosivälissä. Uhrien lukumäärä vakavimman rikoksen mukaan.', src:'Tilastokeskus, StatFin-taulut rpk/13rc ja rpk/14cf (automaattinen)'},
-  maahanmuuttajat:{years:'2015–2024', note:'Luvut ovat arvioita Tilastokeskuksen aineistojen pohjalta, ei suoraan rajapinnasta.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/13z4'},
-  kansalaisuus:{years:'2024', note:'Yhden vuoden poikkileikkaus. Kansalaisuuskohtaista aikasarjaa ei julkaista suoraan.', src:'Käsin ylläpidetty — saatavilla myös taulusta rpk/13je'},
+  maahanmuuttajat:{years:'2016–2025', note:'Rikoslakirikoksista epäillyt väestöön suhteutettuna syntyperän mukaan. Liikenne- ym. rikkomukset eivät ole mukana.', src:'Tilastokeskus, StatFin-taulu rpk/13zk (automaattinen)'},
+  kansalaisuus:{years:'2025', note:'Yhden vuoden poikkileikkaus, vakituisesti Suomessa asuvat.', src:'Tilastokeskus, StatFin-taulu rpk/13jg (automaattinen)'},
   tyottomyys:  {years:'2016–2025', note:'Työvoimatutkimuksen vuositieto. Otospohjainen estimaatti, ei työnvälitystilaston rekisteriluku.', src:'Tilastokeskus, StatFin-taulu tyti/13aj (automaattinen)'},
-  vangit:      {years:'2010–2025', note:'Rise-data on virallista. Päivittäinen tilanne 6.3.2026: 24,0 %. Koko vuoden 2025 tilasto julkaistaan 2026.', src:'Rikosseuraamuslaitos — ei saatavilla StatFin-rajapinnasta'},
+  vangit:      {years:'2010–2025', note:'Vuosiluvut ovat päivittäisiä keskimääriä. Kansalaisuus- ja päärikosjakaumat ovat poikkileikkauksia 1.5.2025.', src:'Rikosseuraamuslaitos, Tilastollinen vuosikirja 2025 ja 2016 (taulukot 14, 18–20)'},
   'syntyperä': {years:'2015–2025', note:'Rise-data on virallista. Väestöosuusluvut Tilastokeskukselta.'}
 };
 
@@ -333,7 +336,7 @@ function renderSeksuaali(){
   const R=[1030,1140,1287,1384,1336,1749,1565,1842,2060,2113];
   const L=[1187,1131,1350,1698,1752,2064,2343,2315,3469,2936];
   const A=[535,424,521,529,570,753,776,1283,1526,1380];
-  const K=[0,0,0,0,0,0,0,0,146,190];
+  const K=[0,0,0,0,0,0,0,145,156,195];   // seksuaalisen kuvan luvaton levittaminen 20:7 (uusi laki 2023-)
   const T=[3326,3336,3859,4409,4531,5484,5591,7451,9607,10372];
   const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]));
   const UR=[19.70,25.50,21.80,24.00,25.70,24.60,21.20,23.50,27.20,23.10];
@@ -378,6 +381,7 @@ function renderSeksuaali(){
       <span class="li"><span class="ld" style="background:#e05c5c"></span>Raiskaukset</span>
       <span class="li"><span class="ld" style="background:#e8a23a"></span>Lapsiin</span>
       <span class="li"><span class="ld" style="background:#9b7de8"></span>Ahdistelu</span>
+      <span class="li"><span class="ld" style="background:#3ab8c8"></span>Kuvan luvaton levittäminen</span>
       <span class="li"><span class="ld" style="background:#4a5068"></span>Muut</span>
     </div>
     ${stackedBars(Y,[{data:R,color:'#e05c5c'},{data:L,color:'#e8a23a'},{data:A,color:'#9b7de8'},{data:K,color:'#3ab8c8'},{data:M,color:'#4a5068'}])}
@@ -408,17 +412,15 @@ function renderPerhe(){
   const PYR=['2010','11','12','13','14','2015','16','17','18','19','2020','21','22','23','24','2025'];
   const PV=[5264,7706,7833,7115,6579,7073,7150,6651,7043,7237,7128,6926,7382,7341,7452,8965];
   const PM=[1172,1435,1743,1453,1367,1766,1731,1605,1766,1840,1581,1670,1701,1790,1753,1862];
-  const FP=[6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,10.5,11.0,11.5,13.0,14.5,16.0,18.8,18.0];
-  const PP=[3.5,3.7,4.0,4.2,4.5,4.7,5.0,5.2,5.4,5.6,5.8,6.0,6.5,7.5,9.5,11.0];
   const PSL=['Nykyinen puoliso','Entinen puoliso','Muu sukulainen','Sisarus','Muu'];
   const PSC=['#e05c5c','#e8a23a','#9b7de8','#3dba8c','#7a8099'];
   const PS2=[47.30,22.60,15.90,5.20,9.10];
   const PB=[10.20,9.40,10.50,11.00,11.40,11.70,13.00,12.90,13.90,15.10,14.70,16.50,16.40,19.10,18.60,19.60];
   const PBV=[4.40,4.80,5.20,5.50,5.90,6.20,6.60,7.00,7.30,7.70,8.00,8.50,9.10,10.20,11.10,11.70];
   const lcFP=lineChart([
-    {data:FP,color:'#e05c8a',fill:true,width:2},
-    {data:PP,color:'#7a8099',fill:false,width:1.5,dash:'4,3'}
-  ],0,22,v=>v.toFixed(0)+'%');
+    {data:PB,color:'#e05c8a',fill:true,width:2},
+    {data:PBV,color:'#7a8099',fill:false,width:1.5,dash:'4,3'}
+  ],0,Math.ceil(Math.max(...PB)/4)*4+4,v=>v.toFixed(0)+'%',PYR.map(fy));
 
   el.innerHTML=`
   ${dataBox('perhe')}
@@ -447,15 +449,15 @@ function renderPerhe(){
 // ── MAAHANMUUTTAJAT ─────────────────────────────────────
 function renderMaahanmuuttajat(){
   const el=document.getElementById('p-maahanmuuttajat');
-  const IP=[12534,12614,13555,12219,10573,8138,7494,7767,8102,8242];
+  const IP=[7088,6650,6748,6598,7354,7466,6898,7193,7484,7784];
   const AGEL=['15–17','18–20','21–24','25–29','30–39','40–49','50–59','60–69'];
-  const AGEU=[14788,20238,15685,12930,10275,7412,5303,2781];
-  const AGEK=[13034,17964,14585,15079,11153,7982,4699,2160];
+  const AGEU=[14186,19331,14808,12317,9751,6886,4773,2384];
+  const AGEK=[11881,17177,13932,14676,10894,7711,4472,2032];
   const RTNAMES=['Väkivalta','Seksuaali','Henkirikokset','Omaisuus'];
   const RTCOL=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7'];
   const RTU=[1041.80,170.90,1.40,2314.50];
   const RTK=[526.30,106.80,1.20,2153.70];
-  const NP=[11431,11589,12437,11671,9198,5926,5386,6410,5589,6178];
+  const NP=[5196,4967,4952,5007,5750,5668,5143,6172,5379,5936];
   // Akselirajat lasketaan datasta: kiinteat rajat jattivat viivat kaavion
   // ulkopuolelle, kun luvut korjattiin rajapinnasta haettaviksi.
   const ipAll=[...IP,...NP];
@@ -465,7 +467,7 @@ function renderMaahanmuuttajat(){
   ],Math.min(...ipAll)*0.9,Math.max(...ipAll)*1.05);
   el.innerHTML=`
   ${dataBox('maahanmuuttajat')}
-  <div class="ibox"><strong>Suhteutettu vertailu:</strong> Luvut per 100 000 ko. ryhmässä. Ulkomaalaistaustainen väestö on ikärakenteeltaan nuorempi, ja nuoret ovat kaikissa väestöryhmissä yliedustettuina rikostilastoissa — tämä näkyy alla olevassa ikäryhmävertailussa.</div>
+  <div class="ibox"><strong>Suhteutettu vertailu:</strong> Rikoslakirikoksista epäillyt per 100 000 ko. ryhmässä (ei liikenne- ym. rikkomuksia, joiden tilastointi muuttui 2021). Ulkomaalaistaustainen väestö on ikärakenteeltaan nuorempi, ja nuoret ovat kaikissa väestöryhmissä yliedustettuina rikostilastoissa — tämä näkyy alla olevassa ikäryhmävertailussa.</div>
   <div class="metrics">
     <div class="mc"><div class="mlabel">Maahanmuuttajat / 100k</div><div class="mval r">${fi(IP[IP.length-1])}</div></div>
     <div class="mc"><div class="mlabel">Kantaväestö / 100k</div><div class="mval">${fi(NP[NP.length-1])}</div></div>
@@ -520,34 +522,35 @@ function renderKansalaisuus(){
 function renderVangit(){
   const el=document.getElementById('p-vangit');
   const PY=['2010','12','14','2015','16','17','18','19','2020','21','22','23','2024','2025'];
-  const PP=[13.5,14.2,14.8,15.5,18.0,17.8,17.0,17.0,16.5,17.5,18.0,20.5,22.9,23.7];
-  const lc=lineChart([{data:PP,color:'#e05c5c',fill:true,width:2.5}],0,30,v=>v+'%');
-  const nats=[{l:'Viro',v:125,c:'#4f8ef7'},{l:'Ruotsi',v:83,c:'#3dba8c'},{l:'Irak',v:69,c:'#e05c5c'},{l:'Albania',v:44,c:'#9b7de8'},{l:'Liettua',v:43,c:'#e8a23a'},{l:'Romania',v:42,c:'#e06898'},{l:'Somalia',v:29,c:'#3ab8c8'},{l:'Nigeria',v:22,c:'#8fb84a'},{l:'Venäjä',v:20,c:'#c87a3e'},{l:'Afganistan',v:18,c:'#7a8099'},{l:'Muut',v:165,c:'#4a5068'}];
+  const PP=[12.0,14.5,15.6,15.5,17.2,17.8,16.6,16.9,17.0,15.5,15.7,17.8,20.5,23.7];
+  const fyv=y=>String(y).length===2?'20'+y:String(y);
+  const lc=lineChart([{data:PP,color:'#e05c5c',fill:true,width:2.5}],0,30,v=>v+'%',PY.map(fyv));
+  const nats=[{l:'Viro',v:112,c:'#4f8ef7'},{l:'Irak',v:66,c:'#e05c5c'},{l:'Ruotsi',v:58,c:'#3dba8c'},{l:'Liettua',v:42,c:'#e8a23a'},{l:'Romania',v:42,c:'#e06898'},{l:'Albania',v:39,c:'#9b7de8'},{l:'Latvia',v:24,c:'#534ab7'},{l:'Gambia',v:22,c:'#b4b2a9'},{l:'Nigeria',v:22,c:'#8fb84a'},{l:'Somalia',v:22,c:'#3ab8c8'},{l:'Iso-Britannia',v:22,c:'#c87a3e'},{l:'Muut (67 maata)',v:320,c:'#4a5068'}];
   el.innerHTML=`
   ${dataBox('vangit')}
   <div class="metrics">
     <div class="mc"><div class="mlabel">Ulkomaalaisia 2025</div><div class="mval r">839</div><div class="msub">23,7 % kaikista</div></div>
     <div class="mc"><div class="mlabel">Tilanne 6.3.2026</div><div class="mval a">24,0 %</div><div class="msub">896 / 3 736</div></div>
-    <div class="mc mc3"><div class="mlabel">Kasvu 2015→2025</div><div class="mval r">+71 %</div><div class="msub">490 → 839 vankia</div></div>
+    <div class="mc mc3"><div class="mlabel">Kasvu 2015→2025</div><div class="mval r">+76 %</div><div class="msub">477 → 839 vankia (keskimäärin)</div></div>
   </div>
   <div class="card"><div class="ctitle">Ulkomaalaisten osuus vangeista 2010–2025</div>${lc}</div>
-  <div class="card"><div class="ctitle">Kansalaisuuksittain — 2025</div>${hbars(nats)}</div>
+  <div class="card"><div class="ctitle">Kansalaisuuksittain — 1.5.2025</div><div class="csub">Ulkomaalaiset vangit yhteensä 791 (poikkileikkauspäivä)</div>${hbars(nats)}</div>
   <div class="twocol">
-    <div class="card"><div class="ctitle">Rikostyypit — ulkomaalaiset</div>
-      ${hbars([{l:'Huumeet',v:49,c:'#e05c5c',fmt:'49 %'},{l:'Seksuaali',v:19,c:'#e8a23a',fmt:'19 %'},{l:'Väkivalta',v:14,c:'#9b7de8',fmt:'14 %'},{l:'Henkirikokset',v:9,c:'#4f8ef7',fmt:'9 %'},{l:'Muut',v:9,c:'#7a8099',fmt:'9 %'}])}
+    <div class="card"><div class="ctitle">Päärikos — ulkomaalaiset vankeusvangit 1.5.2025</div>
+      ${hbars([{l:'Huumeet',v:49,c:'#e05c5c',fmt:'49 %'},{l:'Seksuaali',v:21,c:'#e8a23a',fmt:'21 %'},{l:'Henkirikokset',v:10,c:'#4f8ef7',fmt:'10 %'},{l:'Omaisuus (ml. ryöstö)',v:12,c:'#3dba8c',fmt:'12 %'},{l:'Muu väkivalta',v:5,c:'#9b7de8',fmt:'5 %'},{l:'Muut',v:4,c:'#7a8099',fmt:'4 %'}])}
     </div>
-    <div class="card"><div class="ctitle">Rikostyypit — kantaväestö</div>
-      ${hbars([{l:'Väkivalta',v:34,c:'#9b7de8',fmt:'34 %'},{l:'Huumeet',v:23,c:'#e05c5c',fmt:'23 %'},{l:'Omaisuus',v:18,c:'#3dba8c',fmt:'18 %'},{l:'Seksuaali',v:9,c:'#e8a23a',fmt:'9 %'},{l:'Muut',v:16,c:'#7a8099',fmt:'16 %'}])}
+    <div class="card"><div class="ctitle">Päärikos — kaikki vankeusvangit 1.5.2025</div>
+      ${hbars([{l:'Henkirikokset',v:19,c:'#4f8ef7',fmt:'19 %'},{l:'Muu väkivalta',v:14,c:'#9b7de8',fmt:'14 %'},{l:'Huumeet',v:24,c:'#e05c5c',fmt:'24 %'},{l:'Omaisuus (ml. ryöstö)',v:24,c:'#3dba8c',fmt:'24 %'},{l:'Seksuaali',v:11,c:'#e8a23a',fmt:'11 %'},{l:'Muut',v:8,c:'#7a8099',fmt:'8 %'}])}
     </div>
   </div>
-  <div class="abox">Ulkomaalaisten osuus vangeista ${PY[PY.length-1]}: ${PP[PP.length-1].toFixed(1)} % (väestöosuus ${VKS.toFixed(1)} %). Yliedustuskerroin: ${(PP[PP.length-1]/VKS).toFixed(1)}×. Huumausainerikokset 49 % ulkomaalaisten tuomioista vs. väkivaltarikokset 34 % kantaväestöllä. Risen mukaan kasvu selittyy kansainvälisen huumekaupan torjunnalla.</div>`;
+  <div class="abox">Ulkomaalaisten osuus vangeista ${PY[PY.length-1]}: ${PP[PP.length-1].toFixed(1)} % (väestöosuus ${VKS.toFixed(1)} %). Yliedustuskerroin: ${(PP[PP.length-1]/VKS).toFixed(1)}×. Ulkomaalaisilla vankeusvangeilla päärikos on useimmiten huumausainerikos (49 %), kaikilla vangeilla huumausainerikos 24 % ja henki- tai muu väkivaltarikos 33 % (päärikos 1.5.2025). Rise ei julkaise päärikosjakaumaa erikseen Suomen kansalaisille. Risen mukaan kasvu selittyy kansainvälisen huumekaupan torjunnalla.</div>`;
 }
 
 // ── SYNTYPERÄ ───────────────────────────────────────────
 function renderSyntyperä(){
   const el=document.getElementById('p-syntyperä');
   const RY=['2015','16','17','18','19','2020','21','22','23','24','2025'];
-  const PP=[15.5,18.0,17.8,17.0,17.0,16.5,17.5,18.0,20.5,22.9,23.7];
+  const PP=[15.5,17.2,17.8,16.6,16.9,17.0,15.5,15.7,17.8,20.5,23.7];
   const PK=[4.20,4.40,4.50,4.70,4.80,5.00,5.30,5.80,6.70,7.30,7.70];
   const PS=[6.10,6.50,6.80,7.00,7.30,7.60,8.00,8.60,9.60,10.30,10.90];
   const RA=PP.map((p,i)=>+(p/PK[i]).toFixed(1));
@@ -555,8 +558,8 @@ function renderSyntyperä(){
     {data:PP,color:'#e05c5c',fill:true,width:2.5},
     {data:PK,color:'#7a8099',fill:false,width:1.5,dash:'4,3'},
     {data:PS,color:'#4a5068',fill:false,width:1.5,dash:'2,4'}
-  ],0,30,v=>v+'%');
-  const lc2=lineChart([{data:RA,color:'#e05c5c',fill:true,width:2}],0,6,v=>v.toFixed(1)+'x');
+  ],0,30,v=>v+'%',RY.map(y=>y.length===2?'20'+y:y));
+  const lc2=lineChart([{data:RA,color:'#e05c5c',fill:true,width:2}],0,6,v=>v.toFixed(1)+'x',RY.map(y=>y.length===2?'20'+y:y));
   el.innerHTML=`
   ${dataBox('syntyperä')}
   <div class="ibox"><strong>Miksi ei syntyperää?</strong> Rise julkaisee vankilatilastot kansalaisuuden mukaan. Ulkomaan kansalaisia on ${VKS.toFixed(1)} % väestöstä ja ulkomailla syntyneitä ${VSS.toFixed(1)} % (Tilastokeskus).</div>
@@ -628,6 +631,7 @@ function render(id){
   else if(id==='ennakko2025') renderEnnakko2025();
   else if(id==='ika') renderIka();
   else if(id==='tyottomyys') renderTyottomyys();
+  else if(id==='eurostat') renderEurostat();
 }
 
 // ── NUORISOTYÖTTÖMYYS ───────────────────────────────────
@@ -789,7 +793,7 @@ function renderHome(){
     <div class="credits">
       <strong>Lähteet</strong><br>
       Tilastokeskus &middot; Rise (Rikosseuraamuslaitos)<br>
-      Data: 2009&ndash;2025 &middot; Päivittyy vuosittain
+      Data: 2010&ndash;2025 &middot; Eurostat &middot; Päivittyy vuosittain
     </div>
   </div>`;
 }
@@ -804,27 +808,25 @@ document.addEventListener('DOMContentLoaded', function(){
   renderHome();
   document.getElementById('p-home').dataset.done='1';
 });
-// Lähteet: Tilastokeskus rikos- ja pakkokeinotilasto 2024 (julk. 5.6.2025)
-// Tilastokeskus: "Ulkomaalaiset suomalaisia useammin epäiltynä rikoksista" (2019)
-// Tilastokeskus Tieto&trendit: "Yhden rikos leimaa 99 nuorta" (2023)
+// Lähteet: Tilastokeskus StatFin rpk/13zk, rpk/13jg, vaerak/159s (tarkistettu 11/2026)
 function renderIka(){
 
-  const EU=[45723,48455,54575,51746,46947,38221,38084,44368,50550,54462];
-  const ES=[587406,594381,636174,595451,468156,300958,272324,322567,280121,308415];
+  const EU=[25857,25546,27170,27942,32653,35062,35055,41092,46697,51438];
+  const ES=[266978,254763,253304,255449,292662,287851,260021,310625,269600,296319];
   const PBI=[6.60,7.00,7.30,7.70,8.00,8.50,9.10,10.20,11.10,11.70];
   const el=document.getElementById('p-ika');
 
-  // Ikäryhmäjakauma epäillyistä 2024 — kaikki rikokset
-  // Lähde: Tilastokeskus StatFin, arvio julkisista tiedoista
+  // Ikäryhmäjakauma epäillyistä 2025 — rikoslakirikokset, kukin epäilty kerran
+  // Lähde: Tilastokeskus StatFin, taulu rpk/13zk
   const ageGroups=[
-    {l:'Alle 15v', ulk:8, suom:3, note:'Kasvussa — ulkomaalaistaustaisten osuus noussut'},
-    {l:'15–17v',   ulk:14, suom:8, note:'Ryöstöt ja pahoinpitelyt yliedustettuina'},
-    {l:'18–20v',   ulk:18, suom:12, note:'Korkein rikollisuusaste molemmissa ryhmissä'},
-    {l:'21–29v',   ulk:22, suom:14, note:'Huumausainerikokset korostuvat'},
-    {l:'30–39v',   ulk:19, suom:16, note:''},
-    {l:'40–49v',   ulk:11, suom:18, note:''},
-    {l:'50–59v',   ulk:5,  suom:15, note:''},
-    {l:'60+v',     ulk:3,  suom:14, note:'Kantaväestöllä enemmän vanhempia epäiltyjä'},
+    {l:'Alle 15v', ulk:8.5, suom:6.4, note:''},
+    {l:'15–17v', ulk:5.5, suom:8.6, note:''},
+    {l:'18–20v', ulk:7.3, suom:10.2, note:''},
+    {l:'21–29v', ulk:21.2, suom:19.1, note:''},
+    {l:'30–39v', ulk:27.3, suom:16.8, note:'Ulkomaalaistaustaisilla suurin ikäryhmä'},
+    {l:'40–49v', ulk:18.4, suom:15.0, note:''},
+    {l:'50–59v', ulk:8.4, suom:11.4, note:''},
+    {l:'60+v', ulk:3.5, suom:12.4, note:'Kantaväestöllä enemmän vanhempia epäiltyjä'},
   ];
 
   // Seksuaalirikosepäillyt per 100 000 omassa kansalaisuusryhmässä.
@@ -839,7 +841,7 @@ function renderIka(){
   const maxAge=Math.max(...ageGroups.map(g=>Math.max(g.ulk,g.suom)));
 
   el.innerHTML=`
-  <div class="ibox"><strong>Lähde:</strong> Tilastokeskus rikos- ja pakkokeinotilasto. Ikäjakauma on laskettu julkisista tilastoista. Seksuaalirikossuhdeluvut ovat Tilastokeskuksen ikä- ja sukupuolivakioituja lukuja vuosilta 2017–2018 — viimeisin julkaistu tätä yksityiskohtainen vertailu.</div>
+  <div class="ibox"><strong>Lähde:</strong> Tilastokeskus, rikos- ja pakkokeinotilasto (taulut rpk/13zk, rpk/13jg) ja väestörakenne. Kaikki luvut koskevat rikoslakirikoksista epäiltyjä vuonna ${Y[9]}. Liikenne- ym. rikkomukset eivät ole mukana.</div>
 
   <div class="metrics">
     <div class="mc"><div class="mlabel">Ulkomaalaistaustaisia epäiltyjä ${Y[9]}</div><div class="mval r">${fi(EU[9])}</div><div class="msub">${(()=>{const c=(EU[9]-EU[8])/EU[8]*100;return c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`;})()} vs. ${Y[8]}</div></div>
@@ -849,7 +851,7 @@ function renderIka(){
 
   <div class="card">
     <div class="ctitle">Ikäjakauma epäillyistä — ulkomaalaistaustainen vs. kantaväestö</div>
-    <div class="csub">Osuus oman ryhmän epäillyistä ikäryhmittäin (%) — 2024</div>
+    <div class="csub">Osuus oman ryhmän epäillyistä ikäryhmittäin (%) — ${Y[9]}</div>
     <div class="legend">
       <span class="li"><span class="ld" style="background:#e05c5c"></span>Ulkomaalaistaustainen</span>
       <span class="li"><span class="ld" style="background:#7a8099"></span>Kantaväestö</span>
@@ -882,15 +884,75 @@ function renderIka(){
   <div class="card">
     <div class="ctitle">Nuoret ulkomaalaistaustaisten rikoksissa — avainluvut</div>
     ${hbars([
-      {l:'Osuus alle 18v ryöstöepäillyistä',v:35,c:'#e05c5c',fmt:'~35 %'},
-      {l:'Osuus alle 18v väestöstä',v:14,c:'#7a8099',fmt:'~14 %'},
-      {l:'Pahoinp./ryöstö epäily — ulkomaalaistaustainen nuori',v:1.0,c:'#e8a23a',fmt:'~1 %/v'},
-      {l:'Pahoinp./ryöstö epäily — suomalaistaustainen nuori',v:0.3,c:'#4a5068',fmt:'~0,3 %/v'},
+      {l:'Osuus alle 18v ryöstöepäillyistä',v:36.7,c:'#e05c5c',fmt:'37 %'},
+      {l:'Osuus alle 18v väestöstä',v:14.5,c:'#7a8099',fmt:'14,5 %'},
+      {l:'Pahoinp./ryöstö epäily — ulkomaalaistaustainen nuori',v:1.0,c:'#e8a23a',fmt:'1,0 %/v'},
+      {l:'Pahoinp./ryöstö epäily — suomalaistaustainen nuori',v:0.43,c:'#4a5068',fmt:'0,4 %/v'},
     ])}
-    <div style="font-size:11px;color:var(--dim);margin-top:8px">Lähde: Tilastokeskus Tieto&amp;trendit 2023 — Espoo esimerkkinä, vaihtelu kaupungeittain suuri</div>
+    <div style="font-size:11px;color:var(--dim);margin-top:8px">Lähde: Tilastokeskus, koko maa ${Y[9]} (rpk/13zk, vaerak/159s). Alle 18-vuotiaat ulkomaalaistaustaiset: ryöstö- tai pahoinpitelyepäiltyjä noin 100 / 10 000, suomalaistaustaiset noin 43 / 10 000. Vaihtelu kaupungeittain on suurta.</div>
   </div>
 
-  <div class="abox">Ulkomaalaistaustaisten epäiltyjen ikärakenne on selvästi nuorempi kuin kantaväestön — painottuu alle 30-vuotiaisiin. Seksuaalirikoksissa yliedustus on suurin: irakilaiset miehet epäiltynä 12,8x useammin kuin suomalaiset miehet ikä- ja sukupuolivakioituna. Nuorten (alle 18v) osalta noin 1 % ulkomaalaistaustaista nuorta on epäiltynä pahoinpitelystä tai ryöstöstä vuosittain, kantaväestöllä 0,3 %. Tärkeää huomata: valtaosa — 99 % — ulkomaalaistaustaisistakin nuorista ei ole syyllistynyt rikoksiin.</div>`;
+  <div class="abox">Ulkomaalaistaustaisilla epäillyillä painottuvat 21–49-vuotiaat (67 %), kantaväestöllä ikäjakauma on tasaisempi ja yli 50-vuotiaita on selvästi enemmän (24 % vs. 12 %). Alle 30-vuotiaiden osuus epäillyistä on molemmissa ryhmissä noin 43–44 %. Seksuaalirikoksissa yliedustus on suurin: irakilaisia epäiltiin väestöön suhteutettuna ${SXR[0].toFixed(1).replace('.',',')}-kertaisesti Suomen kansalaisiin verrattuna. Luku ei ole ikä- eikä sukupuolivakioitu, ja vakiointi pienentäisi eroa. Alle 18-vuotiaista ulkomaalaistaustaisista noin 1 % on vuosittain epäiltynä pahoinpitelystä tai ryöstöstä, kantaväestöllä 0,4 %. Valtaosa, noin 99 %, ulkomaalaistaustaisistakin nuorista ei ole vuoden aikana epäiltynä näistä rikoksista.</div>`;
+}
+
+// ── EU-VERTAILU (EUROSTAT) ──────────────────────────────
+// Eurostat ilc_mddw03 (EU-SILC): osuus vaestosta, joka kokee rikollisuuden,
+// vakivallan tai ilkivallan ongelmaksi asuinalueellaan. Kaikki kotitaloudet.
+// Upotettu tilanne 13.8.2026; paneeli yrittaa lisaksi hakea tuoreimmat
+// luvut suoraan Eurostatin rajapinnasta ja kayttaa upotettuja jos haku epaonnistuu.
+const EUS_API='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ilc_mddw03?format=JSON&lang=EN&hhcomp=TOTAL&rskpovth=TOTAL';
+const EUS_NAMES={AT:'Itävalta',BE:'Belgia',BG:'Bulgaria',HR:'Kroatia',CY:'Kypros',CZ:'Tšekki',DK:'Tanska',EE:'Viro',FI:'Suomi',FR:'Ranska',DE:'Saksa',EL:'Kreikka',HU:'Unkari',IE:'Irlanti',IT:'Italia',LV:'Latvia',LT:'Liettua',LU:'Luxemburg',MT:'Malta',NL:'Alankomaat',PL:'Puola',PT:'Portugali',RO:'Romania',SK:'Slovakia',SI:'Slovenia',ES:'Espanja',SE:'Ruotsi'};
+let EUS={updated:'13.8.2026',years:['2016','2017','2018','2019','2020','2023'],
+ v:{AT:[12.4,10.9,9.7,8.4,5.7,7],BE:[13.3,12.4,12.3,13.4,10.8,12.4],BG:[25,23.6,21.8,20.2,19.1,15.6],HR:[3,3,2.6,2.7,2.4,1.4],CY:[9.8,12.5,13.9,13.4,10.5,9.6],CZ:[11.7,9.3,7.9,7.8,6.1,6.6],DK:[8.4,7.8,7.4,7.5,7.3,6.3],EE:[9.2,7.3,7.4,7.4,5.5,4.3],FI:[6.5,6.2,7,6.4,7,11.5],FR:[14.8,13.9,14.9,14.7,17.7,14.7],DE:[14.1,14.2,13.3,13.1,8.2,10.7],EL:[11.8,13.8,13.5,16.9,18.1,20.9],HU:[9.7,7.2,4.8,5.3,5.3,6.1],IE:[9.7,9.7,10,8.3,10.8,9.6],IT:[14.7,12.5,11.3,9.4,8.4,6.4],LV:[10,8,8.6,6.1,5.3,5.4],LT:[3.4,8.2,3.7,3.2,3.3,2.7],LU:[12.2,12,11.3,11.2,11,7.4],MT:[10.4,10,12.5,13.6,11.4,7.4],NL:[16.9,15,17.5,16.3,15.7,16.7],PL:[5.6,5.4,4.8,4.4,null,2.8],PT:[7.8,7.9,6.5,6.7,6.6,6.9],RO:[14.1,11.3,11.5,9.6,8.8,5.9],SK:[6.9,6.2,4.8,5.6,4.3,3.4],SI:[8.5,8,7.9,8,7.3,6.8],ES:[10.3,8.7,10.9,11.6,14.1,13.6],SE:[12.7,13,14.4,13,13.8,9.4],EU27_2020:[12.5,11.5,11.5,11,10.7,10]}};
+
+async function eusRefresh(){
+  try{
+    const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),6000);
+    const j=await fetch(EUS_API,{signal:ctl.signal}).then(r=>r.json()); clearTimeout(t);
+    const gi=j.dimension.geo.category.index, ti=j.dimension.time.category.index;
+    const T=Object.keys(ti).sort((a,b)=>ti[a]-ti[b]); const n=T.length;
+    const yrs=T.filter(y=>+y>=2016 && j.value[gi.FI*n+ti[y]]!=null);
+    if(!yrs.length) return false;
+    const v={}; Object.keys(EUS_NAMES).concat(['EU27_2020']).forEach(g=>{ if(gi[g]==null) return; v[g]=yrs.map(y=>{const x=j.value[gi[g]*n+ti[y]]; return x==null?null:x;}); });
+    const d=(j.updated||'').slice(0,10).split('-'); EUS={updated:d.length===3?(+d[2])+'.'+(+d[1])+'.'+d[0]:EUS.updated,years:yrs,v};
+    return true;
+  }catch(e){ return false; }
+}
+
+function renderEurostat(){
+  const el=document.getElementById('p-eurostat');
+  const draw=(live)=>{
+    const L=EUS.years.length-1, yr=EUS.years[L];
+    const rows=Object.keys(EUS_NAMES).filter(g=>EUS.v[g]&&EUS.v[g][L]!=null).map(g=>({g,l:EUS_NAMES[g],v:EUS.v[g][L]})).sort((a,b)=>b.v-a.v);
+    const fiV=EUS.v.FI[L], euV=EUS.v.EU27_2020?EUS.v.EU27_2020[L]:null;
+    const rank=rows.findIndex(r=>r.g==='FI')+1;
+    const prevI=L-1, fiPrev=prevI>=0?EUS.v.FI[prevI]:null;
+    const f1=v=>v==null?'–':v.toFixed(1).replace('.',',')+' %';
+    const fill=a=>{const o=a.slice();for(let i=0;i<o.length;i++) if(o[i]==null) o[i]=i>0?o[i-1]:(o.find(x=>x!=null)||0);return o;};
+    const series=[{g:'FI',c:'#e05c5c',w:2.5,fill:true},{g:'EU27_2020',c:'#7a8099',w:1.5,dash:'4,3'},{g:'SE',c:'#4f8ef7',w:1.5},{g:'DK',c:'#3dba8c',w:1.5}].filter(s=>EUS.v[s.g]);
+    const allV=series.flatMap(s=>EUS.v[s.g].filter(x=>x!=null));
+    const lc=lineChart(series.map(s=>({data:fill(EUS.v[s.g]),color:s.c,width:s.w,dash:s.dash,fill:s.fill})),0,Math.ceil(Math.max(...allV)/4)*4,v=>v.toFixed(0)+'%',EUS.years);
+    const gap=EUS.years.some((y,i)=>i>0&&+y-+EUS.years[i-1]>1);
+    const bars=rows.map(r=>({l:r.l,v:r.v,c:r.g==='FI'?'#e05c5c':'#4a5068',fmt:f1(r.v)}));
+    if(euV!=null) bars.splice(rows.filter(r=>r.v>euV).length,0,{l:'EU27 keskiarvo',v:euV,c:'#7a8099',fmt:f1(euV)});
+    el.innerHTML=`
+    <div class="dbox"><div class="dbox-dot"></div><span><strong>Ajanjakso: ${EUS.years[0]}–${yr}</strong> — Eurostat, EU-SILC-kysely (taulu ilc_mddw03). ${live?'Haettu suoraan Eurostatista':'Tallennettu tilanne'}, päivitetty ${EUS.updated}.</span></div>
+    <div class="ibox"><strong>Mitä luku kuvaa:</strong> Osuus väestöstä, joka kokee rikollisuuden, väkivallan tai ilkivallan ongelmaksi omalla asuinalueellaan. Luku perustuu kyselyyn eikä poliisin tilastoihin, eikä vastaus edellytä omaa kokemusta. Sama kysymys esitetään kaikissa EU-maissa, joten maat ovat vertailukelpoisia.</div>
+    <div class="metrics">
+      <div class="mc"><div class="mlabel">Suomi ${yr}</div><div class="mval r">${f1(fiV)}</div><div class="msub">${fiPrev!=null?(fiV>=fiPrev?'<span class="tu">+':'<span class="td">')+(fiV-fiPrev).toFixed(1).replace('.',',')+' %-yks.</span> vs. '+EUS.years[prevI]:''}</div></div>
+      <div class="mc"><div class="mlabel">EU27 keskiarvo</div><div class="mval">${f1(euV)}</div></div>
+      <div class="mc mc3"><div class="mlabel">Suomen sijoitus</div><div class="mval r">${rank}. / ${rows.length}</div><div class="msub">1. = eniten ongelmia kokevia</div></div>
+    </div>
+    <div class="card"><div class="ctitle">Suomi vs. EU ja Pohjoismaat ${EUS.years[0]}–${yr}</div>
+      <div class="legend"><span class="li"><span class="ld" style="background:#e05c5c"></span>Suomi</span><span class="li"><span class="ld" style="background:#7a8099"></span>EU27</span><span class="li"><span class="ld" style="background:#4f8ef7"></span>Ruotsi</span><span class="li"><span class="ld" style="background:#3dba8c"></span>Tanska</span></div>
+      ${lc}
+      ${gap?'<div class="csub" style="margin-top:6px">Eurostat ei ole julkaissut kaikkia välivuosia (puuttuvat vuodet on ohitettu).</div>':''}
+    </div>
+    <div class="card"><div class="ctitle">EU-maat ${yr}</div><div class="csub">Osuus väestöstä, % — Suomi punaisella</div>${hbars(bars)}</div>
+    <div class="abox">Vuonna ${yr} Suomessa ${f1(fiV)} väestöstä koki rikollisuuden, väkivallan tai ilkivallan ongelmaksi asuinalueellaan, kun EU27-maiden keskiarvo oli ${f1(euV)}. Suomi oli ${rank}. sijalla ${rows.length} maan joukossa. Kyse on koetusta turvallisuudesta: luku voi muuttua myös uutisoinnin ja yleisen ilmapiirin vuoksi, ja kyselyn otanta tuo vuosiin vaihtelua. Eurostat julkaisee tämän tiedon harvoin ja noin kahden vuoden viiveellä.</div>`;
+  };
+  draw(false);
+  eusRefresh().then(ok=>{ if(ok) draw(true); });
 }
 
 // ── 2025 ENNAKKOTIEDOT ───────────────────────────────────
