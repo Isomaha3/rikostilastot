@@ -1164,7 +1164,9 @@ function ennakkoTxt(id){
     var i=names.indexOf(map[id]); if(i<0) return '';
     var c=kvArr(renderEnnakko2025,'ENC')[i], p=kvArr(renderEnnakko2025,'ENP')[i]; if(!c||!p) return '';
     var ch=(c-p)/p*100;
-    return ' Ennakkotietojen mukaan jaksolla '+kvStr(renderEnnakko2025,'ENPER')+' määrä on '+(ch>=0?'noussut ':'laskenut ')+Math.abs(ch).toFixed(1).replace('.',',')+' % edellisvuoden vastaavasta jaksosta.';
+    var per=kvStr(renderEnnakko2025,'ENPER');
+    if(Math.abs(ch)<0.05) return ' Ennakkotietojen mukaan jaksolla '+per+' määrä on pysynyt samana kuin edellisvuoden vastaavalla jaksolla.';
+    return ' Ennakkotietojen mukaan jaksolla '+per+' määrä on '+(ch>0?'noussut ':'laskenut ')+Math.abs(ch).toFixed(1).replace('.',',')+' % edellisvuoden vastaavasta jaksosta.';
   }catch(e){ return ''; }
 }
 function addTulkinta(id){
