@@ -521,17 +521,24 @@ function renderKansalaisuus(){
 // ── VANGIT ──────────────────────────────────────────────
 function renderVangit(){
   const el=document.getElementById('p-vangit');
-  const PY=['2010','12','14','2015','16','17','18','19','2020','21','22','23','2024','2025'];
-  const PP=[12.0,14.5,15.6,15.5,17.2,17.8,16.6,16.9,17.0,15.5,15.7,17.8,20.5,23.7];
-  const fyv=y=>String(y).length===2?'20'+y:String(y);
-  const lc=lineChart([{data:PP,color:'#e05c5c',fill:true,width:2.5}],0,30,v=>v+'%',PY.map(fyv));
+  // Rikosseuraamuslaitos, tilastollinen vuosikirja 2025 (taulukko 18) ja 2016 (2010-2015).
+  // Vankien paivittainen keskimaara vuodessa.
+  const PY=['2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
+  const VT=[3291,3262,3236,3175,3097,3068,3120,3035,2910,2952,2800,2809,3056,3143,3356,3545];   // kaikki vangit
+  const VU=[394,444,470,464,483,477,537,540,482,499,475,434,480,560,687,839];                   // ulkomaalaiset vangit
+  const PP=VT.map((t,i)=>+(VU[i]/t*100).toFixed(1));
+  const lc=lineChart([{data:PP,color:'#e05c5c',fill:true,width:2.5}],0,30,v=>v+'%',PY);
+  const maxVT=Math.max(...VT);
+  const sb='<div class="sbarchart">'+PY.map((y,i)=>`<div class="sbc-row"><span class="sbc-label">${y}</span><div class="sbc-track"><div class="sbc-seg" style="width:${((VT[i]-VU[i])/maxVT*100).toFixed(1)}%;background:#7a8099aa"></div><div class="sbc-seg" style="width:${(VU[i]/maxVT*100).toFixed(1)}%;background:#e05c5caa"></div></div><span class="bc-val" style="min-width:92px;text-align:right">${fi(VT[i])} · <span style="color:#e05c5c">${fi(VU[i])}</span></span></div>`).join('')+'</div>';
   const nats=[{l:'Viro',v:112,c:'#4f8ef7'},{l:'Irak',v:66,c:'#e05c5c'},{l:'Ruotsi',v:58,c:'#3dba8c'},{l:'Liettua',v:42,c:'#e8a23a'},{l:'Romania',v:42,c:'#e06898'},{l:'Albania',v:39,c:'#9b7de8'},{l:'Latvia',v:24,c:'#534ab7'},{l:'Gambia',v:22,c:'#b4b2a9'},{l:'Nigeria',v:22,c:'#8fb84a'},{l:'Somalia',v:22,c:'#3ab8c8'},{l:'Iso-Britannia',v:22,c:'#c87a3e'},{l:'Muut (67 maata)',v:320,c:'#4a5068'}];
   el.innerHTML=`
   ${dataBox('vangit')}
   <div class="metrics">
+    <div class="mc"><div class="mlabel">Vankeja 2025</div><div class="mval">${fi(VT[VT.length-1])}</div><div class="msub">päivittäinen keskimäärä</div></div>
     <div class="mc"><div class="mlabel">Ulkomaalaisia 2025</div><div class="mval r">839</div><div class="msub">23,7 % kaikista</div></div>
-    <div class="mc"><div class="mlabel">Kasvu 2015→2025</div><div class="mval r">+76 %</div><div class="msub">477 → 839 vankia (keskimäärin)</div></div>
+    <div class="mc mc3"><div class="mlabel">Kasvu 2015→2025</div><div class="mval r">+76 %</div><div class="msub">477 → 839 vankia (keskimäärin)</div></div>
   </div>
+  <div class="card"><div class="ctitle">Vangit yhteensä ja ulkomaalaiset 2010–2025</div><div class="csub">Vankien päivittäinen keskimäärä</div><div class="legend"><span class="li"><span class="ld" style="background:#7a8099"></span>Suomen kansalaiset</span><span class="li"><span class="ld" style="background:#e05c5c"></span>Ulkomaalaiset</span></div>${sb}<div class="csub" style="margin-top:6px">Vankeja yhteensä ${fi(VT[0])} (2010) → ${fi(VT[VT.length-1])} (2025), ulkomaalaisia ${fi(VU[0])} → ${fi(VU[VU.length-1])}. Suomen kansalaisia ${fi(VT[0]-VU[0])} → ${fi(VT[VT.length-1]-VU[VU.length-1])}.</div></div>
   <div class="card"><div class="ctitle">Ulkomaalaisten osuus vangeista 2010–2025</div>${lc}</div>
   <div class="card"><div class="ctitle">Kansalaisuuksittain — 1.5.2025</div><div class="csub">Ulkomaalaiset vangit yhteensä 791 (poikkileikkauspäivä)</div>${hbars(nats)}</div>
   <div class="twocol">
