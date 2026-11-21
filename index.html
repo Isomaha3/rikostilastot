@@ -840,7 +840,9 @@ function renderHome(){
     <h2>Persutilastot</h2>
     <p class="tagline">Suvun WhatsApp-ryhmän virallinen lähde.</p>
     <button class="start-btn" onclick="document.getElementById('home-top3').scrollIntoView({behavior:'smooth'})">No katotaas sitte &#x2193;</button>
+    <button id="home-install" onclick="asennaSovellus()" style="display:none;margin-top:10px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer">&#x1F4F2; Asenna puhelimeen</button>
   </div>${homeExtras()}`;
+  naytaAsennusPainike();
 }
 
 function goTo(id){
@@ -1358,13 +1360,45 @@ window.addEventListener('beforeinstallprompt', e => {
   deferredPrompt = e;
   const btn = document.getElementById('pwa-install-btn');
   if(btn) btn.style.display = 'flex';
+  naytaAsennusPainike();
 });
 
 window.addEventListener('appinstalled', () => {
   const btn = document.getElementById('pwa-install-btn');
   if(btn) btn.style.display = 'none';
+  const hb = document.getElementById('home-install');
+  if(hb) hb.style.display = 'none';
+  const ih = document.getElementById('ios-hint');
+  if(ih) ih.style.display = 'none';
   deferredPrompt = null;
 });
+
+// Etusivun asennuspainike. Androidilla ja tyopoydalla se avaa selaimen oman
+// asennusikkunan. iOS ei salli asennusta ohjelmallisesti lainkaan, joten
+// siella painike avaa ohjeen Jaa-valikon kayttoon.
+function onkoIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+
+function onkoAsennettu(){
+  return window.matchMedia('(display-mode: standalone)').matches
+    || navigator.standalone === true;
+}
+
+function naytaAsennusPainike(){
+  const b = document.getElementById('home-install');
+  if (!b) return;
+  if (onkoAsennettu()) { b.style.display = 'none'; return; }
+  if (deferredPrompt || onkoIOS()) b.style.display = 'inline-block';
+}
+
+function asennaSovellus(){
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+    return;
+  }
+  const b = document.getElementById('ios-hint');
+  if (b) { b.style.display = 'block'; try{ localStorage.removeItem('iosHintDismissed'); }catch(e){} }
+}
 
 function installPWA() {
   if(!deferredPrompt) return;
@@ -1627,6 +1661,8 @@ const DICT = {
 'Lisää Koti-valikkoon':'Add to Home Screen',
 'Sovellus avautuu sen jälkeen omana ikkunanaan.':'The app then opens in its own window.',
 'Jaa':'Share'
+,
+'Asenna puhelimeen':'Install on your phone'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 
