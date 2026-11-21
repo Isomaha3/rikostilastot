@@ -109,6 +109,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ht-name{font-size:15px;font-weight:600}
 .ht-sub{font-size:12px;color:var(--muted)}
 .ht-note{font-size:11px;color:var(--amber)}
+.ht-src{font-size:11px;color:var(--muted)}
 .ht-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .ht-pct{font-size:26px;font-weight:700;line-height:1}
 .home-fine{font-size:11px;color:var(--muted)}
@@ -998,6 +999,7 @@ function kvArr(fn,name){
   const m=fn.toString().match(new RegExp('const '+name+'=\\[([^\\]]+)\\]'));
   return m?m[1].split(',').map(Number):null;
 }
+const KV_SRC={vakivalta:'Tilastokeskus, poliisin tietoon tulleet pahoinpitelyt',seksuaali:'Tilastokeskus, poliisin tietoon tulleet seksuaalirikokset',henki:'Tilastokeskus, poliisin tietoon tulleet henkirikokset',ryostot:'Tilastokeskus, poliisin tietoon tulleet ryöstöt',varkaudet:'Tilastokeskus, poliisin tietoon tulleet varkausrikokset',nuoriso:'Tilastokeskus, rikoslakirikoksista epäillyt alle 18-vuotiaat',perhe:'Tilastokeskus, perhe- ja lähisuhdeväkivallan uhrit',vangit:'Rikosseuraamuslaitos, ulkomaalaiset vangit (päivittäinen keskimäärä)'};
 function kasvuSarjat(){
   const n=Y.length, last=a=>a?a.slice(-n):null;
   const L=[
@@ -1010,7 +1012,7 @@ function kasvuSarjat(){
     {id:'perhe',l:'Perheväkivallan uhrit',d:last(kvArr(renderPerhe,'PV')),c:'#e05c8a',u:'uhria'},
     {id:'vangit',l:'Ulkomaalaiset vangit',d:last(kvArr(renderVangit,'VU')),c:'#3ab8c8',u:'vankia (keskimäärin)'}
   ];
-  return L.filter(s=>s.d&&s.d.length===n&&s.d[0]>0).map(s=>{
+  return L.map(s=>({...s,src:KV_SRC[s.id]||''})).filter(s=>s.d&&s.d.length===n&&s.d[0]>0).map(s=>{
     const a=s.d[0], b=s.d[n-1], p=s.d[n-2];
     return {...s,first:a,lastV:b,pct:(b-a)/a*100,yoy:(b-p)/p*100,idx:s.d.map(v=>v/a*100)};
   }).sort((x,y)=>y.pct-x.pct);
@@ -1032,12 +1034,13 @@ function renderKasvu(){
         <span>${y1}: <strong style="color:var(--text,inherit)">${fi(s.lastV)}</strong></span>
         <span>vs. ${yP}: <strong style="color:${s.yoy>=0?'var(--red)':'var(--green)'}">${sg1(s.yoy)}</strong></span>
       </div>
-      ${s.note?'<div class="csub" style="margin-top:6px">⚠ '+s.note+'</div>':''}
+      <div class="csub" style="margin-top:6px">Lähde: ${s.src}</div>
+      ${s.note?'<div class="csub" style="margin-top:4px">Huom: '+s.note+'</div>':''}
     </div>`).join('');
   const mx=Math.max(...top.flatMap(s=>s.idx)), mn=Math.min(100,...top.flatMap(s=>s.idx));
   const lc=lineChart(top.map((s,i)=>({data:s.idx,color:s.c,width:i===0?2.5:2,fill:false})),Math.floor(mn/50)*50,Math.ceil(mx/50)*50,v=>v.toFixed(0));
   el.innerHTML=`
-    <div class="ibox"><strong>Mitä tämä näyttää:</strong> Kolme tilastoa, joiden määrä on kasvanut eniten vuodesta ${y0} vuoteen ${y1}. Järjestys lasketaan aina uudelleen sivun ajantasaisista luvuista, joten se muuttuu automaattisesti tilastojen päivittyessä.</div>
+    <div class="ibox"><strong>Mitä tämä näyttää:</strong> Kolme tilastoa, joiden määrä on kasvanut eniten vuodesta ${y0} vuoteen ${y1}. Prosentti on muutos ensimmäisen ja viimeisen vuoden välillä, esimerkiksi 3 000 → 6 000 on +100 %. Järjestys lasketaan aina uudelleen sivun ajantasaisista luvuista, joten se muuttuu automaattisesti tilastojen päivittyessä.</div>
     ${cards}
     <div class="card"><div class="ctitle">Kasvu rinnakkain (${y0} = 100)</div>
       <div class="csub">Indeksi: kaikki sarjat alkavat samasta pisteestä, jolloin eri kokoisia lukuja voi verrata</div>
@@ -1096,9 +1099,9 @@ function homeExtras(){
   var sg1=function(v){return (v>=0?'+':'−')+Math.abs(v).toFixed(1).replace('.',',')+' %';};
   var h='<div class="home-wrap"><section id="home-top3" class="home-sec"><div class="home-head"><h2>Eniten kasvaneet '+y0+'–'+y1+'</h2><button data-id="kasvu" onclick="goTo(this.dataset.id)">Kaikki →</button></div>';
   top.forEach(function(s,i){
-    h+='<button class="home-top" data-id="'+s.id+'" onclick="goTo(this.dataset.id)"><div class="ht-main"><div class="ht-rank">'+(i+1)+'. eniten kasvanut</div><div class="ht-name">'+s.l+'</div><div class="ht-sub">'+y0+': '+fi(s.first)+' → '+y1+': '+fi(s.lastV)+' · vs. '+yP+' '+sg1(s.yoy)+'</div>'+(s.note?'<div class="ht-note">Huom: lainmuutos 2023 selittää osan kasvusta</div>':'')+'</div><div class="ht-side"><div class="ht-pct" style="color:'+s.c+'">'+sg(s.pct)+'</div>'+hSpark(s.d,s.c)+'</div></button>';
+    h+='<button class="home-top" data-id="'+s.id+'" onclick="goTo(this.dataset.id)"><div class="ht-main"><div class="ht-rank">'+(i+1)+'. eniten kasvanut</div><div class="ht-name">'+s.l+'</div><div class="ht-sub">'+y0+': '+fi(s.first)+' → '+y1+': '+fi(s.lastV)+' · vs. '+yP+' '+sg1(s.yoy)+'</div><div class="ht-src">Lähde: '+s.src+'</div>'+(s.note?'<div class="ht-note">Huom: lainmuutos 2023 selittää osan kasvusta</div>':'')+'</div><div class="ht-side"><div class="ht-pct" style="color:'+s.c+'">'+sg(s.pct)+'</div>'+hSpark(s.d,s.c)+'</div></button>';
   });
-  h+='<div class="home-fine">Järjestys lasketaan automaattisesti tuoreimmista luvuista.</div></section>';
+  h+='<div class="home-fine">Prosentti kertoo, kuinka paljon määrä on muuttunut vuodesta '+y0+' vuoteen '+y1+'. Luvut ovat viranomaisten virallisia tilastoja, ja kolmikko lasketaan automaattisesti tuoreimmista luvuista.</div></section>';
   MENU.forEach(function(m){
     h+='<section class="home-sec"><h3>'+m.g+'</h3><div class="home-grid">';
     m.ids.forEach(function(id){
