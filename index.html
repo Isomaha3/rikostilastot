@@ -1101,6 +1101,7 @@ function tileInfo(id){
     if(id==='eurostat'){var L2=EUS.years.length-1;return {v:f1(EUS.v.FI[L2])+' %',s:'kokee asuinalueen rikollisuuden ongelmaksi (EU '+f1(EUS.v.EU27_2020[L2])+' %, '+EUS.years[L2]+')',d:0};}
     if(id==='tyottomyys'){var a2=DATA.tyottomyys.aste1524;return {v:f1(a2[a2.length-1])+' %',s:'työttömiä 15–24-v. työvoimasta, '+Y[n-1],d:0};}
     if(id==='kasvu') return {v:kasvuSarjat().length+' tilastoa',s:'koko kasvuvertailu',d:0};
+    if(id==='ulkkasvu'){var ou=kvArr(renderUlkKasvu,'OU_KAI'),ct=kvArr(renderUlkKasvu,'CT_KAI'),pb=kvArr(renderIka,'PBI');var L3=ou.length-1;return {v:f1(ou[L3]/ct[L3]*100)+' %',s:'ulkomaalaistaustaisia epäillyistä '+Y[n-1]+' (väestöstä '+f1(pb[pb.length-1])+' %)',d:0};}
   }catch(err){}
   return {v:'',s:'',d:0};
 }
@@ -1251,7 +1252,7 @@ function renderUlkKasvu(){
     '</div>';
   }).join('');
   var all=G.flatMap(function(g){return g.sh;}).concat(PBI);
-  var lc=lineChart(G.map(function(g){return {data:g.sh,color:g.c,width:2,fill:false};}).concat(PBI.length===n?[{data:PBI,color:'#7a8099',width:1.5,dash:'4,3',fill:false}]:[]),0,Math.ceil(Math.max.apply(null,all)/5)*5,function(v){return v.toFixed(0)+'%';});
+  var lc=lineChart(G.map(function(g){return {data:g.sh,color:g.c,width:2,fill:false};}).concat(PBI.length===n?[{data:PBI,color:'#7a8099',width:1.5,dash:'4,3',fill:false}]:[]),0,Math.ceil(Math.max.apply(null,all)/4)*4,function(v){return v.toFixed(0)+'%';});
   el.innerHTML=
     '<div class="dbox"><div class="dbox-dot"></div><span><strong>Ajanjakso: '+y0+'–'+y1+'</strong> — Selvitettyihin rikoksiin syylliseksi epäillyt. Kukin epäilty lasketaan kerran kussakin rikosryhmässä.<br><span style="opacity:.7">Lähde: Tilastokeskus, StatFin-taulut rpk/13zk (syntyperä) ja rpk/13je (kansalaisuus), väestö vaerak/159s</span></span></div>'+
     '<div class="ibox"><strong>Käsitteet:</strong> <em>Ulkomaalaistaustainen</em> = molemmat vanhemmat (tai ainoa tiedossa oleva) syntyneet ulkomailla; mukana myös Suomessa syntyneitä ja Suomen kansalaisia. <em>Ulkomaan kansalainen</em> = kansalaisuuden mukaan; mukana myös Suomessa vakituisesti asumattomat. <em>Osuus kasvusta</em> = kuinka suuri osa epäiltyjen määrän kasvusta tuli ulkomaalaistaustaisista.</div>'+
