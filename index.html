@@ -129,6 +129,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="p-tyottomyys" class="panel"></div>
   <div id="p-varkaudet" class="panel"></div>
   <div id="p-eurostat" class="panel"></div>
+  <div id="p-kasvu" class="panel"></div>
 </div>
 
 <nav class="botnav" id="botnav" style="display:none">
@@ -147,10 +148,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="bn" data-p="ika" onclick="go(this)"><div class="bn-dot" style="background:#e8a23a"></div>Ikä &amp; tausta</button>
   <button class="bn" data-p="tyottomyys" onclick="go(this)"><div class="bn-dot" style="background:#e8c23a"></div>Nuorisotyöttömyys</button>
   <button class="bn" data-p="eurostat" onclick="go(this)"><div class="bn-dot" style="background:#4f8ef7"></div>EU-vertailu</button>
+  <button class="bn" data-p="kasvu" onclick="go(this)"><div class="bn-dot" style="background:#e05c5c"></div>Top 3 kasvu</button>
 </nav>
 
 <script>
-const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys',eurostat:'EU-vertailu: turvallisuus asuinalueella'};
+const TITLES={home:'Persutilastot',vakivalta:'Väkivaltarikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Maahanmuuttajat vs. kantaväestö',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Syntyperä vs. vangit',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys',eurostat:'EU-vertailu: turvallisuus asuinalueella',kasvu:'Eniten kasvaneet tilastot'};
 const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 // Vaestoosuudet, joita seka vangit- etta syntyperapaneeli kayttavat
 const VKS=7.7;   // ulkomaan kansalaisten vaestoosuus, %
@@ -638,6 +640,7 @@ function render(id){
   else if(id==='ika') renderIka();
   else if(id==='tyottomyys') renderTyottomyys();
   else if(id==='eurostat') renderEurostat();
+  else if(id==='kasvu') renderKasvu();
 }
 
 // ── NUORISOTYÖTTÖMYYS ───────────────────────────────────
@@ -959,6 +962,68 @@ function renderEurostat(){
   };
   draw(false);
   eusRefresh().then(ok=>{ if(ok) draw(true); });
+}
+
+// ── TOP 3 KASVU ─────────────────────────────────────────
+// Laskee joka avauksella, mitka tilastot ovat kasvaneet eniten jakson
+// alusta loppuun. Luvut luetaan suoraan sivun omista taulukoista, joten
+// lista paivittyy itsestaan kun update_stats.py paivittaa datan.
+function kvArr(fn,name){
+  const m=fn.toString().match(new RegExp('const '+name+'=\\[([^\\]]+)\\]'));
+  return m?m[1].split(',').map(Number):null;
+}
+function kasvuSarjat(){
+  const n=Y.length, last=a=>a?a.slice(-n):null;
+  const L=[
+    {id:'vakivalta',l:'Pahoinpitelyt',d:DATA.vakivalta.counts,c:'#e05c5c',u:'rikosilmoitusta'},
+    {id:'seksuaali',l:'Seksuaalirikokset',d:kvArr(renderSeksuaali,'T'),c:'#e8a23a',u:'rikosilmoitusta',note:'Seksuaalirikoslaki uudistui 1.1.2023, mikä kasvattaa lukuja osin määritelmien laajenemisen vuoksi.'},
+    {id:'henki',l:'Henkirikokset',d:DATA.henki.counts,c:'#9b7de8',u:'rikosta'},
+    {id:'ryostot',l:'Ryöstöt',d:DATA.ryostot.counts,c:'#4f8ef7',u:'rikosilmoitusta'},
+    {id:'varkaudet',l:'Varkausrikokset',d:DATA.varkaudet.counts,c:'#c87a3e',u:'rikosilmoitusta'},
+    {id:'nuoriso',l:'Alle 18-v. rikoksista epäillyt',d:DATA.nuoriso.counts,c:'#e06898',u:'epäiltyä'},
+    {id:'perhe',l:'Perheväkivallan uhrit',d:last(kvArr(renderPerhe,'PV')),c:'#e05c8a',u:'uhria'},
+    {id:'vangit',l:'Ulkomaalaiset vangit',d:last(kvArr(renderVangit,'VU')),c:'#3ab8c8',u:'vankia (keskimäärin)'}
+  ];
+  return L.filter(s=>s.d&&s.d.length===n&&s.d[0]>0).map(s=>{
+    const a=s.d[0], b=s.d[n-1], p=s.d[n-2];
+    return {...s,first:a,lastV:b,pct:(b-a)/a*100,yoy:(b-p)/p*100,idx:s.d.map(v=>v/a*100)};
+  }).sort((x,y)=>y.pct-x.pct);
+}
+function renderKasvu(){
+  const el=document.getElementById('p-kasvu');
+  const S=kasvuSarjat(), top=S.slice(0,3), y0=Y[0], y1=Y[Y.length-1], yP=Y[Y.length-2];
+  const sg=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(0)+' %';
+  const sg1=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1).replace('.',',')+' %';
+  const cards=top.map((s,i)=>`
+    <div class="card" style="border-left:4px solid ${s.c}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <div><div style="font-size:11px;color:var(--muted)">${i+1}. eniten kasvanut</div>
+        <div style="font-size:15px;font-weight:600;margin-top:2px">${s.l}</div></div>
+        <div style="font-size:26px;font-weight:700;color:${s.c}">${sg(s.pct)}</div>
+      </div>
+      <div style="display:flex;gap:18px;margin-top:8px;font-size:12px;color:var(--muted)">
+        <span>${y0}: <strong style="color:var(--text,inherit)">${fi(s.first)}</strong></span>
+        <span>${y1}: <strong style="color:var(--text,inherit)">${fi(s.lastV)}</strong></span>
+        <span>vs. ${yP}: <strong style="color:${s.yoy>=0?'var(--red)':'var(--green)'}">${sg1(s.yoy)}</strong></span>
+      </div>
+      ${s.note?'<div class="csub" style="margin-top:6px">⚠ '+s.note+'</div>':''}
+    </div>`).join('');
+  const mx=Math.max(...top.flatMap(s=>s.idx)), mn=Math.min(100,...top.flatMap(s=>s.idx));
+  const lc=lineChart(top.map((s,i)=>({data:s.idx,color:s.c,width:i===0?2.5:2,fill:false})),Math.floor(mn/50)*50,Math.ceil(mx/50)*50,v=>v.toFixed(0));
+  el.innerHTML=`
+    <div class="ibox"><strong>Mitä tämä näyttää:</strong> Kolme tilastoa, joiden määrä on kasvanut eniten vuodesta ${y0} vuoteen ${y1}. Järjestys lasketaan aina uudelleen sivun ajantasaisista luvuista, joten se muuttuu automaattisesti tilastojen päivittyessä.</div>
+    ${cards}
+    <div class="card"><div class="ctitle">Kasvu rinnakkain (${y0} = 100)</div>
+      <div class="csub">Indeksi: kaikki sarjat alkavat samasta pisteestä, jolloin eri kokoisia lukuja voi verrata</div>
+      <div class="legend">${top.map(s=>'<span class="li"><span class="ld" style="background:'+s.c+'"></span>'+s.l+'</span>').join('')}</div>
+      ${lc}
+    </div>
+    <div class="card"><div class="ctitle">Kaikki seuratut tilastot ${y0}–${y1}</div>
+      <div class="csub">Muutos prosentteina, kärkikolmikko korostettuna</div>
+      ${hbars(S.map((s,i)=>({l:s.l,v:Math.max(Math.abs(s.pct),0.5),c:i<3?s.c:(s.pct<0?'#3dba8c':'#4a5068'),fmt:sg(s.pct)})))}
+      <div class="csub" style="margin-top:6px">Vihreä = vähentynyt. Palkin pituus kuvaa muutoksen suuruutta.</div>
+    </div>
+    <div class="abox">Vertailu perustuu lukumääriin, ei väestöön suhteutettuihin lukuihin; väestö kasvoi samalla jaksolla noin 3 %. Luvut ovat viranomaisten tietoon tulleita tapauksia, joten myös ilmoitusalttius ja lakimuutokset vaikuttavat kasvuun.</div>`;
 }
 
 // ── 2025 ENNAKKOTIEDOT ───────────────────────────────────
