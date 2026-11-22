@@ -453,6 +453,8 @@ function renderSeksuaali(){
   const SOT=[832,255,181,286,383,392];
   const SOV=11.69;   // ulkomaalaistaustaisten vaestoosuus 2025
   const SOKM=[1891.00,392.00,5.10];   // kuva-aineisto: tapauskerrat, henkilot, ulk-% tapauskerroista
+  const SKVIL=['alle 15 v','15–17 v','18 v tai yli'];
+  const SKVI=[176,70,146];   // kuva-aineisto: epaillyt henkiloina ikaryhmittain
   const T=[3326,3336,3859,4409,4531,5484,5591,7451,9607,10372];
   const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]-SKV[i]));
   const UR=[19.70,25.50,21.80,24.00,25.70,24.60,21.20,23.50,27.20,23.10];
@@ -554,6 +556,12 @@ function renderSeksuaali(){
     <div class="csub" style="margin-top:8px">${fi(SKV[0])} (${Y[0]}) → ${fi(SKV[9])} (${Y[9]}).
     Osuus kaikista seksuaalirikoksista ${(SKV[9]/T[9]*100).toFixed(0)} %, osuus koko kasvusta
     ${((SKV[9]-SKV[0])/(T[9]-T[0])*100).toFixed(0)} %.</div>
+  </div>
+  <div class="card">
+    <div class="ctitle">Kuva-aineistorikoksista epäillyt iän mukaan ${Y[9]}</div>
+    <div class="csub">Henkilöitä, jokainen kertaalleen vuoden törkeimmän rikoksensa mukaan. Yhteensä ${fi(SKVI.reduce((a,b)=>a+b,0))}.</div>
+    ${hbars(SKVIL.map(function(l,i){var s=SKVI.reduce(function(a,b){return a+b;},0);return {l:l+' ('+fi(SKVI[i])+')',v:SKVI[i]/s*100,c:i<2?'#e05c5c':'#4a5068',fmt:(SKVI[i]/s*100).toFixed(0)+' %'};}))}
+    <div class="csub" style="margin-top:10px">Enemmistö epäillyistä on alaikäisiä ja lähes puolet alle 15-vuotiaita. Tämä erottaa ryhmän muista seksuaalirikoksista: raiskauksissa alaikäisten osuus on alle kymmenesosa. Tilasto ei kerro, keitä aineistossa esiintyy eikä missä yhteydessä sitä on jaettu.</div>
   </div>
   <div class="abox">Seksuaalirikokset yhteensä ${Y[0]}–${Y[9]}: ${fi(T[0])} → ${fi(T[9])}. Lapsiin kohdistuvien muutos viimeisimpänä vuonna: ${(()=>{const c=(L[9]-L[8])/L[8]*100;return (c>=0?"+":"")+c.toFixed(1);})()} %. Ulkomaan kansalaisten osuus raiskausepäillyistä: ${UR[9].toFixed(1)} % (väestöosuus ${UV[9].toFixed(1)} %). Seksuaalirikoslaki uudistui 1.1.2023 ja laajensi rikoslain 20. luvun määritelmiä, joten lukuja ennen ja jälkeen ei voi suoraan verrata.</div>`;
 }
@@ -1918,6 +1926,13 @@ const DICT = {
 'Selvitettyihin rikoksiin syylliseksi epäillyt. Kukin epäilty lasketaan kerran kussakin rikosryhmässä.':'Persons suspected of solved offences. Each suspect is counted once within each offence group.',
 'poliisin tietoon tulleet seksuaalirikokset':'sexual offences known to the police',
 'rikoslakirikoksista epäillyt alle 18-vuotiaat':'persons under 18 suspected of Penal Code offences'
+,
+'Kuva-aineistorikoksista epäillyt iän mukaan ':'Suspects in child sexual abuse image offences by age, ',
+'Henkilöitä, jokainen kertaalleen vuoden törkeimmän rikoksensa mukaan. Yhteensä ':'Persons, each counted once by their most serious offence of the year. Total ',
+'alle 15 v':'under 15',
+'15–17 v':'15–17',
+'18 v tai yli':'18 or over',
+'Enemmistö epäillyistä on alaikäisiä ja lähes puolet alle 15-vuotiaita. Tämä erottaa ryhmän muista seksuaalirikoksista: raiskauksissa alaikäisten osuus on alle kymmenesosa. Tilasto ei kerro, keitä aineistossa esiintyy eikä missä yhteydessä sitä on jaettu.':'A majority of suspects are minors and almost half are under 15. This sets the group apart from other sexual offences: among rape suspects, minors are under a tenth. The statistic does not say who appears in the material, nor in what context it was shared.'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 

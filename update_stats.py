@@ -667,6 +667,32 @@ def fetch_sexcat_origin(year):
     return osuus, maara
 
 
+IMAGERY_AGES = ['0-14', '15-17', '18-']
+
+
+def fetch_imagery_ages(year):
+    """Kuva-aineistorikoksista epaillyt ikaryhmittain, henkiloina."""
+    grp = SEXCAT_GROUPS[-1]
+    out = []
+    for ika in IMAGERY_AGES:
+        d = _pxpost(SYNT_TABLE, [
+            {"code": "sukupuoli_9_20180101",
+             "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "ikaryhma_10_20180101",
+             "selection": {"filter": "item", "values": [ika]}},
+            {"code": "rikokset_74_20211209",
+             "selection": {"filter": "item", "values": [grp]}},
+            {"code": SYNT_VAR, "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "contentscode",
+             "selection": {"filter": "item", "values": [SEXCAT_CONTENT]}},
+        ], [year])
+        if not d or d.get(year) is None:
+            print(f"  Kuva-aineiston ikajakauma puuttuu ({ika})")
+            return None
+        out.append(int(d[year]))
+    return out
+
+
 def fetch_imagery_measures(year):
     """Kuva-aineistoryhma: tapauskerrat, henkilot ja ulkomaalaisosuus kerroista."""
     grp = SEXCAT_GROUPS[-1]
@@ -1336,6 +1362,7 @@ def main():
     sexcat = fetch_sexcat_origin(str(latest_year))
     foreign_share = fetch_foreign_pop_share(str(latest_year))
     imagery = fetch_imagery_measures(str(latest_year))
+    imagery_ages = fetch_imagery_ages(str(latest_year))
     sex_u = fetch_sex_rates(SYNT_FOREIGN, str(latest_year))
     sex_k = fetch_sex_rates(SYNT_DOMESTIC, str(latest_year))
     nat_counts = fetch_nationality_counts(str(latest_year))
@@ -1626,6 +1653,8 @@ def main():
         content = update_const_array(content, 'SOT', sot)
     if imagery:
         content = update_const_array(content, 'SOKM', imagery, is_float=True)
+    if imagery_ages:
+        content = update_const_array(content, 'SKVI', imagery_ages)
     if foreign_share:
         content = re.sub(r'(const SOV=)[\d.]+',
                          lambda m: m.group(1) + f'{foreign_share}',
