@@ -137,7 +137,12 @@ AGE_GROUPS = ['15-17', '18-20', '21-24', '25-29', '30-39', '40-49', '50-59', '60
 NUORI_GROUPS = ['0-14', '15-17', '18-20']   # nuorisopaneelin ikajakauma
 # Vakivaltarikoksista epaillyt ikaryhmittain (13zk), sama jarjestys kuin VAGEL
 VIOL_AGES = ['0-14', '15-17', '18-20', '21-24', '25-29', '30-39', '40-49', '50-59']
-VIOL_GROUP = '201T223'   # 12 Henkeen ja terveyteen kohdistuneet rikokset
+VIOL_GROUP = '201T223'
+
+# Pitka aikasarja (13ex, 1980-). Sama jarjestys kuin LTL.
+LONG_TABLE = f'{PXWEB_BASE}/rpk/13ex.px'
+LONG_START = '2000'
+LONG_GROUPS = ['101T504X406', '101T161', '201T223', '231T241', '201_202_205']   # 12 Henkeen ja terveyteen kohdistuneet rikokset
 # Seksuaalirikosepaillyt kansalaisuuksittain (13jg), sama jarjestys kuin SXL
 SEX_NATS = ['368', '004', '706', '504', '566', 'ULK', '246']
 SEX_GROUP = '231T241'   # 13 Seksuaalirikokset
@@ -938,6 +943,37 @@ def fetch_nationality_counts(year):
     return out
 
 
+def fetch_long_term(pop):
+    """Rikokset per 100 000 asukasta lahtovuonna ja viimeisimpana vuonna (13ex)."""
+    avail = available_years(LONG_TABLE, CRIME_VAR_YEAR)
+    if not avail or LONG_START not in avail:
+        return None
+    viim = avail[-1]
+    if not pop or LONG_START not in pop or viim not in pop:
+        return None
+    alku, loppu = [], []
+    for grp in LONG_GROUPS:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR,
+             "selection": {"filter": "item", "values": [LONG_START, viim]}},
+            {"code": "alue_23_20230101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [grp]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": ["rikokset_lkm"]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(LONG_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            d = parse_jsonstat2(r.json(), [LONG_START, viim], [grp])
+        except Exception as e:
+            print(f"  Pitkan sarjan virhe ({grp}): {e}")
+            return None
+        if not d:
+            return None
+        alku.append(round(d.get(LONG_START, 0) / pop[LONG_START] * 100000, 1))
+        loppu.append(round(d.get(viim, 0) / pop[viim] * 100000, 1))
+    return alku, loppu
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -1020,7 +1056,9 @@ def update_const_array(content, var_name, values, is_float=False, years=False):
         arr = format_js_float_array(values)
     else:
         arr = format_js_array(values)
-    pattern = rf'(const {var_name}=)\[[^\]]+\]'
+    # Korvataan vain, jos nykyinen sisalto on puhdas lukulista. Nain yleinen
+    # nimi (esim. L tai PY) ei voi osua toisen funktion objektitaulukkoon.
+    pattern = rf'(const {var_name}=)\[[-\d.,\s]*\]'
     new_content = re.sub(pattern, rf'\g<1>{arr}', content)
     if new_content != content:
         print(f"  ✓ Päivitetty: {var_name}")
@@ -1032,7 +1070,9 @@ def update_const_array(content, var_name, values, is_float=False, years=False):
 def update_seksuaali_array(content, var_name, new_values):
     """Päivitä seksuaalirikokset-funktion muuttuja."""
     arr_str = format_js_array(new_values)
-    pattern = rf'(const {var_name}=)\[[^\]]+\]'
+    # Korvataan vain, jos nykyinen sisalto on puhdas lukulista. Nain yleinen
+    # nimi (esim. L tai PY) ei voi osua toisen funktion objektitaulukkoon.
+    pattern = rf'(const {var_name}=)\[[-\d.,\s]*\]'
     new_content = re.sub(pattern, rf'\g<1>{arr_str}', content)
     if new_content != content:
         print(f"  ✓ Päivitetty: seksuaali.{var_name}")
@@ -1195,6 +1235,9 @@ def main():
     sex_u = fetch_sex_rates(SYNT_FOREIGN, str(latest_year))
     sex_k = fetch_sex_rates(SYNT_DOMESTIC, str(latest_year))
     nat_counts = fetch_nationality_counts(str(latest_year))
+    print("  Pitkä aikasarja 2000-...")
+    pop_pitka = get_population(int(LONG_START), latest_year)
+    long_term = fetch_long_term(pop_pitka)
     rt_foreign_n = fetch_crime_group_rates(SYNT_FOREIGN, str(latest_year))
     rt_domestic_n = fetch_crime_group_rates(SYNT_DOMESTIC, str(latest_year))
     age_foreign = fetch_age_rates(SYNT_FOREIGN, str(latest_year))
@@ -1458,6 +1501,10 @@ def main():
         content = update_const_array(content, 'SEXK', sex_k)
     if nat_counts:
         content = update_const_array(content, 'KVN', nat_counts)
+    if long_term:
+        lt0, lt1 = long_term
+        content = update_const_array(content, 'LT0', lt0, is_float=True)
+        content = update_const_array(content, 'LT1', lt1, is_float=True)
     if rt_foreign:
         content = update_const_array(content, 'RTU', rt_foreign, is_float=True)
     if rt_domestic:

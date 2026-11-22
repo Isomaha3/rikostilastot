@@ -192,6 +192,12 @@ const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 // Vaestoosuudet, joita seka vangit- etta syntyperapaneeli kayttavat
 const EU=[25857,25546,27170,27942,32653,35062,35055,41092,46697,51438];
 const ES=[266978,254763,253304,255449,292662,287851,260021,310625,269600,296319];
+// Pitka aikasarja taulusta rpk/13ex (1980-). Luvut ovat per 100 000 asukasta,
+// jotta vaestonkasvu ei vaaristaisi vertailua.
+const LTY0='2000';
+const LTL=['Rikoslakirikokset yhteensä','Omaisuusrikokset','Väkivaltarikokset','Seksuaalirikokset','Henkirikokset'];
+const LT0=[10292.7,6041.2,586.9,24.8,2.8];   // per 100k, lahtovuosi
+const LT1=[9792.1,4728.1,852.0,183.5,1.4];   // per 100k, viimeisin vuosi
 const VKS=7.7;   // ulkomaan kansalaisten vaestoosuus, %
 const VSS=10.9;  // ulkomailla syntyneiden vaestoosuus, %
 
@@ -1024,8 +1030,17 @@ function kvArr(fn,name){
 const KV_SRC={vakivalta:'Tilastokeskus, poliisin tietoon tulleet pahoinpitelyt',seksuaali:'Tilastokeskus, poliisin tietoon tulleet seksuaalirikokset',henki:'Tilastokeskus, poliisin tietoon tulleet henkirikokset',ryostot:'Tilastokeskus, poliisin tietoon tulleet ryöstöt',varkaudet:'Tilastokeskus, poliisin tietoon tulleet varkausrikokset',nuoriso:'Tilastokeskus, rikoslakirikoksista epäillyt alle 18-vuotiaat',perhe:'Tilastokeskus, perhe- ja lähisuhdeväkivallan uhrit',vangit:'Rikosseuraamuslaitos, ulkomaalaiset vangit (päivittäinen keskimäärä)'};
 function kasvuSarjat(){
   const n=Y.length, last=a=>a?a.slice(-n):null;
-  const L=[1187,1131,1350,1698,1752,2064,2343,2315,3469,2936];
-  return L.map(s=>({...s,src:KV_SRC[s.id]||''})).filter(s=>s.d&&s.d.length===n&&s.d[0]>0).map(s=>{
+  const KSARJAT=[
+    {id:'vakivalta',l:'Pahoinpitelyt',d:DATA.vakivalta.counts,c:'#e05c5c',u:'rikosilmoitusta'},
+    {id:'seksuaali',l:'Seksuaalirikokset',d:kvArr(renderSeksuaali,'T'),c:'#e8a23a',u:'rikosilmoitusta',note:'Seksuaalirikoslaki uudistui 1.1.2023, mikä kasvattaa lukuja osin määritelmien laajenemisen vuoksi.'},
+    {id:'henki',l:'Henkirikokset',d:DATA.henki.counts,c:'#9b7de8',u:'rikosta'},
+    {id:'ryostot',l:'Ryöstöt',d:DATA.ryostot.counts,c:'#4f8ef7',u:'rikosilmoitusta'},
+    {id:'varkaudet',l:'Varkausrikokset',d:DATA.varkaudet.counts,c:'#c87a3e',u:'rikosilmoitusta'},
+    {id:'nuoriso',l:'Alle 18-v. rikoksista epäillyt',d:DATA.nuoriso.counts,c:'#e06898',u:'epäiltyä'},
+    {id:'perhe',l:'Perheväkivallan uhrit',d:last(kvArr(renderPerhe,'PV')),c:'#e05c8a',u:'uhria'},
+    {id:'vangit',l:'Ulkomaalaiset vangit',d:last(kvArr(renderVangit,'VU')),c:'#3ab8c8',u:'vankia (keskimäärin)'}
+  ];
+  return KSARJAT.map(s=>({...s,src:KV_SRC[s.id]||''})).filter(s=>s.d&&s.d.length===n&&s.d[0]>0).map(s=>{
     const a=s.d[0], b=s.d[n-1], p=s.d[n-2];
     return {...s,first:a,lastV:b,pct:(b-a)/a*100,yoy:(b-p)/p*100,idx:s.d.map(v=>v/a*100)};
   }).sort((x,y)=>y.pct-x.pct);
@@ -1118,6 +1133,24 @@ function homeExtras(){
     h+='<button class="home-top" data-id="'+s.id+'" onclick="goTo(this.dataset.id)"><div class="ht-main"><div class="ht-rank">'+(i+1)+'. eniten kasvanut</div><div class="ht-name">'+s.l+'</div><div class="ht-sub">'+y0+': '+fi(s.first)+' → '+y1+': '+fi(s.lastV)+' · vs. '+yP+' '+sg1(s.yoy)+'</div><div class="ht-txt">'+trendText(s.d,Y)+'</div><div class="ht-src">Lähde: '+s.src+'</div>'+(s.note?'<div class="ht-note">Huom: lainmuutos 2023 selittää osan kasvusta</div>':'')+'</div><div class="ht-side"><div class="ht-pct" style="color:'+s.c+'">'+sg(s.pct)+'</div>'+hSpark(s.d,s.c)+'</div></button>';
   });
   h+='<div class="home-fine">Prosentti kertoo, kuinka paljon määrä on muuttunut vuodesta '+y0+' vuoteen '+y1+'. Luvut ovat viranomaisten virallisia tilastoja, ja kolmikko lasketaan automaattisesti tuoreimmista luvuista.</div></section>';
+  // ── Pitka kuva: kehitys 2000-luvun alusta ──
+  var ab1=function(v){return Math.abs(v).toFixed(1).replace('.',',')+' %';};
+  var pm = LTL.map(function(l,i){ return {l:l, m:(LT1[i]-LT0[i])/LT0[i]*100}; });
+  var byName = {}; pm.forEach(function(x){ byName[x.l]=x.m; });
+  h+='<section class="home-sec"><div class="home-head"><h2>Pitkä kuva '+LTY0+'–'+y1+'</h2></div>';
+  h+='<div class="home-fine" style="margin-bottom:12px">Väestöön suhteutettuna rikoslakirikoksia '
+   +'kirjataan nyt '+sg1(byName['Rikoslakirikokset yhteensä'])+' verrattuna vuoteen '+LTY0+'. '
+   +'Kokonaisuutena rikollisuus ei siis ole kasvanut. Suurin yksittäinen ryhmä, omaisuusrikokset, '
+   +'on vähentynyt '+ab1(byName['Omaisuusrikokset'])+', ja henkirikokset '+ab1(byName['Henkirikokset'])+'. '
+   +'Kasvu keskittyy väkivalta- ja seksuaalirikoksiin. Seksuaalirikosten moninkertaistumisesta iso osa '
+   +'selittyy ilmoitusalttiuden ja lainsäädännön muutoksilla — etenkin vuoden 2023 uudistuksella, joka '
+   +'laajensi rikoslain 20. luvun määritelmiä — joten sitä lukua ei voi suoraan verrata vuoteen '+LTY0+'. '
+   +'Luvut ovat viranomaisten tietoon tulleita rikoksia per 100 000 asukasta.</div>';
+  h+='<div class="card">'+hbars(pm.map(function(x){
+      return {l:x.l, v:Math.abs(x.m), c:(x.m>=0?'#e05c5c':'#3dba8c'), fmt:sg(x.m)};
+    }))+'<div class="csub" style="margin-top:8px">Muutos per 100 000 asukasta. '
+   +'Punainen = kasvanut, vihreä = vähentynyt.</div></div></section>';
+
   MENU.forEach(function(m){
     h+='<section class="home-sec"><h3>'+m.g+'</h3><div class="home-grid">';
     m.ids.forEach(function(id){
@@ -1676,6 +1709,12 @@ const DICT = {
 'epäiltyä':'suspects',
 'Mitä kerroin ei kerro:':'What the ratio does not tell you:',
 'Vankiosuuden ja väestöosuuden suhde ei ole rikosriskin mittari. Vankiluvussa ovat mukana myös tutkintavangit, eli henkilöt joita ei ole tuomittu. Osuuteen vaikuttaa myös tuomioiden pituus: pitkää tuomiota istuva näkyy tilastossa vuosia, lyhyttä istuva ei. Lisäksi osa ulkomaalaisista vangeista ei kuulu Suomen vakituiseen väestöön, jolloin heitä ei ole väestöosuuden nimittäjässä lainkaan. Kansalaisuus ei myöskään ole sama asia kuin syntyperä: Suomen kansalaisuuden saanut maahanmuuttaja lasketaan tässä Suomen kansalaiseksi.':'The ratio of prisoner share to population share is not a measure of offending risk. The prisoner figure includes remand prisoners, who have not been convicted. Sentence length also affects the share: someone serving a long sentence appears in the statistic for years, someone serving a short one does not. In addition, some foreign prisoners are not part of the permanent population of Finland, so they are not in the denominator of the population share at all. Citizenship is also not the same as origin: an immigrant who has been granted Finnish citizenship is counted here as a Finnish citizen.'
+,
+'Pitkä kuva ':'The long view ',
+'Rikoslakirikokset yhteensä':'All Penal Code offences',
+'Omaisuusrikokset':'Property offences',
+'Väkivaltarikokset':'Violent offences',
+'Muutos per 100 000 asukasta. Punainen = kasvanut, vihreä = vähentynyt.':'Change per 100,000 inhabitants. Red = increased, green = decreased.'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 
