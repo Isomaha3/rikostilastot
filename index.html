@@ -1270,6 +1270,182 @@ function homeExtras(){
    +'lukuja voi verrata yli ajan. Se on heikoin juuri niissä ryhmissä jotka kasvavat, ja paras '
    +'henkirikoksissa, jotka tulevat viranomaisten tietoon lähes poikkeuksetta.</div></div></section>';
 
+  // ── Tulkinta: mita luvut kertovat ──
+  // Jokainen luku luetaan sivun omasta sarjasta funktiolla kvArr, jottei
+  // tulkinta voi olla ristiriidassa paneelien kanssa eika vanhene, kun
+  // update_stats.py paivittaa sarjat. Yhtaan lukua ei kirjoiteta tahan
+  // kasin: jos luku ei ole jossakin paneelissa, sita ei esiteta tassa.
+  // Teksti tuotetaan suoraan valitulla kielella, koska lauseissa on lukuja
+  // valissa eika sanakirja osaisi kaantaa niiden ympari luotettavasti.
+  var L=function(fi,en){return LANG==='en'?en:fi;};
+  var pc=function(v){var s=Math.abs(v).toFixed(1);
+    return (v>=0?'+':'−')+(LANG==='en'?s:s.replace('.',','))+' %';};
+  var kT=kvArr(renderSeksuaali,'T')||[], kSKV=kvArr(renderSeksuaali,'SKV')||[];
+  var kSOU=kvArr(renderSeksuaali,'SOU')||[];
+  var kSKVI=kvArr(renderSeksuaali,'SKVI')||[];
+  var kV0=kvArr(renderCrime,'VAGE0')||[], kV1=kvArr(renderCrime,'VAGE1')||[];
+  var kPBI=kvArr(renderIka,'PBI')||[];
+  var kOU=kvArr(renderUlkKasvu,'OU_KAI')||[], kCT=kvArr(renderUlkKasvu,'CT_KAI')||[];
+  var vo=kPBI.length?kPBI[kPBI.length-1]:0;
+  var iL=function(a){return a.length-1;};
+  var pros=function(a,b){return b?a/b*100:0;};
+  var ker=function(v){return LANG==='en'?v.toFixed(1):v.toFixed(1).replace('.',',');};
+  var LTnimi={}; LTL.forEach(function(l,i){LTnimi[l]=i;});
+  var ltm=function(nimi,alku){var i=LTnimi[nimi];var p=alku?LT2[i]:LT0[i];
+    return p?(LT1[i]-p)/p*100:0;};
+  var ryh=[['Ryöstörikokset','Robbery','RYO'],['Pahoinpitelyrikokset','Assault','PAH'],
+           ['Seksuaalirikokset','Sexual offences','SEK'],['Varkausrikokset','Theft','VAR']];
+  var kerT=ryh.map(function(r){
+    var u=kvArr(renderUlkKasvu,'OU_'+r[2])||[], t=kvArr(renderUlkKasvu,'CT_'+r[2])||[];
+    return {l:L(r[0].toLowerCase(),r[1].toLowerCase()), k:(u.length&&vo)?pros(u[iL(u)],t[iL(t)])/vo:0};
+  }).filter(function(x){return x.k>0;}).sort(function(a,b){return b.k-a.k;});
+  var alaik=kSKVI.length===3?kSKVI[0]+kSKVI[1]:0;
+  var kaikkiI=kSKVI.length===3?kSKVI[0]+kSKVI[1]+kSKVI[2]:0;
+  var hu=DATA.huumeet, yA=Y[0], yB=Y[Y.length-1];
+
+  var tul=[];
+  tul.push([L('Mittakaava ei ole kasvanut, sen sisältö on muuttunut',
+              'The scale has not grown; its composition has changed'),
+    L('Väestöön suhteutettuna rikoslakirikoksia kirjataan '+pc(ltm('Rikoslakirikokset yhteensä',false))
+      +' verrattuna vuoteen '+LTY0+', mutta '+pc(ltm('Rikoslakirikokset yhteensä',true))
+      +' verrattuna vuoteen '+LTY2+'. Etumerkki vaihtuu lähtövuoden mukaan, koska 2000-luvun '
+      +'ensimmäinen vuosikymmen oli laskukautta. Suurin yksittäinen ryhmä, omaisuusrikokset, on '
+      +pc(ltm('Omaisuusrikokset',false))+' vuoteen '+LTY0+' verrattuna.',
+      'Relative to population size, recorded Penal Code offences are '+pc(ltm('Rikoslakirikokset yhteensä',false))
+      +' compared with '+LTY0+', but '+pc(ltm('Rikoslakirikokset yhteensä',true))+' compared with '
+      +LTY2+'. The sign flips with the baseline year, because the first decade of the 2000s was a '
+      +'period of decline. The largest single group, property offences, is '
+      +pc(ltm('Omaisuusrikokset',false))+' compared with '+LTY0+'.')]);
+
+  tul.push([L('Vakavin väkivalta vähenee','The most serious violence is declining'),
+    L('Henkirikoksia kirjataan väestöön suhteutettuna '+pc(ltm('Henkirikokset',false))
+      +' verrattuna vuoteen '+LTY0+'. Henkirikos on näistä ryhmistä luotettavin, koska se tulee '
+      +'viranomaisten tietoon lähes poikkeuksetta eikä sen määritelmä ole muuttunut. '
+      +'Väkivaltarikokset kokonaisuutena ovat sen sijaan '+pc(ltm('Väkivaltarikokset',false))
+      +'. Kasvu ei siis koske vakavinta väkivaltaa.',
+      'Relative to population size, homicides are '+pc(ltm('Henkirikokset',false))+' compared with '
+      +LTY0+'. Homicide is the most reliable of these groups, because it is almost always reported '
+      +'and its definition has not changed. Violent offences as a whole, by contrast, are '
+      +pc(ltm('Väkivaltarikokset',false))+'. The growth therefore does not concern the most '
+      +'serious violence.')]);
+
+  if(kV0.length>3&&kV1.length>3){
+    tul.push([L('Kasvu keskittyy alaikäisiin','The growth is concentrated among minors'),
+      L('Väkivaltarikoksista epäillyistä alle 15-vuotiaiden määrä on '+ker(kV1[0]/kV0[0])
+        +'-kertaistunut ja 15–17-vuotiaiden '+ker(kV1[1]/kV0[1])+'-kertaistunut jaksolla '
+        +yA+'–'+yB+', kun 21–24-vuotiaiden määrä on '+pc((kV1[3]-kV0[3])/kV0[3]*100)
+        +'. Muutos on ikäryhmittäinen, ei kaikkia koskeva.',
+        'Among suspects in violent offences, the number of under-15s has grown '+ker(kV1[0]/kV0[0])
+        +'-fold and that of 15–17-year-olds '+ker(kV1[1]/kV0[1])+'-fold over '+yA+'–'+yB
+        +', while the number of 21–24-year-olds is '+pc((kV1[3]-kV0[3])/kV0[3]*100)
+        +'. The change is specific to age groups, not general.')]);
+  }
+
+  if(kSOU.length>=6&&vo&&kT.length){
+    tul.push([L('Seksuaalirikokset ovat kaksi eri ilmiötä','Sexual offences are two different phenomena'),
+      L('Kokonaismäärä on '+ker(kT[iL(kT)]/kT[0])+'-kertaistunut jaksolla '+yA+'–'+yB
+        +', mutta luku sekoittaa kaksi asiaa. Raiskauksissa ulkomaalaistaustaisten osuus '
+        +'epäillyistä on '+ker(kSOU[0])+' % eli '+ker(kSOU[0]/vo)+'-kertainen väestöosuuteen ('
+        +ker(vo)+' %). Nopeimmin kasvanut alaryhmä on sen sijaan lasta seksuaalisesti esittävä '
+        +'kuva-aineisto, jossa osuus on '+ker(kSOU[5])+' % eli '+ker(kSOU[5]/vo)
+        +'-kertainen — väestöosuuden alle ja matalin kaikista alaryhmistä. Yhteenlaskettuna nämä '
+        +'kumoavat toisensa, ja kokonaisluku lakkaa kertomasta kummastakaan.',
+        'The total has grown '+ker(kT[iL(kT)]/kT[0])+'-fold over '+yA+'–'+yB
+        +', but the figure mixes two things. Among rape suspects, '+ker(kSOU[0])
+        +' % have a foreign background, which is '+ker(kSOU[0]/vo)+' times the population share ('
+        +ker(vo)+' %). The fastest-growing subgroup, however, is child sexual abuse imagery, where '
+        +'the share is '+ker(kSOU[5])+' % or '+ker(kSOU[5]/vo)+' times the population share — below '
+        +'it, and the lowest of all subgroups. Added together these cancel out, and the total stops '
+        +'telling you about either.')]);
+  }
+
+  if(alaik&&kSKV.length&&kT.length){
+    tul.push([L('Kuva-aineistorikokset ovat suurelta osin lasten tekoja',
+                'Image offences are largely committed by children'),
+      L('Niistä henkilöistä, joiden vuoden törkeimmäksi rikokseksi kirjattiin kuva-aineistorikos, '
+        +Math.round(pros(alaik,kaikkiI))+' % oli alaikäisiä ja '+Math.round(pros(kSKVI[0],kaikkiI))
+        +' % alle 15-vuotiaita. Ryhmä on '+ker(kSKV[iL(kSKV)]/kSKV[0])+'-kertaistunut jaksolla '
+        +yA+'–'+yB+' ja tuottaa '+Math.round((kSKV[iL(kSKV)]-kSKV[0])/(kT[iL(kT)]-kT[0])*100)
+        +' % koko seksuaalirikosten kasvusta. Ennen vuotta 2023 nämä teot kirjattiin rikoslain '
+        +'17. lukuun eivätkä olleet seksuaalirikoksia lainkaan. Tilasto ei kerro, keitä '
+        +'aineistossa esiintyy eikä missä yhteydessä sitä on jaettu.',
+        'Of the persons whose most serious offence of the year was an image offence, '
+        +Math.round(pros(alaik,kaikkiI))+' % were minors and '+Math.round(pros(kSKVI[0],kaikkiI))
+        +' % were under 15. The group has grown '+ker(kSKV[iL(kSKV)]/kSKV[0])+'-fold over '
+        +yA+'–'+yB+' and accounts for '
+        +Math.round((kSKV[iL(kSKV)]-kSKV[0])/(kT[iL(kT)]-kT[0])*100)
+        +' % of the entire growth in sexual offences. Before 2023 these acts were recorded under '
+        +'Chapter 17 of the Penal Code and were not sexual offences at all. The statistic does not '
+        +'say who appears in the material, nor in what context it was shared.')]);
+  }
+
+  if(hu&&hu.huTorkea&&hu.counts){
+    tul.push([L('Vakava huumerikollisuus kasvaa, vaikka kokonaisluku laskee',
+                'Serious drug crime is growing even as the total falls'),
+      L('Huumausainerikosten kokonaismäärä on '+pc((hu.counts[9]-hu.counts[0])/hu.counts[0]*100)
+        +' jaksolla '+yA+'–'+yB+', mutta törkeät huumausainerikokset ovat '
+        +pc((hu.huTorkea[9]-hu.huTorkea[0])/hu.huTorkea[0]*100)+'. Käyttörikosten määrä riippuu '
+        +'poliisin katutason valvonnasta, törkeä tekomuoto selvästi vähemmän. Kokonaisluku mittaa '
+        +'siis osin valvontaa, törkeä tekomuoto itse ilmiötä.',
+        'The total number of narcotics offences is '+pc((hu.counts[9]-hu.counts[0])/hu.counts[0]*100)
+        +' over '+yA+'–'+yB+', but aggravated narcotics offences are '
+        +pc((hu.huTorkea[9]-hu.huTorkea[0])/hu.huTorkea[0]*100)+'. The number of use offences '
+        +'depends on street-level policing; the aggravated form much less so. The total therefore '
+        +'measures enforcement in part, while the aggravated form reflects the phenomenon itself.')]);
+  }
+
+  if(kerT.length&&kOU.length&&kPBI.length){
+    var lista=kerT.map(function(x){
+      return L(x.l+' '+ker(x.k)+'-kertainen', x.l+' '+ker(x.k)+' times');
+    }).join(', ');
+    tul.push([L('Yliedustus riippuu rikostyypistä','Overrepresentation depends on the type of offence'),
+      L('Kaikista rikoslakirikoksista epäillyistä '+ker(pros(kOU[iL(kOU)],kCT[iL(kCT)]))
+        +' % oli ulkomaalaistaustaisia vuonna '+yB+', kun väestöosuus oli '+ker(vo)+' % — kerroin '
+        +ker(pros(kOU[iL(kOU)],kCT[iL(kCT)])/vo)+'. Keskiarvo peittää suuren vaihtelun: '+lista
+        +'. Epäiltyjen määrän kasvusta jaksolla '+yA+'–'+yB+' tuli '
+        +Math.round((kOU[iL(kOU)]-kOU[0])/(kCT[iL(kCT)]-kCT[0])*100)
+        +' % ulkomaalaistaustaisista, mutta samaan aikaan ryhmän väestöosuus nousi '+ker(kPBI[0])
+        +' prosentista '+ker(vo)+' prosenttiin. Taso ja suunta ovat eri kysymyksiä, eikä yksi '
+        +'kerroin vastaa kumpaankaan.',
+        'Of all persons suspected of Penal Code offences, '+ker(pros(kOU[iL(kOU)],kCT[iL(kCT)]))
+        +' % had a foreign background in '+yB+', against a population share of '+ker(vo)
+        +' % — a factor of '+ker(pros(kOU[iL(kOU)],kCT[iL(kCT)])/vo)+'. The average hides a wide '
+        +'spread: '+lista+'. Of the growth in suspects over '+yA+'–'+yB+', '
+        +Math.round((kOU[iL(kOU)]-kOU[0])/(kCT[iL(kCT)]-kCT[0])*100)
+        +' % came from people with a foreign background, but over the same period that group grew '
+        +'from '+ker(kPBI[0])+' % to '+ker(vo)+' % of the population. Level and direction are '
+        +'different questions, and no single factor answers either.')]);
+  }
+
+  tul.push([L('Mitä nämä luvut eivät kerro','What these figures do not tell you'),
+    L('Nämä ovat viranomaisten tietoon tulleita rikoksia ja rikoksista epäiltyjä — eivät tuomioita '
+      +'eikä todellista rikollisuuden määrää. Ilmoitusalttiuden ja kirjaamiskäytäntöjen muutokset '
+      +'näkyvät luvuissa samalla tavalla kuin todellinen muutos, eikä niitä voi näistä aineistoista '
+      +'erottaa toisistaan. Epäilty ei ole tuomittu.',
+      'These are offences recorded by the authorities and persons suspected of them — not '
+      +'convictions, and not the true amount of crime. Changes in reporting propensity and in '
+      +'recording practice appear in the figures exactly like real change, and the two cannot be '
+      +'separated from these data. A suspect is not a convict.')]);
+
+  h+='<section class="home-sec"><div class="home-head"><h2>'
+   +L('Mitä luvut kertovat','What the figures show')+'</h2></div>';
+  h+='<div class="card">';
+  tul.forEach(function(t,i){
+    h+='<div style="'+(i?'margin-top:14px;padding-top:14px;border-top:1px solid var(--border)':'')
+      +'"><div style="font-size:13px;font-weight:600;margin-bottom:4px">'+t[0]+'</div>'
+      +'<div class="csub" style="line-height:1.55">'+t[1]+'</div></div>';
+  });
+  h+='</div><div class="home-fine" style="margin-top:10px">'
+   +L('Jokainen luku lasketaan tämän sivun omista sarjoista, joten tulkinta päivittyy datan '
+      +'mukana. Osuudet epäillyistä on laskettu rikosryhmittäin samalla mittarilla kuin '
+      +'Ulkomaalaiset ja kasvavat rikokset -välilehdellä; seksuaalirikosten alaryhmissä '
+      +'käytetään henkilöpohjaista lukua, joka on merkitty kyseiseen paneeliin.',
+      'Every figure is computed from the series on this page, so the interpretation updates with '
+      +'the data. Shares of suspects are computed by offence group on the same measure as the '
+      +'Foreign nationals and rising offences tab; within sexual offences a person-based figure is '
+      +'used, as noted in that panel.')
+   +'</div></section>';
+
   MENU.forEach(function(m){
     h+='<section class="home-sec"><h3>'+m.g+'</h3><div class="home-grid">';
     m.ids.forEach(function(id){
@@ -1933,6 +2109,16 @@ const DICT = {
 '15–17 v':'15–17',
 '18 v tai yli':'18 or over',
 'Enemmistö epäillyistä on alaikäisiä ja lähes puolet alle 15-vuotiaita. Tämä erottaa ryhmän muista seksuaalirikoksista: raiskauksissa alaikäisten osuus on alle kymmenesosa. Tilasto ei kerro, keitä aineistossa esiintyy eikä missä yhteydessä sitä on jaettu.':'A majority of suspects are minors and almost half are under 15. This sets the group apart from other sexual offences: among rape suspects, minors are under a tenth. The statistic does not say who appears in the material, nor in what context it was shared.'
+,
+'Mitä luvut kertovat':'What the figures show',
+'Mittakaava ei ole kasvanut, sen sisältö on muuttunut':'The scale has not grown; its composition has changed',
+'Vakavin väkivalta vähenee':'The most serious violence is declining',
+'Kasvu keskittyy alaikäisiin':'The growth is concentrated among minors',
+'Seksuaalirikokset ovat kaksi eri ilmiötä':'Sexual offences are two different phenomena',
+'Kuva-aineistorikokset ovat suurelta osin lasten tekoja':'Image offences are largely committed by children',
+'Vakava huumerikollisuus kasvaa, vaikka kokonaisluku laskee':'Serious drug crime is growing even as the total falls',
+'Yliedustus riippuu rikostyypistä':'Overrepresentation depends on the type of offence',
+'Mitä nämä luvut eivät kerro':'What these figures do not tell you'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 
