@@ -190,6 +190,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 const TITLES={home:'Persutilastot',vakivalta:'Pahoinpitelyrikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Ulkomaalaistaustaiset vs. suomalaistaustaiset',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Ulkomaan kansalaiset vangeissa',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys',eurostat:'EU-vertailu: turvallisuus asuinalueella',kasvu:'Eniten kasvaneet tilastot',ulkkasvu:'Ulkomaalaiset ja kasvavat rikokset'};
 const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 // Vaestoosuudet, joita seka vangit- etta syntyperapaneeli kayttavat
+const EU=[25857,25546,27170,27942,32653,35062,35055,41092,46697,51438];
+const ES=[266978,254763,253304,255449,292662,287851,260021,310625,269600,296319];
 const VKS=7.7;   // ulkomaan kansalaisten vaestoosuus, %
 const VSS=10.9;  // ulkomailla syntyneiden vaestoosuus, %
 
@@ -489,6 +491,9 @@ function renderPerhe(){
 function renderMaahanmuuttajat(){
   const el=document.getElementById('p-maahanmuuttajat');
   const IP=[7088,6650,6748,6598,7354,7466,6898,7193,7484,7784];
+  const SEXL=['Miehet','Naiset'];
+  const SEXU=[0,0];   // ulkomaalaistaustaiset, per 100k
+  const SEXK=[0,0];   // suomalaistaustaiset, per 100k
   const AGEL=['15–17','18–20','21–24','25–29','30–39','40–49','50–59','60–69'];
   const AGEU=[14186,19331,14808,12317,9751,6886,4773,2384];
   const AGEK=[11881,17177,13932,14676,10894,7711,4472,2032];
@@ -508,8 +513,8 @@ function renderMaahanmuuttajat(){
   ${dataBox('maahanmuuttajat')}
   <div class="ibox"><strong>Suhteutettu vertailu:</strong> Rikoslakirikoksista epäillyt per 100 000 ko. ryhmässä (ei liikenne- ym. rikkomuksia, joiden tilastointi muuttui 2021). Ulkomaalaistaustainen väestö on ikärakenteeltaan nuorempi, ja nuoret ovat kaikissa väestöryhmissä yliedustettuina rikostilastoissa — tämä näkyy alla olevassa ikäryhmävertailussa.</div>
   <div class="metrics">
-    <div class="mc"><div class="mlabel">Maahanmuuttajat / 100k</div><div class="mval r">${fi(IP[IP.length-1])}</div></div>
-    <div class="mc"><div class="mlabel">Kantaväestö / 100k</div><div class="mval">${fi(NP[NP.length-1])}</div></div>
+    <div class="mc"><div class="mlabel">Maahanmuuttajat / 100k</div><div class="mval r">${fi(IP[IP.length-1])}</div><div class="msub">${fi(EU[EU.length-1])} epäiltyä</div></div>
+    <div class="mc"><div class="mlabel">Kantaväestö / 100k</div><div class="mval">${fi(NP[NP.length-1])}</div><div class="msub">${fi(ES[ES.length-1])} epäiltyä</div></div>
     <div class="mc mc3"><div class="mlabel">Yliedustus</div><div class="mval r">${(IP[IP.length-1]/NP[NP.length-1]).toFixed(1)}×</div><div class="msub">suhteessa kantaväestöön</div></div>
   </div>
   <div class="card">
@@ -532,6 +537,11 @@ function renderMaahanmuuttajat(){
     ${hbars(AGEL.map((l,i)=>({l:l+" v",v:AGEU[i]/(AGEK[i]||1),c:(AGEU[i]/(AGEK[i]||1))>=1?"#e05c5c":"#3dba8c",fmt:(AGEU[i]/(AGEK[i]||1)).toFixed(2)+"×"})))}
     <div class="csub" style="margin-top:8px">Punainen = ulkomaalaistaustaisilla korkeampi, vihreä = kantaväestöllä korkeampi</div>
   </div>
+  ${SEXU[0]>0?`<div class="card"><div class="ctitle">Sama vertailu sukupuolittain — ${Y[9]}</div>
+    <div class="csub">Epäillyt per 100 000 omassa sukupuoli- ja syntyperäryhmässä</div>
+    ${hbars(SEXL.map((l,i)=>({l,v:SEXU[i]/(SEXK[i]||1),c:(SEXU[i]/(SEXK[i]||1))>=1?"#e05c5c":"#3dba8c",fmt:(SEXU[i]/(SEXK[i]||1)).toFixed(2)+"× · "+fi(SEXU[i])+" vs. "+fi(SEXK[i])})))}
+    <div class="csub" style="margin-top:8px">Ero on miesten ilmiö. Sukupuolijakauma on ryhmissä lähes sama, joten se ei selitä kokonaiseroa — toisin kuin ikärakenne yllä.</div>
+  </div>`:''}
   <div class="abox">Epäiltyjä per 100 000, ulkomaalaistaustaiset suhteessa kantaväestöön: ${(IP[9]/NP[9]).toFixed(1)}×. Väkivaltarikoksissa: ${(RTU[0]/RTK[0]).toFixed(1)}×. Omaisuusrikoksissa: ${(RTU[3]/RTK[3]).toFixed(1)}×. Samanikäisiä verrattaessa ero kapenee selvästi ja kääntyy 25–49-vuotiailla päinvastaiseksi. Luvut kuvaavat rikoksista epäiltyjä, eivät tuomittuja.</div>`;
 }
 
@@ -540,8 +550,9 @@ function renderKansalaisuus(){
   const el=document.getElementById('p-kansalaisuus');
   const KNAMES=['Somalia','Irak','Afganistan','Albania','Nigeria','Romania','Marokko','Venäjä','Viro','Ruotsi','Suomi','Thaimaa','Saksa'];
   const KCOL=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7','#3dba8c','#e06898','#3ab8c8','#8fb84a','#c87a3e','#534ab7','#7a8099','#b4b2a9','#4a5068'];
+  const KVN=[0,0,0,0,0,0,0,0,0,0,0,0,0];
   const KV=[6778,12085,6331,5105,4614,4393,5234,2694,5663,4126,2589,2260,1576];
-  const nats=KNAMES.map((l,i)=>({l,v:KV[i],c:KCOL[i]})).sort((a,b)=>b.v-a.v);
+  const nats=KNAMES.map((l,i)=>({l,v:KV[i],c:KCOL[i],n:KVN[i]})).sort((a,b)=>b.v-a.v);
   const suomiV=KV[KNAMES.indexOf('Suomi')]||1;
   el.innerHTML=`
   ${dataBox('kansalaisuus')}
@@ -552,7 +563,7 @@ function renderKansalaisuus(){
     <div class="mc mc3"><div class="mlabel">Max yliedustus</div><div class="mval r">${(nats[0].v/suomiV).toFixed(1)}×</div></div>
   </div>
   <div class="card"><div class="ctitle">Rikosepäillyt per 100 000 — ${Y[9]}</div><div class="csub">Rikoslakirikokset, kukin epäilty laskettu kerran vuodessa</div>
-    ${hbars(nats)}
+    ${hbars(nats.map(x=>({...x,fmt:fi(x.v)+(x.n?' · '+fi(x.n)+' epäiltyä':'')})))}
   </div>
   <div class="abox">Luvut ovat epäiltyjä per 100 000 kunkin kansalaisuusryhmän omassa väestössä, joten ryhmien koko ei vaikuta vertailuun. Mukana ovat vain rikoslakirikokset ja kukin epäilty on laskettu vuodessa kerran. Luvut kuvaavat epäilyjä, eivät tuomioita, ja kattavat vain viranomaisten tietoon tulleet tapaukset. Ryhmien ikä- ja sukupuolirakenne poikkeaa toisistaan, mitä nämä luvut eivät vakioi.</div>`;
 }
@@ -569,6 +580,7 @@ function renderVangit(){
   const lc=lineChart([{data:PP,color:'#e05c5c',fill:true,width:2.5}],0,30,v=>v+'%',PY);
   const maxVT=Math.max(...VT);
   const sb='<div class="sbarchart">'+PY.map((y,i)=>`<div class="sbc-row"><span class="sbc-label">${y}</span><div class="sbc-track"><div class="sbc-seg" style="width:${((VT[i]-VU[i])/maxVT*100).toFixed(1)}%;background:#7a8099aa"></div><div class="sbc-seg" style="width:${(VU[i]/maxVT*100).toFixed(1)}%;background:#e05c5caa"></div></div><span class="bc-val" style="min-width:92px;text-align:right">${fi(VT[i])} · <span style="color:#e05c5c">${fi(VU[i])}</span></span></div>`).join('')+'</div>';
+
   const nats=[{l:'Viro',v:112,c:'#4f8ef7'},{l:'Irak',v:66,c:'#e05c5c'},{l:'Ruotsi',v:58,c:'#3dba8c'},{l:'Liettua',v:42,c:'#e8a23a'},{l:'Romania',v:42,c:'#e06898'},{l:'Albania',v:39,c:'#9b7de8'},{l:'Latvia',v:24,c:'#534ab7'},{l:'Gambia',v:22,c:'#b4b2a9'},{l:'Nigeria',v:22,c:'#8fb84a'},{l:'Somalia',v:22,c:'#3ab8c8'},{l:'Iso-Britannia',v:22,c:'#c87a3e'},{l:'Muut (67 maata)',v:320,c:'#4a5068'}];
   el.innerHTML=`
   ${dataBox('vangit')}
@@ -588,6 +600,7 @@ function renderVangit(){
       ${hbars([{l:'Henkirikokset',v:19,c:'#4f8ef7',fmt:'19 %'},{l:'Muu väkivalta',v:14,c:'#9b7de8',fmt:'14 %'},{l:'Huumeet',v:24,c:'#e05c5c',fmt:'24 %'},{l:'Omaisuus (ml. ryöstö)',v:24,c:'#3dba8c',fmt:'24 %'},{l:'Seksuaali',v:11,c:'#e8a23a',fmt:'11 %'},{l:'Muut',v:8,c:'#7a8099',fmt:'8 %'}])}
     </div>
   </div>
+  <div class="ibox amber"><strong>Mitä kerroin ei kerro:</strong> Vankiosuuden ja väestöosuuden suhde ei ole rikosriskin mittari. Vankiluvussa ovat mukana myös tutkintavangit, eli henkilöt joita ei ole tuomittu. Osuuteen vaikuttaa myös tuomioiden pituus: pitkää tuomiota istuva näkyy tilastossa vuosia, lyhyttä istuva ei. Lisäksi osa ulkomaalaisista vangeista ei kuulu Suomen vakituiseen väestöön, jolloin heitä ei ole väestöosuuden nimittäjässä lainkaan. Kansalaisuus ei myöskään ole sama asia kuin syntyperä: Suomen kansalaisuuden saanut maahanmuuttaja lasketaan tässä Suomen kansalaiseksi.</div>
   <div class="abox">Ulkomaalaisten osuus vangeista ${PY[PY.length-1]}: ${PP[PP.length-1].toFixed(1)} % (väestöosuus ${VKS.toFixed(1)} %). Yliedustuskerroin: ${(PP[PP.length-1]/VKS).toFixed(1)}×. Ulkomaalaisilla vankeusvangeilla päärikos on useimmiten huumausainerikos (49 %), kaikilla vangeilla huumausainerikos 24 % ja henki- tai muu väkivaltarikos 33 % (päärikos 1.5.2025). Rise ei julkaise päärikosjakaumaa erikseen Suomen kansalaisille. Risen mukaan kasvu selittyy kansainvälisen huumekaupan torjunnalla.</div>`;
 }
 
@@ -858,8 +871,6 @@ document.addEventListener('DOMContentLoaded', function(){
 // Lähteet: Tilastokeskus StatFin rpk/13zk, rpk/13jg, vaerak/159s (tarkistettu 11/2026)
 function renderIka(){
 
-  const EU=[25857,25546,27170,27942,32653,35062,35055,41092,46697,51438];
-  const ES=[266978,254763,253304,255449,292662,287851,260021,310625,269600,296319];
   const PBI=[6.60,7.00,7.30,7.70,8.00,8.50,9.10,10.20,11.10,11.70];
   const el=document.getElementById('p-ika');
 
@@ -1665,6 +1676,15 @@ const DICT = {
 'Asenna puhelimeen':'Install on your phone'
 ,
 'Etusivu':'Home'
+,
+'Sama vertailu sukupuolittain — ':'Same comparison by sex — ',
+'Epäillyt per 100 000 omassa sukupuoli- ja syntyperäryhmässä':'Suspects per 100,000 within each sex and origin group',
+'Ero on miesten ilmiö. Sukupuolijakauma on ryhmissä lähes sama (miehiä 51,7 % ja 49,2 %), joten se ei selitä kokonaiseroa — toisin kuin ikärakenne yllä.':'The gap is a male phenomenon. The sex distribution is almost identical in both groups (51.7% and 49.2% men), so it does not explain the overall difference — unlike age structure above.',
+'Miehet':'Men',
+'Naiset':'Women',
+'epäiltyä':'suspects',
+'Mitä kerroin ei kerro:':'What the ratio does not tell you:',
+'Vankiosuuden ja väestöosuuden suhde ei ole rikosriskin mittari. Vankiluvussa ovat mukana myös tutkintavangit, eli henkilöt joita ei ole tuomittu. Osuuteen vaikuttaa myös tuomioiden pituus: pitkää tuomiota istuva näkyy tilastossa vuosia, lyhyttä istuva ei. Lisäksi osa ulkomaalaisista vangeista ei kuulu Suomen vakituiseen väestöön, jolloin heitä ei ole väestöosuuden nimittäjässä lainkaan. Kansalaisuus ei myöskään ole sama asia kuin syntyperä: Suomen kansalaisuuden saanut maahanmuuttaja lasketaan tässä Suomen kansalaiseksi.':'The ratio of prisoner share to population share is not a measure of offending risk. The prisoner figure includes remand prisoners, who have not been convicted. Sentence length also affects the share: someone serving a long sentence appears in the statistic for years, someone serving a short one does not. In addition, some foreign prisoners are not part of the permanent population of Finland, so they are not in the denominator of the population share at all. Citizenship is also not the same as origin: an immigrant who has been granted Finnish citizenship is counted here as a Finnish citizen.'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 

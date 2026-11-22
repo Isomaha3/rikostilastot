@@ -895,6 +895,49 @@ def fetch_violence_by_age(year):
     return out
 
 
+def fetch_sex_rates(origin_code, year):
+    """Epaillyt per 100 000 sukupuolittain ja syntyperittain (13zk)."""
+    out = []
+    for sp in ["1", "2"]:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": [sp]}},
+            {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [SYNT_CRIME_ALL]}},
+            {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin_code]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": [SYNT_CONTENT]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            out.append(round((r.json().get("value", [0])[0] or 0) * 10))
+        except Exception as e:
+            print(f"  Sukupuolidata-virhe ({sp}): {e}")
+            return None
+    return out
+
+
+def fetch_nationality_counts(year):
+    """Epailtyjen lukumaara kansalaisuuksittain (13jg)."""
+    out = []
+    for code in NAT_CODES:
+        body = {"query": [
+            {"code": CRIME_VAR_YEAR, "selection": {"filter": "item", "values": [year]}},
+            {"code": "valtio_19_20190101", "selection": {"filter": "item", "values": [code]}},
+            {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [NAT_CRIME]}},
+            {"code": "alue_23_20230101", "selection": {"filter": "item", "values": ["SSS"]}},
+            {"code": "contentscode", "selection": {"filter": "item", "values": ["ep_lkm_tork"]}},
+        ], "response": {"format": "json-stat2"}}
+        try:
+            r = requests.post(NAT_TABLE, json=body, timeout=30)
+            r.raise_for_status()
+            out.append(int(r.json().get("value", [0])[0] or 0))
+        except Exception as e:
+            print(f"  Kansalaisuuslukumaara-virhe ({code}): {e}")
+            return None
+    return out
+
+
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
@@ -1149,6 +1192,9 @@ def main():
     viol_age_first = fetch_violence_by_age(str(years[0]))
     viol_age_last = fetch_violence_by_age(str(latest_year))
     sex_ratios = fetch_sex_ratios(str(latest_year))
+    sex_u = fetch_sex_rates(SYNT_FOREIGN, str(latest_year))
+    sex_k = fetch_sex_rates(SYNT_DOMESTIC, str(latest_year))
+    nat_counts = fetch_nationality_counts(str(latest_year))
     rt_foreign_n = fetch_crime_group_rates(SYNT_FOREIGN, str(latest_year))
     rt_domestic_n = fetch_crime_group_rates(SYNT_DOMESTIC, str(latest_year))
     age_foreign = fetch_age_rates(SYNT_FOREIGN, str(latest_year))
@@ -1406,6 +1452,12 @@ def main():
         content = update_const_array(content, 'VAGE1', viol_age_last)
     if sex_ratios:
         content = update_const_array(content, 'SXR', sex_ratios, is_float=True)
+    if sex_u:
+        content = update_const_array(content, 'SEXU', sex_u)
+    if sex_k:
+        content = update_const_array(content, 'SEXK', sex_k)
+    if nat_counts:
+        content = update_const_array(content, 'KVN', nat_counts)
     if rt_foreign:
         content = update_const_array(content, 'RTU', rt_foreign, is_float=True)
     if rt_domestic:
