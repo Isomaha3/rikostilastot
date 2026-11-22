@@ -448,10 +448,11 @@ function renderSeksuaali(){
   const SKV=[156,118,163,276,571,445,598,751,1356,2652];
   // Epaillyt syntyperan mukaan 2025, taulu rpk/13zk. Osuudet ovat
   // ulkomaalaistaustaisten osuus kyseisen nimikkeen epaillyista.
-  const SOL=['Raiskaus 20:1-2','Seksuaalinen kajoaminen 20:3-5','Lapsenraiskaus 20:12-13','Seksuaalinen ahdistelu 20:6','Lapsiin kohdistuvat 20:14-18','Kuva-aineisto 20:19-22'];
-  const SOU=[33.7,29.9,21.5,20.0,17.3,5.1];
-  const SOT=[1080,318,585,646,762,1891];
+  const SOL=['Raiskaus 20:1-2','Lapsenraiskaus 20:12-13','Seksuaalinen kajoaminen 20:3-5','Seksuaalinen ahdistelu 20:6','Lapsiin kohdistuvat 20:14-18','Kuva-aineisto 20:19-22'];
+  const SOU=[32.1,30.6,24.3,21.0,17.8,10.7];
+  const SOT=[832,255,181,286,383,392];
   const SOV=11.69;   // ulkomaalaistaustaisten vaestoosuus 2025
+  const SOKM=[1891,392,5.1];   // kuva-aineisto: tapauskerrat, henkilot, ulk-% tapauskerroista
   const T=[3326,3336,3859,4409,4531,5484,5591,7451,9607,10372];
   const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]-SKV[i]));
   const UR=[19.70,25.50,21.80,24.00,25.70,24.60,21.20,23.50,27.20,23.10];
@@ -527,14 +528,21 @@ function renderSeksuaali(){
   </div>
   <div class="card">
     <div class="ctitle">Kaksi eri ilmiötä — ulkomaalaistaustaisten osuus epäillyistä ${Y[9]}</div>
-    <div class="csub">Väestöosuus ${SOV.toFixed(1)} %. Yli sen = yliedustus, alle = aliedustus.</div>
+    <div class="csub">Väestöosuus ${SOV.toFixed(1)} %. Yli sen = yliedustus, alle = aliedustus.
+    Luvut ovat henkilöitä, ei rikosilmoituksia: jokainen epäilty on laskettu kertaalleen vuoden
+    törkeimmän rikoksensa mukaan.</div>
     ${hbars(SOL.map(function(l,i){return {l:l+' ('+fi(SOT[i])+' epäiltyä)',v:SOU[i],
       c:SOU[i]>=SOV?'#e05c5c':'#3dba8c',fmt:SOU[i].toFixed(1)+' %'};}))}
-    <div class="csub" style="margin-top:10px">Nopeimmin kasvava ryhmä, lasta seksuaalisesti
-    esittävä kuva-aineisto, on ainoa jossa ulkomaalaistaustaiset ovat aliedustettuja —
-    ${(SOV/SOU[5]).toFixed(1)} kertaa väestöosuutta harvemmin. Raiskauksissa osuus on
-    ${(SOU[0]/SOV).toFixed(1)}-kertainen väestöosuuteen. Siksi seksuaalirikosten kokonaisluku
-    ei kerro kummastakaan ilmiöstä juuri mitään: ne liikkuvat eri suuntiin ja eri syistä.</div>
+    <div class="csub" style="margin-top:10px">Raiskauksissa ulkomaalaistaustaisten osuus on
+    ${(SOU[0]/SOV).toFixed(1)}-kertainen väestöosuuteen. Nopeimmin kasvavassa ryhmässä, lasta
+    seksuaalisesti esittävässä kuva-aineistossa, osuus on matalin kaikista ja jää väestöosuuden
+    alle (kerroin ${(SOU[5]/SOV).toFixed(1)}). Siksi seksuaalirikosten kokonaisluku ei kerro
+    kummastakaan ilmiöstä juuri mitään: ne liikkuvat eri suuntiin ja eri syistä.</div>
+    <div class="csub" style="margin-top:8px">Mittarin valinta muuttaa kuva-aineiston luvun
+    olennaisesti: tapauskerroittain laskien osuus olisi vain ${SOKM[2].toFixed(1)} %.
+    Ryhmässä yksittäisillä tekijöillä on poikkeuksellisen paljon rikosnimikkeitä —
+    ${fi(SOKM[0])} tapauskertaa on vain ${fi(SOKM[1])} henkilöä.
+    Henkilöpohjainen luku on tässä oikeampi, koska kysymys on siitä keitä tekijät ovat.</div>
   </div>
   <div class="card">
     <div class="ctitle">Kuva-aineistorikokset ${Y[0]}–${Y[9]}</div>
@@ -1865,8 +1873,67 @@ const DICT = {
 'yksikköä':'units',
 'Huumausainerikokset':'Narcotics offences',
 'Kokonaismäärä riippuu poliisin valvonnan määrästä. Törkeä tekomuoto on kasvanut selvästi nopeammin kuin ryhmä kokonaisuutena.':'The total depends on the level of police enforcement. The aggravated form has grown considerably faster than the group as a whole.'
+,
+'Luvut ovat henkilöitä, ei rikosilmoituksia: jokainen epäilty on laskettu kertaalleen vuoden törkeimmän rikoksensa mukaan.':'The figures are persons, not police reports: each suspect is counted once, by their most serious offence of the year.',
+'Mittarin valinta muuttaa kuva-aineiston luvun olennaisesti.':'The choice of measure changes the imagery figure substantially.',
+'Henkilöpohjainen luku on tässä oikeampi, koska kysymys on siitä keitä tekijät ovat.':'The person-based figure is the right one here, because the question is who the offenders are.'
+,
+'Yli sen = yliedustus, alle = aliedustus.':'Above it = overrepresented, below it = underrepresented.',
+'Raiskauksissa ulkomaalaistaustaisten osuus on ':'Among rape suspects the foreign-background share is ',
+'-kertainen väestöosuuteen. Nopeimmin kasvavassa ryhmässä, lasta seksuaalisesti esittävässä kuva-aineistossa, osuus on matalin kaikista ja jää väestöosuuden alle (kerroin ':' times the population share. In the fastest-growing group, child sexual abuse imagery, the share is the lowest of all and falls below the population share (factor ',
+'). Siksi seksuaalirikosten kokonaisluku ei kerro kummastakaan ilmiöstä juuri mitään: ne liikkuvat eri suuntiin ja eri syistä.':'). This is why the overall sexual-offence figure says almost nothing about either phenomenon: they move in different directions, for different reasons.',
+'Mittarin valinta muuttaa kuva-aineiston luvun olennaisesti: tapauskerroittain laskien osuus olisi vain ':'The choice of measure changes the imagery figure substantially: counted by case occurrences the share would be only ',
+'Ryhmässä yksittäisillä tekijöillä on poikkeuksellisen paljon rikosnimikkeitä —':'In this group individual offenders carry an exceptional number of offence counts —',
+' tapauskertaa on vain ':' case occurrences are only ',
+' henkilöä.':' persons.',
+'Hallussapito, levittäminen ja esityksen seuraaminen.':'Possession, distribution and viewing of a performance.',
+'Ennen vuotta 2023 nämä kirjattiin rikoslain 17. luvun mukaan eivätkä olleet seksuaalirikoksia lainkaan, joten vuoden 2023 uudistus siirsi ne tilastoon mukaan.':'Before 2023 these were recorded under Chapter 17 of the Penal Code and were not sexual offences at all, so the 2023 reform brought them into the statistic.',
+'Osuus kaikista seksuaalirikoksista ':'Share of all sexual offences ',
+'%, osuus koko kasvusta ':'%, share of total growth ',
+'Siirto selittää kasvusta kuitenkin vain pienen osan: ilmiö itse ':'The transfer explains only a small part of the growth, however: the phenomenon itself grew ',
+'-kertaistui jaksolla.':'-fold over the period.'
+,
+'Ennen vuotta 2023 nämä kirjattiin rikoslain 17. lukuun eivätkä olleet seksuaalirikoksia lainkaan, joten vuoden 2023 uudistus siirsi ne tilastoon mukaan.':'Before 2023 these were recorded under Chapter 17 of the Penal Code and were not sexual offences at all, so the 2023 reform brought them into the statistic.',
+'Seksuaalirikoslaki uudistui 1.1.2023. Raiskauksen määritelmä muuttui suostumusperusteiseksi, ja lapsen kuva-aineistorikokset siirrettiin rikoslain 17. luvusta 20. lukuun. Lukuja ennen ja jälkeen 2023 ei voi suoraan verrata.':'The Sexual Offences Act was reformed on 1 January 2023. The definition of rape became consent-based, and child sexual abuse image offences were moved from Chapter 17 of the Penal Code to Chapter 20. Figures before and after 2023 are not directly comparable.',
+'Seksuaalirikoslaki uudistui 1.1.2023, mikä kasvattaa lukuja osin määritelmien laajenemisen vuoksi.':'The Sexual Offences Act was reformed on 1 January 2023, which raises the figures partly because the definitions widened.',
+'Luku on viranomaisten tietoon tulleiden huumausainerikosten määrä (RL 50). Huumausainerikokset ovat kontrollirikoksia: ne tulevat ilmi vain kun niitä etsitään, joten luku kertoo yhtä lailla valvonnan määrästä kuin ilmiön laajuudesta.':'The figure is the number of narcotics offences known to the authorities (Penal Code ch. 50). These are enforcement-driven offences: they come to light only when they are looked for, so the figure says as much about the level of enforcement as about the scale of the phenomenon.',
+'Kokonaismäärä kääntyi laskuun vuoden 2020 huipun jälkeen, mutta lasku tulee käyttörikoksista ja perusmuotoisista teoista — eli niistä, joiden määrä riippuu poliisin katutason valvonnasta. Törkeät huumausainerikokset ovat sen sijaan kasvaneet koko ajan ja ovat ennätystasolla. Törkeä tekomuoto on ryhmän vähiten valvontariippuvainen, koska isot ainemäärät ja järjestäytynyt kauppa tutkitaan joka tapauksessa. Kokonaisluvun lasku ei siis tarkoita, että vakava huumerikollisuus olisi vähentynyt.':'The total turned downward after the 2020 peak, but the decline comes from use offences and basic-form offences — the ones whose number depends on street-level policing. Aggravated narcotics offences, by contrast, have grown throughout and are at a record level. The aggravated form is the least enforcement-dependent in the group, because large quantities and organised trade are investigated in any case. A falling total therefore does not mean that serious drug crime has declined.',
+'Katkoviiva = osuus väestöstä':'Dashed line = share of population',
+'Ero on miesten ilmiö. Sukupuolijakauma on ryhmissä lähes sama, joten se ei selitä kokonaiseroa — toisin kuin ikärakenne yllä.':'The gap is a male phenomenon. The sex distribution is almost identical between the groups, so it does not explain the overall gap — unlike the age structure above.'
+,
+'Seksuaalirikoslaki uudistui 2023.':'The Sexual Offences Act was reformed in 2023.',
+'Pahoinpitelyrikokset':'Assault offences',
+'Liikennerikokset':'Traffic offences',
+'KAIKKI RIKOSLAKIRIKOKSET':'ALL PENAL CODE OFFENCES',
+'kaikki rikoslakirikokset':'all Penal Code offences',
+'OSUUS EPÄILTYJEN KASVUSTA':'SHARE OF THE GROWTH IN SUSPECTS',
+'ulkomaalaistaustaisia epäillyistä':'of suspects have a foreign background',
+'ulkomaalaistaustaisia':'with a foreign background',
+'Osuus epäillyistä':'Share of suspects',
+'Epäiltyjä':'Suspects',
+'Seksuaalirikoksissa yliedustus on suurin: irakilaisia epäiltiin väestöön suhteutettuna 14,6-kertaisesti Suomen kansalaisiin verrattuna.':'Overrepresentation is largest in sexual offences: relative to population size, Iraqi citizens were suspected at 14.6 times the rate of Finnish citizens.',
+'Luku ei ole ikä- eikä sukupuolivakioitu, ja vakiointi pienentäisi eroa.':'The figure is neither age- nor sex-standardised; standardising would narrow the gap.',
+'Kaikki luvut koskevat rikoslakirikoksista epäiltyjä vuonna ':'All figures concern persons suspected of Penal Code offences in ',
+'Liikenne- ym. rikkomukset eivät ole mukana.':'Traffic and other minor infractions are excluded.',
+'Selvitettyihin rikoksiin syylliseksi epäillyt. Kukin epäilty lasketaan kerran kussakin rikosryhmässä.':'Persons suspected of solved offences. Each suspect is counted once within each offence group.',
+'poliisin tietoon tulleet seksuaalirikokset':'sexual offences known to the police',
+'rikoslakirikoksista epäillyt alle 18-vuotiaat':'persons under 18 suspected of Penal Code offences'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
+
+// Korvaus tehtiin ennen raakana osajonohakuna, jolloin lyhyt avain osui
+// pidemman sanan sisaan: "Seksuaalirikokset" osui sanaan "Seksuaalirikoslaki"
+// ja tuotti sekamuodon "Sexual offencesrikoslaki". Siksi kirjaimeen alkava tai
+// paattyva avain vaatii nyt sanarajan. Valimerkkiin tai valilyontiin rajautuvat
+// avaimet (esim. " rikosta vuodessa.") toimivat ennallaan.
+const DKIRJAIN = /[A-Za-zÄÖÅäöåÀ-ÿ]/;
+const DRE = new Map(DKEYS.map(k => {
+  const esc = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const alku = DKIRJAIN.test(k[0]) ? '(?<![A-Za-zÄÖÅäöåÀ-ÿ])' : '';
+  const loppu = DKIRJAIN.test(k[k.length - 1]) ? '(?![A-Za-zÄÖÅäöåÀ-ÿ])' : '';
+  try { return [k, new RegExp(alku + esc + loppu, 'g')]; }
+  catch (e) { return [k, new RegExp(esc, 'g')]; }   // lookbehind puuttuu
+}));
 
 // Alkuperaiset suomenkieliset tekstit talteen, jotta staattinen valikko ja
 // ylapalkki voidaan palauttaa kielta vaihdettaessa. Paneelit renderoidaan
@@ -1885,8 +1952,16 @@ function translateTree(root){
     }
     const base = ORIG.has(n) ? ORIG.get(n) : n.textContent;
     if (!/[a-zäöÄÖ]/.test(base)) continue;
-    let t = base;
-    for (const k of DKEYS){ if (t.indexOf(k) !== -1) t = t.split(k).join(DICT[k]); }
+    // Lahdekoodin rivinvaihdot ja sisennys eivat nay sivulla, mutta ne jaavat
+    // tekstisolmuun ja estaisivat sanakirjan osumat. HTML tiivistaa valilyonnit
+    // joka tapauksessa, joten normalisointi ei muuta ulkoasua.
+    let t = base.replace(/\s+/g, ' ');
+    for (const k of DKEYS){
+      if (t.indexOf(k) === -1) continue;
+      const re = DRE.get(k);
+      re.lastIndex = 0;
+      t = t.replace(re, () => DICT[k]);   // funktio, jotta $-merkit eivat tulkitu
+    }
     if (t !== n.textContent){
       if (!ORIG.has(n)) ORIG.set(n, base);
       n.textContent = t;

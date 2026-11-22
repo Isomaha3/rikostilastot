@@ -626,21 +626,50 @@ def fetch_pop_origin(origin_code, years):
 
 
 # Seksuaalirikosten nimikeryhmat sivun SOL-taulukon jarjestyksessa (13zk).
-SEXCAT_GROUPS = ['234', '235', '239', '236', '240', '241']
+SEXCAT_GROUPS = ['234', '239', '235', '236', '240', '241']
+# Henkiloperusteinen mittari: jokainen epailty kertaalleen vuoden torkeimman
+# rikoksen mukaan. ep_lkm laskisi tapauskerrat, jolloin yksi tekija jolla on
+# kymmenia nimikkeita vaaristaa ryhman osuutta.
+SEXCAT_CONTENT = 'ep_lkm_tork'
+
+
+def _sexcat_fetch(crime, origin, year):
+    """Epaillyt nimikeryhmittain henkiloina (13zk, ep_lkm_tork)."""
+    return _pxpost(SYNT_TABLE, [
+        {"code": "sukupuoli_9_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "ikaryhma_10_20180101", "selection": {"filter": "item", "values": ["SSS"]}},
+        {"code": "rikokset_74_20211209", "selection": {"filter": "item", "values": [crime]}},
+        {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin]}},
+        {"code": "contentscode", "selection": {"filter": "item", "values": [SEXCAT_CONTENT]}},
+    ], [year])
 
 
 def fetch_sexcat_origin(year):
     """Ulkomaalaistaustaisten osuus ja epailtyjen maara nimikeryhmittain."""
     osuus, maara = [], []
     for grp in SEXCAT_GROUPS:
-        tot = fetch_origin_counts(grp, "SSS", [year])
-        ulk = fetch_origin_counts(grp, SYNT_FOREIGN, [year])
+        tot = _sexcat_fetch(grp, "SSS", year)
+        ulk = _sexcat_fetch(grp, SYNT_FOREIGN, year)
         if not tot or not ulk or not tot.get(year):
             print(f"  Seksuaalinimikkeen alkupera puuttuu ({grp})")
             return None
         maara.append(int(tot[year]))
         osuus.append(round(ulk.get(year, 0) / tot[year] * 100, 1))
     return osuus, maara
+
+
+def fetch_imagery_measures(year):
+    """Kuva-aineistoryhma: tapauskerrat, henkilot ja ulkomaalaisosuus kerroista."""
+    grp = SEXCAT_GROUPS[-1]
+    kerrat = fetch_origin_counts(grp, "SSS", [year])
+    kerrat_ulk = fetch_origin_counts(grp, SYNT_FOREIGN, [year])
+    henkilot = _sexcat_fetch(grp, "SSS", year)
+    if not kerrat or not kerrat_ulk or not henkilot:
+        return None
+    k, h_, u = kerrat.get(year), henkilot.get(year), kerrat_ulk.get(year, 0)
+    if not k or not h_:
+        return None
+    return [int(k), int(h_), round(u / k * 100, 1)]
 
 
 def fetch_foreign_pop_share(year):
@@ -1278,6 +1307,7 @@ def main():
     print("  Seksuaalirikosten nimikeryhmat alkuperan mukaan...")
     sexcat = fetch_sexcat_origin(str(latest_year))
     foreign_share = fetch_foreign_pop_share(str(latest_year))
+    imagery = fetch_imagery_measures(str(latest_year))
     sex_u = fetch_sex_rates(SYNT_FOREIGN, str(latest_year))
     sex_k = fetch_sex_rates(SYNT_DOMESTIC, str(latest_year))
     nat_counts = fetch_nationality_counts(str(latest_year))
@@ -1566,6 +1596,8 @@ def main():
         sou, sot = sexcat
         content = update_const_array(content, 'SOU', sou, is_float=True)
         content = update_const_array(content, 'SOT', sot)
+    if imagery:
+        content = update_const_array(content, 'SOKM', imagery, is_float=True)
     if foreign_share:
         content = re.sub(r'(const SOV=)[\d.]+',
                          lambda m: m.group(1) + f'{foreign_share}',
