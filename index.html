@@ -1280,6 +1280,11 @@ function homeExtras(){
   var L=function(fi,en){return LANG==='en'?en:fi;};
   var pc=function(v){var s=Math.abs(v).toFixed(1);
     return (v>=0?'+':'−')+(LANG==='en'?s:s.replace('.',','))+' %';};
+  // Lauseessa etumerkki ei riita: lukija haluaa tietaa kasvoiko vai vaheniko.
+  // ap() antaa pelkan suuruuden, su() valitsee suuntaa kuvaavan sanan.
+  var ap=function(v){var s=Math.abs(v).toFixed(1);
+    return LANG==='en'?s:s.replace('.',',');};
+  var su=function(v,ylos,alas){return v>=0?ylos:alas;};
   var kT=kvArr(renderSeksuaali,'T')||[], kSKV=kvArr(renderSeksuaali,'SKV')||[];
   var kSOU=kvArr(renderSeksuaali,'SOU')||[];
   var kSKVI=kvArr(renderSeksuaali,'SKVI')||[];
@@ -1306,39 +1311,51 @@ function homeExtras(){
   var tul=[];
   tul.push([L('Mittakaava ei ole kasvanut, sen sisältö on muuttunut',
               'The scale has not grown; its composition has changed'),
-    L('Väestöön suhteutettuna rikoslakirikoksia kirjataan '+pc(ltm('Rikoslakirikokset yhteensä',false))
-      +' verrattuna vuoteen '+LTY0+', mutta '+pc(ltm('Rikoslakirikokset yhteensä',true))
-      +' verrattuna vuoteen '+LTY2+'. Etumerkki vaihtuu lähtövuoden mukaan, koska 2000-luvun '
-      +'ensimmäinen vuosikymmen oli laskukautta. Suurin yksittäinen ryhmä, omaisuusrikokset, on '
-      +pc(ltm('Omaisuusrikokset',false))+' vuoteen '+LTY0+' verrattuna.',
-      'Relative to population size, recorded Penal Code offences are '+pc(ltm('Rikoslakirikokset yhteensä',false))
-      +' compared with '+LTY0+', but '+pc(ltm('Rikoslakirikokset yhteensä',true))+' compared with '
-      +LTY2+'. The sign flips with the baseline year, because the first decade of the 2000s was a '
-      +'period of decline. The largest single group, property offences, is '
-      +pc(ltm('Omaisuusrikokset',false))+' compared with '+LTY0+'.')]);
+    L('Väestöön suhteutettuna rikoslakirikoksia kirjataan nyt '+ap(ltm('Rikoslakirikokset yhteensä',false))
+      +' prosenttia '+su(ltm('Rikoslakirikokset yhteensä',false),'enemmän','vähemmän')+' kuin vuonna '
+      +LTY0+', mutta '+ap(ltm('Rikoslakirikokset yhteensä',true))+' prosenttia '
+      +su(ltm('Rikoslakirikokset yhteensä',true),'enemmän','vähemmän')+' kuin vuonna '+LTY2
+      +'. Kumpi tulos saadaan, riippuu lähtövuodesta, koska 2000-luvun ensimmäinen vuosikymmen oli '
+      +'laskukautta. Suurin yksittäinen ryhmä eli omaisuusrikokset on '
+      +su(ltm('Omaisuusrikokset',false),'kasvanut','vähentynyt')+' '+ap(ltm('Omaisuusrikokset',false))
+      +' prosenttia vuodesta '+LTY0+'.',
+      'Relative to population size, recorded Penal Code offences are now '
+      +ap(ltm('Rikoslakirikokset yhteensä',false))+' % '
+      +su(ltm('Rikoslakirikokset yhteensä',false),'higher','lower')+' than in '+LTY0+', but '
+      +ap(ltm('Rikoslakirikokset yhteensä',true))+' % '
+      +su(ltm('Rikoslakirikokset yhteensä',true),'higher','lower')+' than in '+LTY2
+      +'. Which answer you get depends on the baseline year, because the first decade of the 2000s '
+      +'was a period of decline. The largest single group, property offences, has '
+      +su(ltm('Omaisuusrikokset',false),'risen','fallen')+' by '+ap(ltm('Omaisuusrikokset',false))
+      +' % since '+LTY0+'.')]);
 
   tul.push([L('Vakavin väkivalta vähenee','The most serious violence is declining'),
-    L('Henkirikoksia kirjataan väestöön suhteutettuna '+pc(ltm('Henkirikokset',false))
-      +' verrattuna vuoteen '+LTY0+'. Henkirikos on näistä ryhmistä luotettavin, koska se tulee '
-      +'viranomaisten tietoon lähes poikkeuksetta eikä sen määritelmä ole muuttunut. '
-      +'Väkivaltarikokset kokonaisuutena ovat sen sijaan '+pc(ltm('Väkivaltarikokset',false))
+    L('Henkirikoksia tehdään väestöön suhteutettuna '+ap(ltm('Henkirikokset',false))
+      +' prosenttia '+su(ltm('Henkirikokset',false),'enemmän','vähemmän')+' kuin vuonna '+LTY0
+      +'. Henkirikos on näistä ryhmistä luotettavin mittari, koska se tulee viranomaisten tietoon '
+      +'lähes poikkeuksetta eikä sen määritelmä ole muuttunut. Väkivaltarikoksia kirjataan sen '
+      +'sijaan '+ap(ltm('Väkivaltarikokset',false))+' prosenttia '
+      +su(ltm('Väkivaltarikokset',false),'enemmän','vähemmän')+' kuin vuonna '+LTY0
       +'. Kasvu ei siis koske vakavinta väkivaltaa.',
-      'Relative to population size, homicides are '+pc(ltm('Henkirikokset',false))+' compared with '
-      +LTY0+'. Homicide is the most reliable of these groups, because it is almost always reported '
-      +'and its definition has not changed. Violent offences as a whole, by contrast, are '
-      +pc(ltm('Väkivaltarikokset',false))+'. The growth therefore does not concern the most '
-      +'serious violence.')]);
+      'Relative to population size, '+ap(ltm('Henkirikokset',false))+' % '
+      +su(ltm('Henkirikokset',false),'more','fewer')+' homicides are committed than in '+LTY0
+      +'. Homicide is the most reliable measure of these groups, because it is almost always '
+      +'reported and its definition has not changed. Violent offences, by contrast, are recorded '
+      +ap(ltm('Väkivaltarikokset',false))+' % '+su(ltm('Väkivaltarikokset',false),'more','less')
+      +' often. The growth therefore does not concern the most serious violence.')]);
 
   if(kV0.length>3&&kV1.length>3){
     tul.push([L('Kasvu keskittyy alaikäisiin','The growth is concentrated among minors'),
       L('Väkivaltarikoksista epäillyistä alle 15-vuotiaiden määrä on '+ker(kV1[0]/kV0[0])
         +'-kertaistunut ja 15–17-vuotiaiden '+ker(kV1[1]/kV0[1])+'-kertaistunut jaksolla '
-        +yA+'–'+yB+', kun 21–24-vuotiaiden määrä on '+pc((kV1[3]-kV0[3])/kV0[3]*100)
-        +'. Muutos on ikäryhmittäinen, ei kaikkia koskeva.',
+        +yA+'–'+yB+', kun 21–24-vuotiaiden määrä on '
+        +su((kV1[3]-kV0[3])/kV0[3]*100,'kasvanut','vähentynyt')+' '+ap((kV1[3]-kV0[3])/kV0[3]*100)
+        +' prosenttia. Muutos on ikäryhmittäinen, ei kaikkia koskeva.',
         'Among suspects in violent offences, the number of under-15s has grown '+ker(kV1[0]/kV0[0])
         +'-fold and that of 15–17-year-olds '+ker(kV1[1]/kV0[1])+'-fold over '+yA+'–'+yB
-        +', while the number of 21–24-year-olds is '+pc((kV1[3]-kV0[3])/kV0[3]*100)
-        +'. The change is specific to age groups, not general.')]);
+        +', while the number of 21–24-year-olds has '
+        +su((kV1[3]-kV0[3])/kV0[3]*100,'risen','fallen')+' by '+ap((kV1[3]-kV0[3])/kV0[3]*100)
+        +' %. The change is specific to age groups, not general.')]);
   }
 
   if(kSOU.length>=6&&vo&&kT.length){
@@ -1382,14 +1399,21 @@ function homeExtras(){
   if(hu&&hu.huTorkea&&hu.counts){
     tul.push([L('Vakava huumerikollisuus kasvaa, vaikka kokonaisluku laskee',
                 'Serious drug crime is growing even as the total falls'),
-      L('Huumausainerikosten kokonaismäärä on '+pc((hu.counts[9]-hu.counts[0])/hu.counts[0]*100)
-        +' jaksolla '+yA+'–'+yB+', mutta törkeät huumausainerikokset ovat '
-        +pc((hu.huTorkea[9]-hu.huTorkea[0])/hu.huTorkea[0]*100)+'. Käyttörikosten määrä riippuu '
+      L('Huumausainerikosten kokonaismäärä on '
+        +su((hu.counts[9]-hu.counts[0])/hu.counts[0]*100,'kasvanut','vähentynyt')+' '
+        +ap((hu.counts[9]-hu.counts[0])/hu.counts[0]*100)+' prosenttia jaksolla '+yA+'–'+yB
+        +', mutta törkeät huumausainerikokset ovat '
+        +su((hu.huTorkea[9]-hu.huTorkea[0])/hu.huTorkea[0]*100,'kasvaneet','vähentyneet')+' '
+        +ap((hu.huTorkea[9]-hu.huTorkea[0])/hu.huTorkea[0]*100)
+        +' prosenttia. Käyttörikosten määrä riippuu '
         +'poliisin katutason valvonnasta, törkeä tekomuoto selvästi vähemmän. Kokonaisluku mittaa '
         +'siis osin valvontaa, törkeä tekomuoto itse ilmiötä.',
-        'The total number of narcotics offences is '+pc((hu.counts[9]-hu.counts[0])/hu.counts[0]*100)
-        +' over '+yA+'–'+yB+', but aggravated narcotics offences are '
-        +pc((hu.huTorkea[9]-hu.huTorkea[0])/hu.huTorkea[0]*100)+'. The number of use offences '
+        'The total number of narcotics offences has '
+        +su((hu.counts[9]-hu.counts[0])/hu.counts[0]*100,'risen','fallen')+' by '
+        +ap((hu.counts[9]-hu.counts[0])/hu.counts[0]*100)+' % over '+yA+'–'+yB
+        +', but aggravated narcotics offences have '
+        +su((hu.huTorkea[9]-hu.huTorkea[0])/hu.huTorkea[0]*100,'risen','fallen')+' by '
+        +ap((hu.huTorkea[9]-hu.huTorkea[0])/hu.huTorkea[0]*100)+' %. The number of use offences '
         +'depends on street-level policing; the aggravated form much less so. The total therefore '
         +'measures enforcement in part, while the aggravated form reflects the phenomenon itself.')]);
   }
