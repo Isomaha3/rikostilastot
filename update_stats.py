@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-update_stats.py — Persutilastot automaattinen päivitys
+update_stats.py — Suomen rikostilastot, automaattinen päivitys
 ======================================================
 Hakee rikostilastot Tilastokeskuksen PxWeb API:sta ja päivittää
 index.html:n JavaScript-arrayt regexillä.
@@ -1240,7 +1240,7 @@ def update_trend_pct(content, obj_key, first_val, last_val):
 
 def main():
     print("=" * 60)
-    print("PERSUTILASTOT — Automaattinen päivitys")
+    print("SUOMEN RIKOSTILASTOT — Automaattinen päivitys")
     print(f"Aika: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
     print("=" * 60)
     

@@ -1,24 +1,20 @@
 {
-  "name": "Persutilastot",
-  "short_name": "Persutilastot",
-  "description": "Suomen viralliset rikostilastot — Tilastokeskus & Rise",
+  "id": "/rikostilastot/",
+  "name": "Suomen rikostilastot",
+  "short_name": "Rikostilastot",
+  "description": "Suomen viralliset rikostilastot Tilastokeskuksen ja Rikosseuraamuslaitoksen aineistosta. Paivittyy automaattisesti.",
+  "lang": "fi",
+  "dir": "ltr",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
   "background_color": "#0d0f12",
   "theme_color": "#0d0f12",
-  "orientation": "portrait-primary",
+  "categories": ["education", "news", "government"],
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

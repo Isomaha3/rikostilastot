@@ -1,7 +1,7 @@
-// Persutilastot - service worker
+// Suomen rikostilastot - service worker
 // Verkko ensin, valimuisti vain varalle. Nain uusi julkaisu nakyy heti
 // eika asennettuun sovellukseen jaa vanhaa versiota kiinni.
-const CACHE = 'persutilastot-v3';
+const CACHE = 'rikostilastot-v4';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
