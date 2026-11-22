@@ -35,6 +35,15 @@ import re
 import sys
 from datetime import datetime
 
+# Tulosteet sisaltavat skandeja ja symboleja. Windowsin oletuskoodaus
+# (cp1252) ei osaa niita, ja ajo kaatuu kesken paivityksen. Pakotetaan
+# UTF-8 ja korvataan tuntemattomat merkit sen sijaan, etta nostetaan virhe.
+for _virta in (sys.stdout, sys.stderr):
+    try:
+        _virta.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 # ── ASETUKSET ────────────────────────────────────────────
 
 HTML_FILE = 'index.html'
@@ -801,12 +810,15 @@ def fetch_prelim():
 def update_const_string(content, var_name, value):
     """Paivita yksittainen merkkijonovakio."""
     pattern = rf"(const {var_name}=')[^']*(')"
-    new_content = re.sub(pattern, rf'\g<1>{value}\g<2>', content)
-    if new_content != content:
-        print(f"  ✓ Päivitetty: {var_name} = {value}")
-        return new_content
-    print(f"  ✗ Ei löytynyt: {var_name}")
-    return content
+    new_content, osumia = re.subn(pattern, rf'\g<1>{value}\g<2>', content)
+    if not osumia:
+        print(f"  ✗ Ei löytynyt: {var_name}")
+        return content
+    if new_content == content:
+        print(f"  = Ennallaan: {var_name} = {value}")
+        return content
+    print(f"  ✓ Päivitetty: {var_name} = {value}")
+    return new_content
 
 
 def fetch_perhe_relations(year):
@@ -1095,13 +1107,15 @@ def update_data_object(content, obj_key, field, new_values, is_float=False):
     arr_str = format_js_float_array(new_values) if is_float else format_js_array(new_values)
     # Etsi pattern: field:[...]  DATA-objektin sisältä
     pattern = rf'({obj_key}:\{{[^}}]*{field}:)\[[^\]]+\]'
-    new_content = re.sub(pattern, rf'\g<1>{arr_str}', content)
-    if new_content != content:
-        print(f"  ✓ Päivitetty: DATA.{obj_key}.{field}")
-        return new_content
-    else:
+    new_content, osumia = re.subn(pattern, rf'\g<1>{arr_str}', content)
+    if not osumia:
         print(f"  ✗ Ei löytynyt: DATA.{obj_key}.{field}")
         return content
+    if new_content == content:
+        print(f"  = Ennallaan: DATA.{obj_key}.{field}")
+        return content
+    print(f"  ✓ Päivitetty: DATA.{obj_key}.{field}")
+    return new_content
 
 
 def format_js_year_array(years):
@@ -1124,12 +1138,17 @@ def update_const_array(content, var_name, values, is_float=False, years=False):
     # Korvataan vain, jos nykyinen sisalto on puhdas lukulista. Nain yleinen
     # nimi (esim. L tai PY) ei voi osua toisen funktion objektitaulukkoon.
     pattern = rf'(const {var_name}=)\[[-\d.,\s]*\]'
-    new_content = re.sub(pattern, rf'\g<1>{arr}', content)
-    if new_content != content:
-        print(f"  ✓ Päivitetty: {var_name}")
-        return new_content
-    print(f"  ✗ Ei löytynyt: {var_name}")
-    return content
+    new_content, osumia = re.subn(pattern, rf'\g<1>{arr}', content)
+    # Erotellaan kolme tapausta. Aiemmin "ei loytynyt" tulostui myos silloin
+    # kun taulukko loytyi mutta arvo oli jo oikea, mika naytti vialta.
+    if not osumia:
+        print(f"  ✗ Ei löytynyt: {var_name}")
+        return content
+    if new_content == content:
+        print(f"  = Ennallaan: {var_name}")
+        return content
+    print(f"  ✓ Päivitetty: {var_name}")
+    return new_content
 
 
 def update_seksuaali_array(content, var_name, new_values):
