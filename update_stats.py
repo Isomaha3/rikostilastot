@@ -179,6 +179,11 @@ CRIME_CODES = {
         '210502',  # Pahoinpitelyn yritys 21:5§2
         '210602',  # Törkeän pahoinpitelyn yritys 21:6§2
     ],
+    # Huumausainerikokset (RL 50)
+    'huume': ['500101', '500201', '5002A1', '500301', '500401', '5004A1'],
+    'huume_kaytto': ['5002A1'],
+    'huume_perus': ['500101'],
+    'huume_torkea': ['500201'],
     # Varkausrikokset (RL 28:1-3)
     'varkaus': ['280101', '280201', '280301', '280102', '280202', '280302'],
     'varkaus_yritys': ['280102', '280202', '280302'],
@@ -1189,6 +1194,11 @@ def main():
     pp_torkea = fetch_crime_data('pahoinpitely_torkea', years[0], latest_year)
     pp_lieva = fetch_crime_data('pahoinpitely_lieva', years[0], latest_year)
     print("  Varkausrikokset...")
+    print("  Huumausainerikokset...")
+    huume = fetch_crime_data('huume', years[0], latest_year)
+    hu_kaytto = fetch_crime_data('huume_kaytto', years[0], latest_year)
+    hu_perus = fetch_crime_data('huume_perus', years[0], latest_year)
+    hu_torkea = fetch_crime_data('huume_torkea', years[0], latest_year)
     varkaus = fetch_crime_data('varkaus', years[0], latest_year)
     vk_perus = fetch_crime_data('varkaus_perus', years[0], latest_year)
     vk_torkea = fetch_crime_data('varkaus_torkea', years[0], latest_year)
@@ -1294,6 +1304,11 @@ def main():
     pp_perus_arr = to_array(pp_perus)
     pp_torkea_arr = to_array(pp_torkea)
     pp_lieva_arr = to_array(pp_lieva)
+    huume_arr = to_array(huume)
+    hu_kaytto_arr = to_array(hu_kaytto)
+    hu_perus_arr = to_array(hu_perus)
+    hu_torkea_arr = to_array(hu_torkea)
+    huume_p100k = calc_per100k(huume_arr, pop)
     varkaus_arr = to_array(varkaus)
     vk_perus_arr = to_array(vk_perus)
     vk_torkea_arr = to_array(vk_torkea)
@@ -1354,6 +1369,18 @@ def main():
         content = update_data_object(content, 'vakivalta', 'ppTorkea', pp_torkea_arr)
     if pp_lieva_arr:
         content = update_data_object(content, 'vakivalta', 'ppLieva', pp_lieva_arr)
+
+    if huume_arr:
+        content = update_data_object(content, 'huumeet', 'counts', huume_arr)
+        content = update_trend_pct(content, 'huumeet', huume_arr[0], huume_arr[-1])
+    if huume_p100k:
+        content = update_data_object(content, 'huumeet', 'p100k', huume_p100k, is_float=True)
+    if hu_kaytto_arr:
+        content = update_data_object(content, 'huumeet', 'huKaytto', hu_kaytto_arr)
+    if hu_perus_arr:
+        content = update_data_object(content, 'huumeet', 'huPerus', hu_perus_arr)
+    if hu_torkea_arr:
+        content = update_data_object(content, 'huumeet', 'huTorkea', hu_torkea_arr)
 
     if varkaus_arr:
         content = update_data_object(content, 'varkaudet', 'counts', varkaus_arr)
@@ -1550,7 +1577,7 @@ def main():
     )
     
     # Päivitä COVERAGE-vuodet
-    for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot', 'nuoriso', 'tyottomyys', 'varkaudet']:
+    for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot', 'nuoriso', 'tyottomyys', 'varkaudet', 'huumeet']:
         content = re.sub(
             rf"({panel}:\s*\{{years:')[^']+(')",
             rf"\g<1>{years[0]}–{latest_year}\g<2>",
