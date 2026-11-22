@@ -492,8 +492,8 @@ function renderMaahanmuuttajat(){
   const el=document.getElementById('p-maahanmuuttajat');
   const IP=[7088,6650,6748,6598,7354,7466,6898,7193,7484,7784];
   const SEXL=['Miehet','Naiset'];
-  const SEXU=[0,0];   // ulkomaalaistaustaiset, per 100k
-  const SEXK=[0,0];   // suomalaistaustaiset, per 100k
+  const SEXU=[12593,2638];   // ulkomaalaistaustaiset, per 100k
+  const SEXK=[9340,2635];   // suomalaistaustaiset, per 100k
   const AGEL=['15–17','18–20','21–24','25–29','30–39','40–49','50–59','60–69'];
   const AGEU=[14186,19331,14808,12317,9751,6886,4773,2384];
   const AGEK=[11881,17177,13932,14676,10894,7711,4472,2032];
@@ -550,7 +550,7 @@ function renderKansalaisuus(){
   const el=document.getElementById('p-kansalaisuus');
   const KNAMES=['Somalia','Irak','Afganistan','Albania','Nigeria','Romania','Marokko','Venäjä','Viro','Ruotsi','Suomi','Thaimaa','Saksa'];
   const KCOL=['#e05c5c','#e8a23a','#9b7de8','#4f8ef7','#3dba8c','#e06898','#3ab8c8','#8fb84a','#c87a3e','#534ab7','#7a8099','#b4b2a9','#4a5068'];
-  const KVN=[0,0,0,0,0,0,0,0,0,0,0,0,0];
+  const KVN=[470,1521,570,100,284,257,104,912,2769,324,135149,194,83];
   const KV=[6778,12085,6331,5105,4614,4393,5234,2694,5663,4126,2589,2260,1576];
   const nats=KNAMES.map((l,i)=>({l,v:KV[i],c:KCOL[i],n:KVN[i]})).sort((a,b)=>b.v-a.v);
   const suomiV=KV[KNAMES.indexOf('Suomi')]||1;
@@ -1024,16 +1024,7 @@ function kvArr(fn,name){
 const KV_SRC={vakivalta:'Tilastokeskus, poliisin tietoon tulleet pahoinpitelyt',seksuaali:'Tilastokeskus, poliisin tietoon tulleet seksuaalirikokset',henki:'Tilastokeskus, poliisin tietoon tulleet henkirikokset',ryostot:'Tilastokeskus, poliisin tietoon tulleet ryöstöt',varkaudet:'Tilastokeskus, poliisin tietoon tulleet varkausrikokset',nuoriso:'Tilastokeskus, rikoslakirikoksista epäillyt alle 18-vuotiaat',perhe:'Tilastokeskus, perhe- ja lähisuhdeväkivallan uhrit',vangit:'Rikosseuraamuslaitos, ulkomaalaiset vangit (päivittäinen keskimäärä)'};
 function kasvuSarjat(){
   const n=Y.length, last=a=>a?a.slice(-n):null;
-  const L=[
-    {id:'vakivalta',l:'Pahoinpitelyt',d:DATA.vakivalta.counts,c:'#e05c5c',u:'rikosilmoitusta'},
-    {id:'seksuaali',l:'Seksuaalirikokset',d:kvArr(renderSeksuaali,'T'),c:'#e8a23a',u:'rikosilmoitusta',note:'Seksuaalirikoslaki uudistui 1.1.2023, mikä kasvattaa lukuja osin määritelmien laajenemisen vuoksi.'},
-    {id:'henki',l:'Henkirikokset',d:DATA.henki.counts,c:'#9b7de8',u:'rikosta'},
-    {id:'ryostot',l:'Ryöstöt',d:DATA.ryostot.counts,c:'#4f8ef7',u:'rikosilmoitusta'},
-    {id:'varkaudet',l:'Varkausrikokset',d:DATA.varkaudet.counts,c:'#c87a3e',u:'rikosilmoitusta'},
-    {id:'nuoriso',l:'Alle 18-v. rikoksista epäillyt',d:DATA.nuoriso.counts,c:'#e06898',u:'epäiltyä'},
-    {id:'perhe',l:'Perheväkivallan uhrit',d:last(kvArr(renderPerhe,'PV')),c:'#e05c8a',u:'uhria'},
-    {id:'vangit',l:'Ulkomaalaiset vangit',d:last(kvArr(renderVangit,'VU')),c:'#3ab8c8',u:'vankia (keskimäärin)'}
-  ];
+  const L=[1187,1131,1350,1698,1752,2064,2343,2315,3469,2936];
   return L.map(s=>({...s,src:KV_SRC[s.id]||''})).filter(s=>s.d&&s.d.length===n&&s.d[0]>0).map(s=>{
     const a=s.d[0], b=s.d[n-1], p=s.d[n-2];
     return {...s,first:a,lastV:b,pct:(b-a)/a*100,yoy:(b-p)/p*100,idx:s.d.map(v=>v/a*100)};
