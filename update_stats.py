@@ -1137,7 +1137,12 @@ def update_const_array(content, var_name, values, is_float=False, years=False):
         arr = format_js_array(values)
     # Korvataan vain, jos nykyinen sisalto on puhdas lukulista. Nain yleinen
     # nimi (esim. L tai PY) ei voi osua toisen funktion objektitaulukkoon.
-    pattern = rf'(const {var_name}=)\[[-\d.,\s]*\]'
+    # Vuosirivit ovat lainausmerkeissa ('2016','17'), joten niille sallitaan
+    # myos lainausmerkit - muuten ne eivat paivity lainkaan.
+    if years:
+        pattern = rf"(const {var_name}=)\[[-\d.,\s'\"]*\]"
+    else:
+        pattern = rf'(const {var_name}=)\[[-\d.,\s]*\]'
     new_content, osumia = re.subn(pattern, rf'\g<1>{arr}', content)
     # Erotellaan kolme tapausta. Aiemmin "ei loytynyt" tulostui myos silloin
     # kun taulukko loytyi mutta arvo oli jo oikea, mika naytti vialta.
@@ -1157,26 +1162,30 @@ def update_seksuaali_array(content, var_name, new_values):
     # Korvataan vain, jos nykyinen sisalto on puhdas lukulista. Nain yleinen
     # nimi (esim. L tai PY) ei voi osua toisen funktion objektitaulukkoon.
     pattern = rf'(const {var_name}=)\[[-\d.,\s]*\]'
-    new_content = re.sub(pattern, rf'\g<1>{arr_str}', content)
-    if new_content != content:
-        print(f"  ✓ Päivitetty: seksuaali.{var_name}")
-        return new_content
-    else:
+    new_content, osumia = re.subn(pattern, rf'\g<1>{arr_str}', content)
+    if not osumia:
         print(f"  ✗ Ei löytynyt: seksuaali.{var_name}")
         return content
+    if new_content == content:
+        print(f"  = Ennallaan: seksuaali.{var_name}")
+        return content
+    print(f"  ✓ Päivitetty: seksuaali.{var_name}")
+    return new_content
 
 
 def update_year_array(content, new_years):
     """Päivitä Y-vuosiarray."""
     arr_str = '[' + ','.join(f"'{y}'" for y in new_years) + ']'
     pattern = r"(const Y=)\[[^\]]+\]"
-    new_content = re.sub(pattern, rf"\g<1>{arr_str}", content)
-    if new_content != content:
-        print(f"  ✓ Päivitetty: Y (vuodet)")
-        return new_content
-    else:
+    new_content, osumia = re.subn(pattern, rf"\g<1>{arr_str}", content)
+    if not osumia:
         print(f"  ✗ Ei löytynyt: Y")
         return content
+    if new_content == content:
+        print(f"  = Ennallaan: Y (vuodet)")
+        return content
+    print(f"  ✓ Päivitetty: Y (vuodet)")
+    return new_content
 
 
 def update_trend_pct(content, obj_key, first_val, last_val):
