@@ -179,6 +179,10 @@ CRIME_CODES = {
         '210502',  # Pahoinpitelyn yritys 21:5§2
         '210602',  # Törkeän pahoinpitelyn yritys 21:6§2
     ],
+    # Lasta seksuaalisesti esittava kuva-aineisto. Ennen 2023 RL 17, sen jalkeen RL 20.
+    'seks_kuva': ['171901_2022', '1718A1_2022', '1718A2_2022',
+                  '202101', '2021A1', '201901', '201902', '202001',
+                  '202002', '202201', '202203', '2008C1_2022', '2008C2_2022'],
     # Huumausainerikokset (RL 50)
     'huume': ['500101', '500201', '5002A1', '500301', '500401', '5004A1'],
     'huume_kaytto': ['5002A1'],
@@ -619,6 +623,33 @@ def fetch_pop_origin(origin_code, years):
         {"code": SYNT_VAR, "selection": {"filter": "item", "values": [origin_code]}},
         {"code": "contentscode", "selection": {"filter": "item", "values": ["vaerak-vaesto"]}},
     ], years)
+
+
+# Seksuaalirikosten nimikeryhmat sivun SOL-taulukon jarjestyksessa (13zk).
+SEXCAT_GROUPS = ['234', '235', '239', '236', '240', '241']
+
+
+def fetch_sexcat_origin(year):
+    """Ulkomaalaistaustaisten osuus ja epailtyjen maara nimikeryhmittain."""
+    osuus, maara = [], []
+    for grp in SEXCAT_GROUPS:
+        tot = fetch_origin_counts(grp, "SSS", [year])
+        ulk = fetch_origin_counts(grp, SYNT_FOREIGN, [year])
+        if not tot or not ulk or not tot.get(year):
+            print(f"  Seksuaalinimikkeen alkupera puuttuu ({grp})")
+            return None
+        maara.append(int(tot[year]))
+        osuus.append(round(ulk.get(year, 0) / tot[year] * 100, 1))
+    return osuus, maara
+
+
+def fetch_foreign_pop_share(year):
+    """Ulkomaalaistaustaisten vaestoosuus prosentteina (159s)."""
+    tot = fetch_pop_origin("SSS", [year])
+    ulk = fetch_pop_origin(SYNT_FOREIGN, [year])
+    if not tot or not ulk or not tot.get(year):
+        return None
+    return round(ulk.get(year, 0) / tot[year] * 100, 2)
 
 
 def fetch_nationality_rates(year):
@@ -1194,6 +1225,8 @@ def main():
     pp_torkea = fetch_crime_data('pahoinpitely_torkea', years[0], latest_year)
     pp_lieva = fetch_crime_data('pahoinpitely_lieva', years[0], latest_year)
     print("  Varkausrikokset...")
+    print("  Kuva-aineistorikokset...")
+    seks_kuva = fetch_crime_data('seks_kuva', years[0], latest_year)
     print("  Huumausainerikokset...")
     huume = fetch_crime_data('huume', years[0], latest_year)
     hu_kaytto = fetch_crime_data('huume_kaytto', years[0], latest_year)
@@ -1242,6 +1275,9 @@ def main():
     viol_age_first = fetch_violence_by_age(str(years[0]))
     viol_age_last = fetch_violence_by_age(str(latest_year))
     sex_ratios = fetch_sex_ratios(str(latest_year))
+    print("  Seksuaalirikosten nimikeryhmat alkuperan mukaan...")
+    sexcat = fetch_sexcat_origin(str(latest_year))
+    foreign_share = fetch_foreign_pop_share(str(latest_year))
     sex_u = fetch_sex_rates(SYNT_FOREIGN, str(latest_year))
     sex_k = fetch_sex_rates(SYNT_DOMESTIC, str(latest_year))
     nat_counts = fetch_nationality_counts(str(latest_year))
@@ -1304,6 +1340,7 @@ def main():
     pp_perus_arr = to_array(pp_perus)
     pp_torkea_arr = to_array(pp_torkea)
     pp_lieva_arr = to_array(pp_lieva)
+    seks_kuva_arr = to_array(seks_kuva)
     huume_arr = to_array(huume)
     hu_kaytto_arr = to_array(hu_kaytto)
     hu_perus_arr = to_array(hu_perus)
@@ -1369,6 +1406,9 @@ def main():
         content = update_data_object(content, 'vakivalta', 'ppTorkea', pp_torkea_arr)
     if pp_lieva_arr:
         content = update_data_object(content, 'vakivalta', 'ppLieva', pp_lieva_arr)
+
+    if seks_kuva_arr:
+        content = update_const_array(content, 'SKV', seks_kuva_arr)
 
     if huume_arr:
         content = update_data_object(content, 'huumeet', 'counts', huume_arr)
@@ -1522,6 +1562,14 @@ def main():
         content = update_const_array(content, 'VAGE1', viol_age_last)
     if sex_ratios:
         content = update_const_array(content, 'SXR', sex_ratios, is_float=True)
+    if sexcat:
+        sou, sot = sexcat
+        content = update_const_array(content, 'SOU', sou, is_float=True)
+        content = update_const_array(content, 'SOT', sot)
+    if foreign_share:
+        content = re.sub(r'(const SOV=)[\d.]+',
+                         lambda m: m.group(1) + f'{foreign_share}',
+                         content, count=1)
     if sex_u:
         content = update_const_array(content, 'SEXU', sex_u)
     if sex_k:

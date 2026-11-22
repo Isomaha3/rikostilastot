@@ -211,6 +211,34 @@ const VSS=10.9;  // ulkomailla syntyneiden vaestoosuus, %
 function fi(n){return Math.round(n).toLocaleString('fi-FI');}
 
 // ── SVG LINE CHART ──────────────────────────────────────
+// Pienimman neliosumman suora. Palauttaa sovitetut arvot, kulmakertoimen
+// (muutos vuodessa) ja selitysasteen, jotta kayran voi myos sanallistaa.
+function trendi(arr){
+  const n=arr.length, xs=arr.map((_,i)=>i);
+  const mx=xs.reduce((a,b)=>a+b,0)/n, my=arr.reduce((a,b)=>a+b,0)/n;
+  let sxy=0, sxx=0;
+  for(let i=0;i<n;i++){ sxy+=(xs[i]-mx)*(arr[i]-my); sxx+=(xs[i]-mx)**2; }
+  const k=sxx?sxy/sxx:0, b=my-k*mx;
+  const fit=xs.map(x=>k*x+b);
+  let ss=0, st=0;
+  for(let i=0;i<n;i++){ ss+=(arr[i]-fit[i])**2; st+=(arr[i]-my)**2; }
+  return {fit:fit, k:k, r2:st?1-ss/st:0};
+}
+
+function lineTrend(data,color,yMin,yMax,yFmt,labels,opts){
+  const o=opts||{}, t=trendi(data);
+  const fit=t.fit.map(v=>Math.min(yMax,Math.max(yMin,v)));
+  const svg=lineChart([{data:fit,color:o.tc||'#7a8099',fill:false,width:1.5,dash:'6,4'}]
+    .concat(o.extra||[])
+    .concat([{data:data,color:color,fill:o.fill!==false,width:o.width||2}]),
+    yMin,yMax,yFmt,labels);
+  const k=Math.abs(t.k);
+  const ks=(t.k>=0?'+':'−')+(o.dec?k.toFixed(o.dec).replace('.',','):fi(Math.round(k)));
+  return svg+'<div class="csub" style="margin-top:8px">Katkoviiva on pienimmän neliösumman '
+    +'trendisuora: keskimäärin '+ks+' '+(o.unit||'')+' vuodessa, selitysaste '
+    +(t.r2*100).toFixed(0)+' %. Suora tiivistää suunnan, se ei ole ennuste.</div>';
+}
+
 function lineChart(datasets, yMin, yMax, yFmt, labels){
   const XL=labels||Y;
   const W=340,H=140,PL=46,PR=10,PT=10,PB=24;
@@ -317,11 +345,11 @@ function renderCrime(id){
   const tH=d.trendPct>2?`<span class="tu">+${d.trendPct.toFixed(1)}%</span>`:d.trendPct<-2?`<span class="td">${d.trendPct.toFixed(1)}%</span>`:`<span style="color:var(--muted)">vakaa</span>`;
 
   const yMin=Math.min(...d.counts)*0.95, yMax=Math.max(...d.counts)*1.03;
-  const lc=lineChart([{data:d.counts,color:d.col,fill:true}],yMin,yMax);
+  const lc=lineTrend(d.counts,d.col,yMin,yMax,undefined,undefined,{unit:d.u||'tapausta'});
 
   const c2data=id==='nuoriso'?d.yShare:d.p100k;
   const c2min=Math.min(...c2data)*0.9, c2max=Math.max(...c2data)*1.05;
-  const lc2=lineChart([{data:c2data,color:d.col,fill:true}],c2min,c2max,id==='nuoriso'?v=>v.toFixed(1)+'%':v=>v.toFixed(1));
+  const lc2=lineTrend(c2data,d.col,c2min,c2max,id==='nuoriso'?v=>v.toFixed(1)+'%':v=>v.toFixed(1),undefined,{dec:2,unit:id==='nuoriso'?'prosenttiyksikköä':'rikosta per 100 000 asukasta'});
 
   // Vakivaltarikoksista epaillyt ikaryhmittain, aikasarjan ensimmainen
   // ja viimeinen vuosi. Haetaan taulusta rpk/13zk.
@@ -417,21 +445,31 @@ function renderSeksuaali(){
   const L=[1187,1131,1350,1698,1752,2064,2343,2315,3469,2936];
   const A=[535,424,521,529,570,753,776,1283,1526,1380];
   const K=[0,0,0,0,0,0,0,145,156,195];   // seksuaalisen kuvan luvaton levittaminen 20:7 (uusi laki 2023-)
+  const SKV=[156,118,163,276,571,445,598,751,1356,2652];
+  // Epaillyt syntyperan mukaan 2025, taulu rpk/13zk. Osuudet ovat
+  // ulkomaalaistaustaisten osuus kyseisen nimikkeen epaillyista.
+  const SOL=['Raiskaus 20:1-2','Seksuaalinen kajoaminen 20:3-5','Lapsenraiskaus 20:12-13','Seksuaalinen ahdistelu 20:6','Lapsiin kohdistuvat 20:14-18','Kuva-aineisto 20:19-22'];
+  const SOU=[33.7,29.9,21.5,20.0,17.3,5.1];
+  const SOT=[1080,318,585,646,762,1891];
+  const SOV=11.69;   // ulkomaalaistaustaisten vaestoosuus 2025
   const T=[3326,3336,3859,4409,4531,5484,5591,7451,9607,10372];
-  const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]));
+  const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]-SKV[i]));
   const UR=[19.70,25.50,21.80,24.00,25.70,24.60,21.20,23.50,27.20,23.10];
   const jaIdx=Y.indexOf('2022')>=0?Y.indexOf('2022'):6;
-  const jakauma=i=>{const muut=Math.max(0,T[i]-R[i]-L[i]-A[i]);
+  const jakauma=i=>{const muut=Math.max(0,T[i]-R[i]-L[i]-A[i]-SKV[i]);
     return [{l:'Raiskaukset',v:R[i],c:'#e05c5c'},{l:'Lapsiin',v:L[i],c:'#e8a23a'},
-            {l:'Ahdistelu',v:A[i],c:'#9b7de8'},{l:'Muut',v:muut,c:'#4a5068'}]
+            {l:'Ahdistelu',v:A[i],c:'#9b7de8'},{l:'Kuva-aineisto',v:SKV[i],c:'#3ab8c8'},
+            {l:'Muut',v:muut,c:'#4a5068'}]
       .map(o=>({...o,fmt:(o.v/T[i]*100).toFixed(0)+' %'}));};
   const UV=[4.40,4.50,4.70,4.80,5.00,5.30,5.80,6.70,7.30,7.70];
 
+  const TR=trendi(R);
   const lc1=lineChart([
+    {data:TR.fit,color:'#8a3030',fill:false,width:1.5,dash:'6,4'},
     {data:R,color:'#e05c5c',fill:false,width:2},
     {data:L,color:'#e8a23a',fill:false,width:2},
     {data:A,color:'#9b7de8',fill:false,width:1.5,dash:'4,3'}
-  ],0,Math.max(...R,...L,...A)*1.1);
+  ],0,Math.max(...R,...L,...A,...TR.fit)*1.1);
 
   const lc2=lineChart([
     {data:UR,color:'#e05c5c',fill:true,width:2},
@@ -440,7 +478,7 @@ function renderSeksuaali(){
 
   el.innerHTML=`
   ${dataBox('seksuaali')}
-  <div class="ibox amber"><strong>Lainmuutoshuomio:</strong> Seksuaalirikoslaki uudistui 1.1.2023. Raiskauksen määritelmä muuttui suostumusperusteiseksi. Lukuja ennen ja jälkeen 2023 ei voi suoraan verrata.</div>
+  <div class="ibox amber"><strong>Lainmuutoshuomio:</strong> Seksuaalirikoslaki uudistui 1.1.2023. Raiskauksen määritelmä muuttui suostumusperusteiseksi, ja lapsen kuva-aineistorikokset siirrettiin rikoslain 17. luvusta 20. lukuun. Lukuja ennen ja jälkeen 2023 ei voi suoraan verrata.</div>
   <div class="metrics">
     <div class="mc"><div class="mlabel">Yhteensä ${Y[9]}</div><div class="mval r">${fi(T[9])}</div><div class="msub">${(()=>{const c=(T[9]-T[8])/T[8]*100;return c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`;})()} vs. ${Y[8]}</div></div>
     <div class="mc"><div class="mlabel">Lapsiin kohdistuvat</div><div class="mval r">${fi(L[9])}</div><div class="msub">${(()=>{const c=(L[9]-L[8])/L[8]*100;return c>0?`<span class="tu">+${c.toFixed(1)}%</span>`:`<span class="td">${c.toFixed(1)}%</span>`;})()} vs. ${Y[8]}</div></div>
@@ -452,8 +490,13 @@ function renderSeksuaali(){
       <span class="li"><span class="ld" style="background:#e05c5c"></span>Raiskaukset</span>
       <span class="li"><span class="ld" style="background:#e8a23a"></span>Lapsiin kohdistuvat</span>
       <span class="li"><span class="ld" style="background:#9b7de8"></span>Ahdistelu</span>
+      <span class="li"><span class="ld" style="background:#8a3030"></span>Raiskausten trendi</span>
     </div>
     ${lc1}
+    <div class="csub" style="margin-top:8px">Trendisuora on raiskausten pienimmän neliösumman
+    sovitus: keskimäärin ${(TR.k>=0?'+':'−')+fi(Math.round(Math.abs(TR.k)))} rikosta vuodessa.
+    Suora selittää ${(TR.r2*100).toFixed(0)} % sarjan vaihtelusta, eli kasvu on tasaista eikä
+    yksittäisten vuosien piikkejä. Suora on vain sarjan muodon tiivistys, ei ennuste.</div>
   </div>
   <div class="card">
     <div class="ctitle">Stacked — kaikki kategoriat</div>
@@ -461,10 +504,10 @@ function renderSeksuaali(){
       <span class="li"><span class="ld" style="background:#e05c5c"></span>Raiskaukset</span>
       <span class="li"><span class="ld" style="background:#e8a23a"></span>Lapsiin</span>
       <span class="li"><span class="ld" style="background:#9b7de8"></span>Ahdistelu</span>
-      <span class="li"><span class="ld" style="background:#3ab8c8"></span>Kuvan luvaton levittäminen</span>
+      <span class="li"><span class="ld" style="background:#3ab8c8"></span>Lapsen kuva-aineisto</span>
       <span class="li"><span class="ld" style="background:#4a5068"></span>Muut</span>
     </div>
-    ${stackedBars(Y,[{data:R,color:'#e05c5c'},{data:L,color:'#e8a23a'},{data:A,color:'#9b7de8'},{data:K,color:'#3ab8c8'},{data:M,color:'#4a5068'}])}
+    ${stackedBars(Y,[{data:R,color:'#e05c5c'},{data:L,color:'#e8a23a'},{data:A,color:'#9b7de8'},{data:SKV,color:'#3ab8c8'},{data:M,color:'#4a5068'}])}
   </div>
   <div class="card">
     <div class="ctitle">Ulkomaalaisten osuus raiskausepäillyistä vs. väestöosuus (${Y[0]}–${Y[9]})</div>
@@ -482,6 +525,28 @@ function renderSeksuaali(){
       </div>
     </div>
   </div>
+  <div class="card">
+    <div class="ctitle">Kaksi eri ilmiötä — ulkomaalaistaustaisten osuus epäillyistä ${Y[9]}</div>
+    <div class="csub">Väestöosuus ${SOV.toFixed(1)} %. Yli sen = yliedustus, alle = aliedustus.</div>
+    ${hbars(SOL.map(function(l,i){return {l:l+' ('+fi(SOT[i])+' epäiltyä)',v:SOU[i],
+      c:SOU[i]>=SOV?'#e05c5c':'#3dba8c',fmt:SOU[i].toFixed(1)+' %'};}))}
+    <div class="csub" style="margin-top:10px">Nopeimmin kasvava ryhmä, lasta seksuaalisesti
+    esittävä kuva-aineisto, on ainoa jossa ulkomaalaistaustaiset ovat aliedustettuja —
+    ${(SOV/SOU[5]).toFixed(1)} kertaa väestöosuutta harvemmin. Raiskauksissa osuus on
+    ${(SOU[0]/SOV).toFixed(1)}-kertainen väestöosuuteen. Siksi seksuaalirikosten kokonaisluku
+    ei kerro kummastakaan ilmiöstä juuri mitään: ne liikkuvat eri suuntiin ja eri syistä.</div>
+  </div>
+  <div class="card">
+    <div class="ctitle">Kuva-aineistorikokset ${Y[0]}–${Y[9]}</div>
+    <div class="csub">Hallussapito, levittäminen ja esityksen seuraaminen. Ennen vuotta 2023
+    nämä kirjattiin rikoslain 17. lukuun eivätkä olleet seksuaalirikoksia lainkaan, joten vuoden
+    2023 uudistus siirsi ne tilastoon mukaan. Siirto selittää kasvusta kuitenkin vain pienen osan:
+    ilmiö itse ${(SKV[9]/SKV[0]).toFixed(0)}-kertaistui jaksolla.</div>
+    ${lineTrend(SKV,'#3ab8c8',0,Math.max(...SKV)*1.1,undefined,undefined,{width:2.5,unit:'rikosta'})}
+    <div class="csub" style="margin-top:8px">${fi(SKV[0])} (${Y[0]}) → ${fi(SKV[9])} (${Y[9]}).
+    Osuus kaikista seksuaalirikoksista ${(SKV[9]/T[9]*100).toFixed(0)} %, osuus koko kasvusta
+    ${((SKV[9]-SKV[0])/(T[9]-T[0])*100).toFixed(0)} %.</div>
+  </div>
   <div class="abox">Seksuaalirikokset yhteensä ${Y[0]}–${Y[9]}: ${fi(T[0])} → ${fi(T[9])}. Lapsiin kohdistuvien muutos viimeisimpänä vuonna: ${(()=>{const c=(L[9]-L[8])/L[8]*100;return (c>=0?"+":"")+c.toFixed(1);})()} %. Ulkomaan kansalaisten osuus raiskausepäillyistä: ${UR[9].toFixed(1)} % (väestöosuus ${UV[9].toFixed(1)} %). Seksuaalirikoslaki uudistui 1.1.2023 ja laajensi rikoslain 20. luvun määritelmiä, joten lukuja ennen ja jälkeen ei voi suoraan verrata.</div>`;
 }
 
@@ -497,10 +562,8 @@ function renderPerhe(){
   const PS2=[47.30,22.60,15.90,5.20,9.10];
   const PB=[10.20,9.40,10.50,11.00,11.40,11.70,13.00,12.90,13.90,15.10,14.70,16.50,16.40,19.10,18.60,19.60];
   const PBV=[4.40,4.80,5.20,5.50,5.90,6.20,6.60,7.00,7.30,7.70,8.00,8.50,9.10,10.20,11.10,11.70];
-  const lcFP=lineChart([
-    {data:PB,color:'#e05c8a',fill:true,width:2},
-    {data:PBV,color:'#7a8099',fill:false,width:1.5,dash:'4,3'}
-  ],0,Math.ceil(Math.max(...PB)/4)*4+4,v=>v.toFixed(0)+'%',PYR.map(fy));
+  const lcFP=lineTrend(PB,'#e05c8a',0,Math.ceil(Math.max(...PB)/4)*4+4,v=>v.toFixed(0)+'%',PYR.map(fy),{dec:2,unit:'prosenttiyksikköä',tc:'#8a3050',
+    extra:[{data:PBV,color:'#7a8099',fill:false,width:1.5,dash:'4,3'}]});
 
   el.innerHTML=`
   ${dataBox('perhe')}
@@ -616,7 +679,7 @@ function renderVangit(){
   const VT=[3291,3262,3236,3175,3097,3068,3120,3035,2910,2952,2800,2809,3056,3143,3356,3545];   // kaikki vangit
   const VU=[394,444,470,464,483,477,537,540,482,499,475,434,480,560,687,839];                   // ulkomaalaiset vangit
   const PP=VT.map((t,i)=>+(VU[i]/t*100).toFixed(1));
-  const lc=lineChart([{data:PP,color:'#e05c5c',fill:true,width:2.5}],0,30,v=>v+'%',PY);
+  const lc=lineTrend(PP,'#e05c5c',0,30,v=>v+'%',PY,{width:2.5,dec:2,unit:'prosenttiyksikköä'});
   const maxVT=Math.max(...VT);
   const sb='<div class="sbarchart">'+PY.map((y,i)=>`<div class="sbc-row"><span class="sbc-label">${y}</span><div class="sbc-track"><div class="sbc-seg" style="width:${((VT[i]-VU[i])/maxVT*100).toFixed(1)}%;background:#7a8099aa"></div><div class="sbc-seg" style="width:${(VU[i]/maxVT*100).toFixed(1)}%;background:#e05c5caa"></div></div><span class="bc-val" style="min-width:92px;text-align:right">${fi(VT[i])} · <span style="color:#e05c5c">${fi(VU[i])}</span></span></div>`).join('')+'</div>';
 
@@ -656,7 +719,7 @@ function renderSyntyperä(){
     {data:PK,color:'#7a8099',fill:false,width:1.5,dash:'4,3'},
     {data:PS,color:'#4a5068',fill:false,width:1.5,dash:'2,4'}
   ],0,30,v=>v+'%',RY.map(y=>y.length===2?'20'+y:y));
-  const lc2=lineChart([{data:RA,color:'#e05c5c',fill:true,width:2}],0,6,v=>v.toFixed(1)+'x',RY.map(y=>y.length===2?'20'+y:y));
+  const lc2=lineTrend(RA,'#e05c5c',0,6,v=>v.toFixed(1)+'x',RY.map(y=>y.length===2?'20'+y:y),{dec:2,unit:'yksikköä'});
   el.innerHTML=`
   ${dataBox('syntyperä')}
   <div class="ibox"><strong>Miksi ei syntyperää?</strong> Rise julkaisee vankilatilastot kansalaisuuden mukaan. Ulkomaan kansalaisia on ${VKS.toFixed(1)} % väestöstä ja ulkomailla syntyneitä ${VSS.toFixed(1)} % (Tilastokeskus).</div>
@@ -752,8 +815,7 @@ function renderTyottomyys(){
   const kaikki=[...d.aste1524,...d.aste1574];
   const lc=lineChart([{data:d.aste1524,color:d.col,fill:true},{data:d.aste1574,color:'#4a5068',fill:false}],
                      Math.min(...kaikki)*0.85,Math.max(...kaikki)*1.05,v=>v.toFixed(1)+'%');
-  const lc2=lineChart([{data:d.maara1524,color:d.col,fill:true}],
-                      Math.min(...d.maara1524)*0.85,Math.max(...d.maara1524)*1.05,v=>v.toFixed(0));
+  const lc2=lineTrend(d.maara1524,d.col,Math.min(...d.maara1524)*0.85,Math.max(...d.maara1524)*1.05,v=>v.toFixed(0),undefined,{dec:1,unit:'tuhatta henkilöä'});
   const suhde=(d.aste1524[9]/d.aste1574[9]).toFixed(1);
   el.innerHTML=`
   ${dataBox('tyottomyys')}
@@ -1070,6 +1132,7 @@ function kasvuSarjat(){
     {id:'ryostot',l:'Ryöstöt',d:DATA.ryostot.counts,c:'#4f8ef7',u:'rikosilmoitusta'},
     {id:'varkaudet',l:'Varkausrikokset',d:DATA.varkaudet.counts,c:'#c87a3e',u:'rikosilmoitusta'},
     {id:'nuoriso',l:'Alle 18-v. rikoksista epäillyt',d:DATA.nuoriso.counts,c:'#e06898',u:'epäiltyä'},
+    {id:'huumeet',l:'Huumausainerikokset',d:DATA.huumeet.counts,c:'#8fb84a',u:'rikosilmoitusta',note:'Kokonaismäärä riippuu poliisin valvonnan määrästä. Törkeä tekomuoto on kasvanut selvästi nopeammin kuin ryhmä kokonaisuutena.'},
     {id:'perhe',l:'Perheväkivallan uhrit',d:last(kvArr(renderPerhe,'PV')),c:'#e05c8a',u:'uhria'},
     {id:'vangit',l:'Ulkomaalaiset vangit',d:last(kvArr(renderVangit,'VU')),c:'#3ab8c8',u:'vankia (keskimäärin)'}
   ];
@@ -1774,6 +1837,34 @@ const DICT = {
 'Huumausainerikos (50:1)':'Narcotics offence (50:1)',
 'Törkeä (50:2)':'Aggravated (50:2)',
 'Törkeä':'Aggravated'
+,
+'Kaksi eri ilmiötä — ulkomaalaistaustaisten osuus epäillyistä ':'Two different phenomena — share of suspects with a foreign background, ',
+'Kuva-aineistorikokset ':'Child sexual abuse image offences ',
+'Lapsen kuva-aineisto':'Child sexual abuse imagery',
+'Kuva-aineisto 20:19-22':'Sexual imagery 20:19-22',
+'Raiskaus 20:1-2':'Rape 20:1-2',
+'Seksuaalinen kajoaminen 20:3-5':'Sexual assault 20:3-5',
+'Lapsenraiskaus 20:12-13':'Rape of a child 20:12-13',
+'Seksuaalinen ahdistelu 20:6':'Sexual harassment 20:6',
+'Lapsiin kohdistuvat 20:14-18':'Offences against children 20:14-18',
+'Kuva-aineisto':'Sexual imagery',
+' epäiltyä)':' suspects)'
+,
+'Raiskausten trendi':'Rape trend',
+' rikosta vuodessa.':' offences per year.',
+'Trendisuora on raiskausten pienimmän neliösumman sovitus: keskimäärin ':'The trend line is a least-squares fit to the rape series: on average '
+,
+'Katkoviiva on pienimmän neliösumman trendisuora: keskimäärin ':'The dashed line is a least-squares trend: on average ',
+' vuodessa, selitysaste ':' per year; it explains ',
+'. Suora tiivistää suunnan, se ei ole ennuste.':' of the variation. The line summarises direction; it is not a forecast.',
+'prosenttiyksikköä':'percentage points',
+'rikosta per 100 000 asukasta':'offences per 100,000 inhabitants',
+'tuhatta henkilöä':'thousand persons',
+'tapausta':'cases',
+'rikosta':'offences',
+'yksikköä':'units',
+'Huumausainerikokset':'Narcotics offences',
+'Kokonaismäärä riippuu poliisin valvonnan määrästä. Törkeä tekomuoto on kasvanut selvästi nopeammin kuin ryhmä kokonaisuutena.':'The total depends on the level of police enforcement. The aggravated form has grown considerably faster than the group as a whole.'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 
