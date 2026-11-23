@@ -193,6 +193,15 @@ body.brand-persu .landing .start-btn{background:linear-gradient(135deg,#4f8ef7,#
 
 <script>
 const TITLES={home:'Suomen rikostilastot',vakivalta:'Pahoinpitelyrikokset',seksuaali:'Seksuaalirikokset',henki:'Henkirikokset',ryostot:'Ryöstöt',varkaudet:'Varkausrikokset',huumeet:'Huumausainerikokset',nuoriso:'Nuorisorikollisuus',perhe:'Perhe- ja lähisuhdeväkivalta',maahanmuuttajat:'Ulkomaalaistaustaiset vs. suomalaistaustaiset',kansalaisuus:'Kansalaisuuksittain',vangit:'Ulkomaalaiset vangit','syntyperä':'Ulkomaan kansalaiset vangeissa',ennakko2025:'Ennakkotiedot',ika:'Ikäjakauma & tausta',tyottomyys:'Nuorisotyöttömyys',eurostat:'EU-vertailu: turvallisuus asuinalueella',kasvu:'Eniten kasvaneet tilastot',ulkkasvu:'Ulkomaalaiset ja kasvavat rikokset'};
+// Vuosi, jonka luvuista DATA.*.analysis-tekstit on kirjoitettu. Paivita kasin,
+// kun tekstit on tarkistettu uusia lukuja vasten. Jos automaattipaivitys tuo
+// uudemman vuoden, sivu kertoo tekstin olevan vanhemmista luvuista.
+const TEKSTIT_VUOSI='2025';
+function analyysi(d){
+  const v=Y[Y.length-1];
+  const huom=v===TEKSTIT_VUOSI?'':`<div style="margin-top:6px;font-size:11px;opacity:.75">${LANG==='en'?'Commentary written from '+TEKSTIT_VUOSI+' data; figures above are updated to '+v+'.':'Tulkintateksti on kirjoitettu vuoden '+TEKSTIT_VUOSI+' luvuista; yllä olevat luvut on päivitetty vuoteen '+v+'.'}</div>`;
+  return d.analysis+huom;
+}
 const Y=['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
 // Vaestoosuudet, joita seka vangit- etta syntyperapaneeli kayttavat
 const EU=[25857,25546,27170,27942,32653,35062,35055,41092,46697,51438];
@@ -438,7 +447,7 @@ function renderCrime(id){
   <div class="card"><div class="ctitle">Vuositrendi ${Y[0]}–${Y[9]}</div><div class="csub">${d.csub||'Viranomaisten tietoon tulleet tapaukset'}</div>${lc}</div>
   ${agExtra}
   <div class="card"><div class="ctitle">${id==='nuoriso'?'Osuus kaikista epäillyistä':'Per 100 000 asukasta'}</div>${lc2}</div>
-  <div class="abox">${d.analysis}</div>`;
+  <div class="abox">${analyysi(d)}</div>`;
 }
 
 // ── SEKSUAALIRIKOKSET ───────────────────────────────────
@@ -459,14 +468,18 @@ function renderSeksuaali(){
   const SKVIL=['alle 15 v','15–17 v','18 v tai yli'];
   const SKVI=[176,70,146];   // kuva-aineisto: epaillyt henkiloina ikaryhmittain
   const T=[3326,3336,3859,4409,4531,5484,5591,7451,9607,10372];
-  const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-K[i]-SKV[i]));
+  // Kuva-aineistorikokset kuuluivat ennen 2023 rikoslain 17. lukuun, joten ne
+  // eivat sisally kokonaislukuun T (20. luku) noilta vuosilta. Muut = T miinus
+  // ne alakategoriat, jotka oikeasti ovat T:n sisalla. 20:7 (K) kuuluu muihin.
+  const SKV20=SKV.map((v,i)=>+Y[i]>=2023?v:0);
+  const M=T.map((t,i)=>Math.max(0,t-R[i]-L[i]-A[i]-SKV20[i]));
   const UR=[19.70,25.50,21.80,24.00,25.70,24.60,21.20,23.50,27.20,23.10];
   const jaIdx=Y.indexOf('2022')>=0?Y.indexOf('2022'):6;
-  const jakauma=i=>{const muut=Math.max(0,T[i]-R[i]-L[i]-A[i]-SKV[i]);
+  const jakauma=i=>{const muut=M[i], koko=R[i]+L[i]+A[i]+SKV[i]+muut;
     return [{l:'Raiskaukset',v:R[i],c:'#e05c5c'},{l:'Lapsiin',v:L[i],c:'#e8a23a'},
             {l:'Ahdistelu',v:A[i],c:'#9b7de8'},{l:'Kuva-aineisto',v:SKV[i],c:'#3ab8c8'},
             {l:'Muut',v:muut,c:'#4a5068'}]
-      .map(o=>({...o,fmt:(o.v/T[i]*100).toFixed(0)+' %'}));};
+      .map(o=>({...o,fmt:(o.v/koko*100).toFixed(0)+' %'}));};
   const UV=[4.40,4.50,4.70,4.80,5.00,5.30,5.80,6.70,7.30,7.70];
 
   const TR=trendi(R);
@@ -514,6 +527,7 @@ function renderSeksuaali(){
       <span class="li"><span class="ld" style="background:#4a5068"></span>Muut</span>
     </div>
     ${stackedBars(Y,[{data:R,color:'#e05c5c'},{data:L,color:'#e8a23a'},{data:A,color:'#9b7de8'},{data:SKV,color:'#3ab8c8'},{data:M,color:'#4a5068'}])}
+    <div class="csub" style="margin-top:8px">Ennen vuotta 2023 lapsen kuva-aineistorikokset olivat rikoslain 17. luvussa, joten niiltä vuosilta ne on lisätty seksuaalirikosten (20. luku) päälle. Pylväs on siksi ennen 2023 korkeampi kuin yllä oleva kokonaisluku.</div>
   </div>
   <div class="card">
     <div class="ctitle">Ulkomaalaisten osuus raiskausepäillyistä vs. väestöosuus (${Y[0]}–${Y[9]})</div>
@@ -848,7 +862,7 @@ function renderTyottomyys(){
   </div>
   <div class="card"><div class="ctitle">Työttömyysaste ${Y[0]}–${Y[9]}</div><div class="csub">Tumma viiva: koko väestö 15–74-vuotiaat</div>${lc}</div>
   <div class="card"><div class="ctitle">Työttömien määrä 15–24v</div><div class="csub">1 000 henkilöä</div>${lc2}</div>
-  <div class="abox">${d.analysis}</div>`;
+  <div class="abox">${analyysi(d)}</div>`;
 }
 
 // ── ALOITUSNÄKYMÄ ────────────────────────────────────────

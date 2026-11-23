@@ -1,7 +1,7 @@
 // Suomen rikostilastot - service worker
 // Verkko ensin, valimuisti vain varalle. Nain uusi julkaisu nakyy heti
 // eika asennettuun sovellukseen jaa vanhaa versiota kiinni.
-const CACHE = 'rikostilastot-v4';
+const CACHE = 'rikostilastot-v5';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -33,8 +33,12 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     hae
       .then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+        // Vain onnistuneet oman sivuston vastaukset talteen. Muuten yksi
+        // 404 tai palvelinvirhe korvaisi toimivan offline-version.
+        if (res.ok && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+        }
         return res;
       })
       .catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
