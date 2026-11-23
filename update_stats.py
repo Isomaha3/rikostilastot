@@ -170,7 +170,7 @@ PRELIM_CATS = [
     ['310101', '310201', '310102', '310202', '3102A1'],  # Ryöstöt (ml. yritykset)
     ['280101', '280201', '280301', '280102', '280202', '280302'],  # Varkaudet (ml. yritykset)
 ]
-# = Väkivalta, Seksuaali, Henkirikokset, Omaisuus (sama järjestys kuin RTNAMES)
+# Sama jarjestys kuin sivun ENL-taulukko (7 luokkaa).
 
 # ── TILASTOKESKUKSEN RIKOSNIMIKEKOODIT ───────────────────
 # Koodit ovat muotoa <luku><pykälä><momentti>. Seksuaalirikoslaki uudistui
@@ -323,6 +323,16 @@ def _summa(r, nimi):
 def _ei_loytynyt(nimi):
     VIRHEET.append(f"Sivulta ei löytynyt kohtaa: {nimi}")
     print(f"  ✗ Ei löytynyt: {nimi}")
+
+
+def korvaa(content, pattern, repl, nimi):
+    """re.sub, joka kirjaa virheen jos kohtaa ei loydy sivulta."""
+    uusi, osumia = re.subn(pattern, repl, content)
+    if not osumia:
+        _ei_loytynyt(nimi)
+        return content
+    print(f"  {'✓ Päivitetty' if uusi != content else '= Ennallaan'}: {nimi}")
+    return uusi
 
 
 def tarkista(nimi, data, vuodet):
@@ -1300,20 +1310,14 @@ def update_trend_pct(content, obj_key, first_val, last_val):
         return content
     pct = round((last_val - first_val) / first_val * 100, 1)
     pattern = rf'({obj_key}:\{{[^}}]*trendPct:)[^,]+'
-    new_content = re.sub(pattern, rf'\g<1>{pct}', content)
-    if new_content != content:
-        print(f"  ✓ Päivitetty: DATA.{obj_key}.trendPct = {pct}%")
-        content = new_content
+    content = korvaa(content, pattern, rf'\g<1>{pct}', f"DATA.{obj_key}.trendPct = {pct}%")
 
     # Nimilappu pidetään datan mukana, jotta sivulla ei lue 'laskeva'
     # silloin kun luvut nousevat. Aiemmin tämä jäi käsin ylläpidettäväksi
     # ja ehti ajautua ristiriitaan datan kanssa.
     label = 'vakaa' if abs(pct) < 1 else ('nouseva' if pct > 0 else 'laskeva')
     label_pattern = rf"({obj_key}:\{{[^}}]*?trend:')[^']*(')"
-    relabeled = re.sub(label_pattern, rf"\g<1>{label}\g<2>", content)
-    if relabeled != content:
-        print(f"  ✓ Päivitetty: DATA.{obj_key}.trend = {label}")
-        content = relabeled
+    content = korvaa(content, label_pattern, rf"\g<1>{label}\g<2>", f"DATA.{obj_key}.trend = {label}")
 
     return content
 
@@ -1693,8 +1697,8 @@ def main():
             content = update_const_array(content, 'PYR', py, years=True)
             content = update_const_array(content, 'PV', pv)
             content = update_const_array(content, 'PM', pm)
-            content = re.sub(r"(perhe:\s*\{years:')[^']*(')",
-                             rf"\g<1>{py[0]}–{py[-1]}\g<2>", content)
+            content = korvaa(content, r"(perhe:\s*\{years:')[^']*(')",
+                             rf"\g<1>{py[0]}–{py[-1]}\g<2>", "COVERAGE.perhe")
             if perhe_ulk and perhe_kaikki:
                 pb = [round(perhe_ulk.get(y, 0) / perhe_kaikki[y] * 100, 1)
                       for y in py if perhe_kaikki.get(y)]
@@ -1752,16 +1756,14 @@ def main():
         pk = [round(pop_for_c.get(y, 0) / pop_all_c[y] * 100, 1)
               if pop_all_c.get(y) else 0 for y in synt_years]
         content = update_const_array(content, 'PK', pk, is_float=True)
-        content = re.sub(r'const VKS=[\d.]+', f'const VKS={pk[-1]}', content)
-        print(f"  ✓ Päivitetty: VKS = {pk[-1]} %")
+        content = korvaa(content, r'const VKS=[\d.]+', f'const VKS={pk[-1]}', f"VKS = {pk[-1]} %")
         content = update_const_array(content, 'RY', synt_years, years=True)
         if pop_fb and pop_all_s:
             ps = [round(pop_fb.get(y, 0) / pop_all_s[y] * 100, 1)
                   for y in synt_years if pop_all_s.get(y)]
             if len(ps) == len(synt_years):
                 content = update_const_array(content, 'PS', ps, is_float=True)
-                content = re.sub(r'const VSS=[\d.]+', f'const VSS={ps[-1]}', content)
-                print(f"  ✓ Päivitetty: VSS = {ps[-1]} %")
+                content = korvaa(content, r'const VSS=[\d.]+', f'const VSS={ps[-1]}', f"VSS = {ps[-1]} %")
 
     if nat_rates:
         content = update_const_array(content, 'KV', nat_rates)
@@ -1781,9 +1783,7 @@ def main():
     if imagery_ages:
         content = update_const_array(content, 'SKVI', imagery_ages)
     if foreign_share:
-        content = re.sub(r'(const SOV=)[\d.]+',
-                         lambda m: m.group(1) + f'{foreign_share}',
-                         content, count=1)
+        content = korvaa(content, r'(const SOV=)[\d.]+', rf'\g<1>{foreign_share}', f"SOV = {foreign_share}")
     if sex_u:
         content = update_const_array(content, 'SEXU', sex_u)
     if sex_k:
@@ -1812,11 +1812,10 @@ def main():
 
     if unemp_roll:
         ty12, ty12p, per, perp = unemp_roll
-        content = re.sub(r'const TY12=[\d.]+', f'const TY12={ty12}', content)
-        content = re.sub(r'TY12P=[\d.]+', f'TY12P={ty12p}', content)
+        content = korvaa(content, r'const TY12=[\d.]+', f'const TY12={ty12}', f"TY12 = {ty12}")
+        content = korvaa(content, r'TY12P=[\d.]+', f'TY12P={ty12p}', f"TY12P = {ty12p}")
         content = update_const_string(content, 'TY12PER', per)
         content = update_const_string(content, 'TY12PERP', perp)
-        print(f"  ✓ Päivitetty: TY12 = {ty12} % ({per})")
 
     if perhe_rel:
         content = update_const_array(content, 'PS2', perhe_rel, is_float=True)
@@ -1832,19 +1831,13 @@ def main():
         content = update_seksuaali_array(content, 'T', seks_yht_arr)
     
     # Päivitä data range topbarissa
-    content = re.sub(
-        r"(id=\"datarange\">)[^<]+(<)",
-        rf"\g<1>{years[0]}–{latest_year}\g<2>",
-        content
-    )
+    content = korvaa(content, r"(id=\"datarange\">)[^<]+(<)",
+                     rf"\g<1>{years[0]}–{latest_year}\g<2>", "datarange")
     
     # Päivitä COVERAGE-vuodet
     for panel in ['vakivalta', 'seksuaali', 'henki', 'ryostot', 'nuoriso', 'tyottomyys', 'varkaudet', 'huumeet']:
-        content = re.sub(
-            rf"({panel}:\s*\{{years:')[^']+(')",
-            rf"\g<1>{years[0]}–{latest_year}\g<2>",
-            content
-        )
+        content = korvaa(content, rf"({panel}:\s*\{{years:')[^']+(')",
+                         rf"\g<1>{years[0]}–{latest_year}\g<2>", f"COVERAGE.{panel}")
     
     # ── 6. Tallenna ──
     # Kaikki tai ei mitaan: yksikin ongelma estaa tallennuksen, jolloin
@@ -1860,8 +1853,10 @@ def main():
         print("\n  Ei muutoksia — data on ajan tasalla.")
     elif DRY_RUN:
         print("\n  DRY RUN: muutoksia havaittu mutta ei tallennettu.")
-        changes = sum(1 for a, b in zip(content, original) if a != b)
-        print(f"  ({changes} merkkiä muuttunut)")
+        import difflib
+        rivit = sum(1 for r in difflib.unified_diff(original.splitlines(), content.splitlines(), lineterm='')
+                    if r.startswith(('+', '-')) and not r.startswith(('+++', '---')))
+        print(f"  ({rivit} riviä muuttuisi)")
     else:
         print(f"\n[6/6] Tallennetaan {HTML_FILE}...")
         with open(HTML_FILE, 'w', encoding='utf-8') as f:
