@@ -33,6 +33,7 @@ import requests
 import json
 import re
 import sys
+import time
 from datetime import datetime
 
 # Tulosteet sisaltavat skandeja ja symboleja. Windowsin oletuskoodaus
@@ -254,6 +255,87 @@ CRIME_CODES = {
 
 # ── APUFUNKTIOT ──────────────────────────────────────────
 
+# Kaikki ajon aikana havaitut ongelmat. Jos lista ei ole lopussa tyhja,
+# index.html:aa ei tallenneta ja ajo paattyy virheeseen. Nain sivulle ei
+# koskaan paady osittain paivitettya tai nollilla taytettya dataa.
+VIRHEET = []
+
+# Tilastokeskuksen rajapinta sallii 30 kyselya 10 sekunnissa. Pidetaan
+# varmuusvara ja odotetaan tarvittaessa.
+_RAJA_KPL, _RAJA_S = 25, 10.0
+_kyselyajat = []
+
+
+def _odota_vuoroa():
+    nyt = time.monotonic()
+    while _kyselyajat and nyt - _kyselyajat[0] > _RAJA_S:
+        _kyselyajat.pop(0)
+    if len(_kyselyajat) >= _RAJA_KPL:
+        time.sleep(_RAJA_S - (nyt - _kyselyajat[0]) + 0.1)
+    _kyselyajat.append(time.monotonic())
+
+
+def _pyynto(metodi, url, **kw):
+    """HTTP-pyynto rajoituksen sisalla. 429:n jalkeen yritetaan uudelleen.
+    Epaonnistuminen kirjataan VIRHEET-listaan ja poikkeus nostetaan edelleen."""
+    for yritys in range(4):
+        _odota_vuoroa()
+        try:
+            r = requests.request(metodi, url, **kw)
+            if r.status_code == 429 and yritys < 3:
+                time.sleep(10)
+                continue
+            r.raise_for_status()
+            return r
+        except Exception as e:
+            if yritys == 3 or not isinstance(e, requests.ConnectionError):
+                VIRHEET.append(f"Haku epäonnistui: {url.rsplit('/', 1)[-1]}: {e}")
+                raise
+            time.sleep(5)
+
+
+def _get(url, **kw):
+    return _pyynto('GET', url, **kw)
+
+
+def _post(url, **kw):
+    return _pyynto('POST', url, **kw)
+
+
+def _eka(r, nimi):
+    """Vastauksen ainoa arvo. Puuttuva arvo on virhe, ei nolla."""
+    v = (r.json().get("value") or [None])[0]
+    if v is None:
+        VIRHEET.append(f"Arvo puuttuu: {nimi}")
+        return 0
+    return v
+
+
+def _summa(r, nimi):
+    """Usean koodin summa. Yksittainen tyhja koodi on normaali (vanhan ja
+    uuden lain koodit), mutta jos kaikki ovat tyhjia, arvo puuttuu."""
+    arvot = [x for x in (r.json().get("value") or []) if x is not None]
+    if not arvot:
+        VIRHEET.append(f"Arvo puuttuu: {nimi}")
+    return sum(arvot)
+
+
+def _ei_loytynyt(nimi):
+    VIRHEET.append(f"Sivulta ei löytynyt kohtaa: {nimi}")
+    print(f"  ✗ Ei löytynyt: {nimi}")
+
+
+def tarkista(nimi, data, vuodet):
+    """Sarjan pitaa olla haettu ja sisaltaa jokainen vaadittu vuosi."""
+    if data is None:
+        VIRHEET.append(f"Sarja puuttuu kokonaan: {nimi}")
+        return
+    if isinstance(data, dict):
+        puuttuvat = [str(y) for y in vuodet if str(y) not in data]
+        if puuttuvat:
+            VIRHEET.append(f"{nimi}: vuodet puuttuvat {', '.join(puuttuvat)}")
+
+
 _YEAR_CACHE = {}
 
 
@@ -272,7 +354,7 @@ def available_years(table_url, year_var):
 
     found = []
     try:
-        r = requests.get(table_url, timeout=30)
+        r = _get(table_url, timeout=30)
         r.raise_for_status()
         for var in r.json().get('variables', []):
             if var.get('code') == year_var:
@@ -323,7 +405,7 @@ def pxweb_query(table_url, variable_code, values, year_start, year_end=None):
     }
 
     try:
-        r = requests.post(table_url, json=query, timeout=30)
+        r = _post(table_url, json=query, timeout=30)
         r.raise_for_status()
         return parse_jsonstat2(r.json(), years, values)
     except Exception as e:
@@ -419,7 +501,7 @@ def get_population(year_start, year_end=None):
     }
 
     try:
-        r = requests.post(POP_TABLE, json=query, timeout=30)
+        r = _post(POP_TABLE, json=query, timeout=30)
         r.raise_for_status()
         return parse_jsonstat2(r.json(), years, [POP_AREA_ALL])
     except Exception as e:
@@ -464,7 +546,7 @@ def fetch_youth(age_code, year_start, year_end=None):
     }
 
     try:
-        r = requests.post(YOUTH_TABLE, json=query, timeout=30)
+        r = _post(YOUTH_TABLE, json=query, timeout=30)
         r.raise_for_status()
         return parse_jsonstat2(r.json(), years, [age_code])
     except Exception as e:
@@ -499,7 +581,7 @@ def fetch_unemployment(age_code, content_code):
     }
 
     try:
-        r = requests.post(UNEMP_TABLE, json=query, timeout=30)
+        r = _post(UNEMP_TABLE, json=query, timeout=30)
         r.raise_for_status()
         return parse_jsonstat2(r.json(), avail, [age_code], as_float=True)
     except Exception as e:
@@ -517,7 +599,7 @@ def _pxpost(table, query_items, years, as_float=False):
               "selection": {"filter": "item", "values": years}}] + query_items
     body = {"query": query, "response": {"format": "json-stat2"}}
     try:
-        r = requests.post(table, json=body, timeout=30)
+        r = _post(table, json=body, timeout=30)
         r.raise_for_status()
         return parse_jsonstat2(r.json(), years, ["x"], as_float=as_float)
     except Exception as e:
@@ -728,10 +810,9 @@ def fetch_nationality_rates(year):
             {"code": "contentscode", "selection": {"filter": "item", "values": [NAT_CONTENT]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(NAT_TABLE, json=body, timeout=30)
+            r = _post(NAT_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            v = r.json().get("value", [None])[0]
-            out.append(round((v or 0) * 10))
+            out.append(round(_eka(r, f"kansalaisuus {code}") * 10))
         except Exception as e:
             print(f"  Kansalaisuusdata-virhe ({code}): {e}")
             return None
@@ -755,10 +836,9 @@ def fetch_crime_group_rates(origin_code, year):
             {"code": "contentscode", "selection": {"filter": "item", "values": ["ep_lkm"]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r = _post(SYNT_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            v = r.json().get("value", [None])[0]
-            out.append(int(v or 0))
+            out.append(int(_eka(r, f"rikostyyppi {grp}")))
         except Exception as e:
             print(f"  Rikostyyppidata-virhe ({grp}): {e}")
             return None
@@ -777,10 +857,9 @@ def fetch_age_rates(origin_code, year):
             {"code": "contentscode", "selection": {"filter": "item", "values": [SYNT_CONTENT]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r = _post(SYNT_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            v = r.json().get("value", [None])[0]
-            out.append(round((v or 0) * 10))
+            out.append(round(_eka(r, f"ikäryhmä {age}") * 10))
         except Exception as e:
             print(f"  Ikäryhmädata-virhe ({age}): {e}")
             return None
@@ -793,7 +872,7 @@ def fetch_prelim():
     Palauttaa (nykyinen, edellinen, jaksolappu, vertailulappu) tai None.
     """
     try:
-        meta = requests.get(PRELIM_TABLE, timeout=30).json()
+        meta = _get(PRELIM_TABLE, timeout=30).json()
     except Exception as e:
         print(f"  Ennakkodata-virhe (metadata): {e}")
         return None
@@ -816,9 +895,9 @@ def fetch_prelim():
             {"code": "timeperiod_m", "selection": {"filter": "item", "values": [month]}},
             {"code": "contentscode", "selection": {"filter": "item", "values": ["kum_sum"]}},
         ], "response": {"format": "json-stat2"}}
-        r = requests.post(PRELIM_TABLE, json=body, timeout=30)
+        r = _post(PRELIM_TABLE, json=body, timeout=30)
         r.raise_for_status()
-        return sum(x for x in r.json().get("value", []) if x is not None)
+        return _summa(r, f"ennakkotieto {month} {codes[0]}")
 
     try:
         cur = [kum(c, last) for c in PRELIM_CATS]
@@ -838,7 +917,7 @@ def update_const_string(content, var_name, value):
     pattern = rf"(const {var_name}=')[^']*(')"
     new_content, osumia = re.subn(pattern, rf'\g<1>{value}\g<2>', content)
     if not osumia:
-        print(f"  ✗ Ei löytynyt: {var_name}")
+        _ei_loytynyt(f"{var_name}")
         return content
     if new_content == content:
         print(f"  = Ennallaan: {var_name} = {value}")
@@ -861,9 +940,9 @@ def fetch_perhe_relations(year):
             {"code": "contentscode", "selection": {"filter": "item", "values": [PERHE_CONTENT]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(PERHE_TABLE, json=body, timeout=30)
+            r = _post(PERHE_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            vals.append(sum(x for x in r.json().get("value", []) if x is not None))
+            vals.append(_summa(r, f"tekijäsuhde {codes[0]}"))
         except Exception as e:
             print(f"  Tekijasuhdedata-virhe: {e}")
             return None
@@ -894,7 +973,7 @@ def fetch_unemp_rolling():
     """
     table = f'{PXWEB_BASE}/tyti/135y.px'
     try:
-        meta = requests.get(table, timeout=30).json()
+        meta = _get(table, timeout=30).json()
     except Exception as e:
         print(f"  Kuukausidata-virhe: {e}")
         return None
@@ -912,7 +991,7 @@ def fetch_unemp_rolling():
         {"code": "contentscode", "selection": {"filter": "item", "values": [UNEMP_RATE]}},
     ], "response": {"format": "json-stat2"}}
     try:
-        r = requests.post(table, json=body, timeout=30)
+        r = _post(table, json=body, timeout=30)
         r.raise_for_status()
         data = r.json()
     except Exception as e:
@@ -944,9 +1023,9 @@ def fetch_youth_agemix(year):
             {"code": "contentscode", "selection": {"filter": "item", "values": [YOUTH_CONTENT]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r = _post(SYNT_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            vals.append(r.json().get("value", [0])[0] or 0)
+            vals.append(_eka(r, f"nuorten ikäjakauma {age}"))
         except Exception as e:
             print(f"  Ikajakauma-virhe ({age}): {e}")
             return None
@@ -969,9 +1048,9 @@ def fetch_sex_ratios(year):
             {"code": "contentscode", "selection": {"filter": "item", "values": [NAT_CONTENT]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(NAT_TABLE, json=body, timeout=30)
+            r = _post(NAT_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            raw.append((r.json().get("value", [0])[0] or 0) * 10)
+            raw.append(_eka(r, f"seksuaalirikossuhde {code}") * 10)
         except Exception as e:
             print(f"  Seksuaalisuhdeluku-virhe ({code}): {e}")
             return None
@@ -994,9 +1073,9 @@ def fetch_violence_by_age(year):
             {"code": "contentscode", "selection": {"filter": "item", "values": [YOUTH_CONTENT]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r = _post(SYNT_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            out.append(int(r.json().get("value", [0])[0] or 0))
+            out.append(int(_eka(r, f"väkivalta-ikä {age}")))
         except Exception as e:
             print(f"  Vakivalta-ikadata-virhe ({age}): {e}")
             return None
@@ -1016,9 +1095,9 @@ def fetch_sex_rates(origin_code, year):
             {"code": "contentscode", "selection": {"filter": "item", "values": [SYNT_CONTENT]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(SYNT_TABLE, json=body, timeout=30)
+            r = _post(SYNT_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            out.append(round((r.json().get("value", [0])[0] or 0) * 10))
+            out.append(round(_eka(r, f"sukupuoli {sp}") * 10))
         except Exception as e:
             print(f"  Sukupuolidata-virhe ({sp}): {e}")
             return None
@@ -1037,9 +1116,9 @@ def fetch_nationality_counts(year):
             {"code": "contentscode", "selection": {"filter": "item", "values": ["ep_lkm_tork"]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(NAT_TABLE, json=body, timeout=30)
+            r = _post(NAT_TABLE, json=body, timeout=30)
             r.raise_for_status()
-            out.append(int(r.json().get("value", [0])[0] or 0))
+            out.append(int(_eka(r, f"kansalaisuusmäärä {code}")))
         except Exception as e:
             print(f"  Kansalaisuuslukumaara-virhe ({code}): {e}")
             return None
@@ -1064,7 +1143,7 @@ def fetch_long_term(pop):
             {"code": "contentscode", "selection": {"filter": "item", "values": ["rikokset_lkm"]}},
         ], "response": {"format": "json-stat2"}}
         try:
-            r = requests.post(LONG_TABLE, json=body, timeout=30)
+            r = _post(LONG_TABLE, json=body, timeout=30)
             r.raise_for_status()
             d = parse_jsonstat2(r.json(), [LONG_START, viim], [grp])
         except Exception as e:
@@ -1080,7 +1159,7 @@ def fetch_long_term(pop):
 def discover_codes(table_url):
     """Listaa taulun muuttujat ja koodit (debug-apufunktio)."""
     try:
-        r = requests.get(table_url, timeout=15)
+        r = _get(table_url, timeout=15)
         r.raise_for_status()
         meta = r.json()
         for var in meta.get('variables', []):
@@ -1121,7 +1200,7 @@ def update_array_in_html(content, pattern, new_array_str, label):
         print(f"  ✓ Päivitetty: {label}")
         return new_content
     else:
-        print(f"  ✗ Ei löytynyt: {label}")
+        _ei_loytynyt(f"{label}")
         return content
 
 
@@ -1135,7 +1214,7 @@ def update_data_object(content, obj_key, field, new_values, is_float=False):
     pattern = rf'({obj_key}:\{{[^}}]*{field}:)\[[^\]]+\]'
     new_content, osumia = re.subn(pattern, rf'\g<1>{arr_str}', content)
     if not osumia:
-        print(f"  ✗ Ei löytynyt: DATA.{obj_key}.{field}")
+        _ei_loytynyt(f"DATA.{obj_key}.{field}")
         return content
     if new_content == content:
         print(f"  = Ennallaan: DATA.{obj_key}.{field}")
@@ -1173,7 +1252,7 @@ def update_const_array(content, var_name, values, is_float=False, years=False):
     # Erotellaan kolme tapausta. Aiemmin "ei loytynyt" tulostui myos silloin
     # kun taulukko loytyi mutta arvo oli jo oikea, mika naytti vialta.
     if not osumia:
-        print(f"  ✗ Ei löytynyt: {var_name}")
+        _ei_loytynyt(f"{var_name}")
         return content
     if new_content == content:
         print(f"  = Ennallaan: {var_name}")
@@ -1190,7 +1269,7 @@ def update_seksuaali_array(content, var_name, new_values):
     pattern = rf'(const {var_name}=)\[[-\d.,\s]*\]'
     new_content, osumia = re.subn(pattern, rf'\g<1>{arr_str}', content)
     if not osumia:
-        print(f"  ✗ Ei löytynyt: seksuaali.{var_name}")
+        _ei_loytynyt(f"seksuaali.{var_name}")
         return content
     if new_content == content:
         print(f"  = Ennallaan: seksuaali.{var_name}")
@@ -1205,7 +1284,7 @@ def update_year_array(content, new_years):
     pattern = r"(const Y=)\[[^\]]+\]"
     new_content, osumia = re.subn(pattern, rf"\g<1>{arr_str}", content)
     if not osumia:
-        print(f"  ✗ Ei löytynyt: Y")
+        _ei_loytynyt(f"Y")
         return content
     if new_content == content:
         print(f"  = Ennallaan: Y (vuodet)")
@@ -1216,6 +1295,9 @@ def update_year_array(content, new_years):
 
 def update_trend_pct(content, obj_key, first_val, last_val):
     """Päivitä trendPct-arvo ja sitä vastaava trend-nimilappu."""
+    if not first_val:
+        VIRHEET.append(f"{obj_key}: ensimmäinen arvo on 0, trendiä ei voi laskea")
+        return content
     pct = round((last_val - first_val) / first_val * 100, 1)
     pattern = rf'({obj_key}:\{{[^}}]*trendPct:)[^,]+'
     new_content = re.sub(pattern, rf'\g<1>{pct}', content)
@@ -1388,6 +1470,47 @@ def main():
     rt_domestic = ([round(n / pop_dom_o[ly] * 100000, 1) for n in rt_domestic_n]
                    if rt_domestic_n and pop_dom_o and pop_dom_o.get(ly) else None)
     
+    # ── Tarkista, etta kaikki sarjat ovat mukana kaikilta vuosilta ──
+    # Viimeisin vuosi luetaan taulusta 13gw. Jos jokin muu taulu ei ole viela
+    # julkaissut samaa vuotta, ajo pysahtyy tassa eika kirjoita nollia sivulle.
+    for nimi, d in [('pahoinpitely', pahoinpitely), ('henkirikos', henkirikos),
+                    ('ryosto', ryosto), ('raiskaus', raiskaus), ('lapsi', lapsi),
+                    ('ahdistelu', ahdistelu), ('seksuaali_yht', seks_yht),
+                    ('nuoriso', nuoriso), ('nuoriso_kaikki', nuoriso_kaikki),
+                    ('pp_perus', pp_perus), ('pp_torkea', pp_torkea), ('pp_lieva', pp_lieva),
+                    ('pp_yritys', pp_yritys), ('seks_kuva', seks_kuva), ('huume', huume),
+                    ('hu_kaytto', hu_kaytto), ('hu_perus', hu_perus), ('hu_torkea', hu_torkea),
+                    ('varkaus', varkaus), ('vk_perus', vk_perus), ('vk_torkea', vk_torkea),
+                    ('vk_napistys', vk_napistys), ('vk_yritys', vk_yritys),
+                    ('tyottomyysaste', unemp_rate), ('tyottomat', unemp_count),
+                    ('tyottomyysaste_kaikki', unemp_rate_all), ('tyollisyysaste', unemp_emp),
+                    ('vaesto', pop), ('epaillyt_ulk_suhde', rate_foreign),
+                    ('epaillyt_suom_suhde', rate_domestic), ('epaillyt_ulk', susp_foreign),
+                    ('epaillyt_suom', susp_domestic), ('raiskaus_kaikki', rape_all),
+                    ('raiskaus_ulk', rape_foreign)]:
+        tarkista(nimi, d, year_strs_pre)
+    for nimi, d in [('perhe_kaikki_uhrit', perhe_tot), ('perhe_alle18', perhe_alle18),
+                    ('perhe_ulk', perhe_ulk), ('perhe_syntypera_kaikki', perhe_kaikki),
+                    ('vaesto_ulk_syntypera', pop_ulk_syntypera),
+                    ('vaesto_syntypera_kaikki', pop_kaikki_syntypera)]:
+        tarkista(nimi, d, perhe_years)
+    for nimi, d in [('vaesto_kansalaisuus', pop_all_c), ('vaesto_ulk_kansalaiset', pop_for_c),
+                    ('vaesto_ulkomailla_syntyneet', pop_fb), ('vaesto_syntypera', pop_all_s)]:
+        tarkista(nimi, d, synt_years)
+    tarkista('vaesto_ulk_viimeisin', pop_for_o, [ly])
+    tarkista('vaesto_suom_viimeisin', pop_dom_o, [ly])
+    for nimi, d in [('kansalaisuussuhteet', nat_rates), ('nuorten_ikajakauma', youth_mix),
+                    ('vakivalta_ika_alku', viol_age_first), ('vakivalta_ika_loppu', viol_age_last),
+                    ('seksuaalirikossuhteet', sex_ratios), ('seksuaalinimikkeet', sexcat),
+                    ('ulk_vaestoosuus', foreign_share), ('kuva_aineisto', imagery),
+                    ('kuva_aineisto_iat', imagery_ages), ('sukupuoli_ulk', sex_u),
+                    ('sukupuoli_suom', sex_k), ('kansalaisuusmaarat', nat_counts),
+                    ('pitka_sarja', long_term), ('rikostyypit_ulk', rt_foreign),
+                    ('rikostyypit_suom', rt_domestic), ('ika_ulk', age_foreign),
+                    ('ika_suom', age_domestic), ('ennakkotiedot', prelim),
+                    ('tyottomyys_12kk', unemp_roll), ('tekijasuhde', perhe_rel)]:
+        tarkista(nimi, d, [])
+
     # ── 4. Koosta arrayt ──
     print("\n[4/6] Koostetaan data-arrayt...")
     
@@ -1612,6 +1735,8 @@ def main():
         ok_ = fetch_origin_counts(crime, SYNT_DOMESTIC, year_strs)
         cu = fetch_citizen_counts(crime, 'ULK', year_strs)
         ct = fetch_citizen_counts(crime, 'SSS', year_strs)
+        for nimi, d in [('OU', ou), ('OK', ok_), ('CU', cu), ('CT', ct)]:
+            tarkista(f'{nimi}_{key}', d, year_strs)
         if ou and ok_:
             content = update_const_array(content, f'OU_{key}', [int(ou.get(y, 0)) for y in year_strs])
             content = update_const_array(content, f'OK_{key}', [int(ok_.get(y, 0)) for y in year_strs])
@@ -1722,6 +1847,15 @@ def main():
         )
     
     # ── 6. Tallenna ──
+    # Kaikki tai ei mitaan: yksikin ongelma estaa tallennuksen, jolloin
+    # sivulla pysyy edellinen ehja versio ja GitHub Actions -ajo nayttaa
+    # punaista.
+    if VIRHEET:
+        print(f"\n✗ {len(VIRHEET)} ongelmaa, {HTML_FILE} jätetään ennalleen:")
+        for v in VIRHEET:
+            print(f"  - {v}")
+        sys.exit(1)
+
     if content == original:
         print("\n  Ei muutoksia — data on ajan tasalla.")
     elif DRY_RUN:

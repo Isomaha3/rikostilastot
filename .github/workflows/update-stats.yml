@@ -29,6 +29,12 @@ jobs:
       - name: Asenna kirjastot
         run: pip install requests
 
+      - name: Aja testit
+        run: python -m unittest discover tests
+
+      # Skripti päättyy virheeseen, jos yksikin haku epäonnistuu tai luku
+      # puuttuu. Silloin alla oleva tallennus jää tekemättä ja sivulle jää
+      # edellinen ehjä versio.
       - name: Hae uudet tilastot ja päivitä dashboard
         run: python update_stats.py
 
