@@ -1194,7 +1194,105 @@ function renderEurostat(){
     <div class="abox">Vuonna ${yr} Suomessa ${f1(fiV)} väestöstä koki rikollisuuden, väkivallan tai ilkivallan ongelmaksi asuinalueellaan, kun EU27-maiden keskiarvo oli ${f1(euV)}. Suomi oli ${rank}. sijalla ${rows.length} maan joukossa. Kyse on koetusta turvallisuudesta: luku voi muuttua myös uutisoinnin ja yleisen ilmapiirin vuoksi, ja kyselyn otanta tuo vuosiin vaihtelua. Eurostat julkaisee tämän tiedon harvoin ja noin kahden vuoden viiveellä.</div>`;
   };
   draw(false);
-  eusRefresh().then(ok=>{ if(ok) draw(true); });
+  eusRefresh().then(ok=>{ if(ok) draw(true); renderEuHenki(); });
+  renderEuHenki();
+}
+
+// ── EU-VERTAILU: HENKIRIKOKSET (EUROSTAT crim_off_cat) ──────
+// Poliisin tietoon tulleet tahalliset henkirikokset (ICCS0101) sataatuhatta
+// asukasta kohden. Lukuja ei ole upotettu sivulle: ne haetaan selaimessa
+// suoraan Eurostatin rajapinnasta. Jos haku epaonnistuu, kortti kertoo sen
+// eika nayta lukuja. Haettu tulos pidetaan muistissa, jotta paneelin
+// uudelleenpiirto ei hae dataa uudestaan.
+const EUH_API='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/crim_off_cat?format=JSON&lang=EN&iccs=ICCS0101&unit=P_HTHAB';
+let EUH=null, EUH_HAKU=null;
+
+// Yleinen JSON-stat-lukija: laskee arvon paikan id- ja size-kenttien
+// mukaisesta jarjestyksesta, joten se ei riipu ulottuvuuksien jarjestyksesta.
+function jsonstatArvo(j, valinta){
+  let idx=0;
+  for(let k=0;k<j.id.length;k++){
+    const d=j.id[k], ci=j.dimension[d].category.index;
+    let pos;
+    if(valinta[d]!=null) pos=Array.isArray(ci)?ci.indexOf(valinta[d]):ci[valinta[d]];
+    else if(j.size[k]===1) pos=0;
+    else return null;
+    if(pos==null||pos<0) return null;
+    idx=idx*j.size[k]+pos;
+  }
+  const v=j.value[idx];
+  return v==null?null:v;
+}
+
+function euhJasenna(j){
+  const ti=j.dimension.time.category.index;
+  const T=(Array.isArray(ti)?ti.slice():Object.keys(ti).sort((a,b)=>ti[a]-ti[b]));
+  const maat=Object.keys(EUS_NAMES).concat(['EU27_2020']);
+  const v={};
+  maat.forEach(g=>{ v[g]=T.map(y=>jsonstatArvo(j,{geo:g,time:y})); });
+  // Viimeisin vuosi, jolta vahintaan 20 EU-maalla ja Suomella on luku.
+  let L=-1;
+  for(let i=T.length-1;i>=0;i--){
+    const n=Object.keys(EUS_NAMES).filter(g=>v[g][i]!=null).length;
+    if(n>=20&&v.FI[i]!=null){L=i;break;}
+  }
+  if(L<0) return null;
+  const alku=Math.max(0,L-9);
+  const years=T.slice(alku,L+1);
+  Object.keys(v).forEach(g=>{ v[g]=v[g].slice(alku,L+1); if(v[g].every(x=>x==null)) delete v[g]; });
+  const d=(j.updated||'').slice(0,10).split('-');
+  return {updated:d.length===3?(+d[2])+'.'+(+d[1])+'.'+d[0]:'',years,v};
+}
+
+function euhHae(){
+  if(EUH_HAKU) return EUH_HAKU;
+  EUH_HAKU=(async()=>{
+    try{
+      const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),8000);
+      const r=await fetch(EUH_API,{signal:ctl.signal}); clearTimeout(t);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      EUH=euhJasenna(await r.json());
+      return !!EUH;
+    }catch(e){ EUH_HAKU=null; return false; }
+  })();
+  return EUH_HAKU;
+}
+
+function renderEuHenki(){
+  const el=document.getElementById('p-eurostat');
+  if(!el) return;
+  let box=document.getElementById('eu-henki');
+  if(!box){ box=document.createElement('div'); box.id='eu-henki'; el.appendChild(box); }
+  const kaanna=()=>{ if(typeof translateTree==='function'&&typeof LANG!=='undefined'&&LANG!=='fi') translateTree(box); };
+  if(!EUH){
+    box.innerHTML='<div class="card"><div class="ctitle">Henkirikokset EU-maissa</div><div class="csub">Haetaan lukuja Eurostatista…</div></div>';
+    kaanna();
+    euhHae().then(ok=>{
+      if(ok) renderEuHenki();
+      else { box.innerHTML='<div class="card"><div class="ctitle">Henkirikokset EU-maissa</div><div class="csub">Eurostatin henkirikostietoja ei saatu haettua. Yritä myöhemmin uudelleen.</div></div>'; kaanna(); }
+    });
+    return;
+  }
+  const L=EUH.years.length-1, yr=EUH.years[L];
+  const f2=v=>v==null?'–':v.toFixed(2).replace('.',',');
+  const rows=Object.keys(EUS_NAMES).filter(g=>EUH.v[g]&&EUH.v[g][L]!=null).map(g=>({g,l:EUS_NAMES[g],v:EUH.v[g][L]})).sort((a,b)=>b.v-a.v);
+  const fiV=EUH.v.FI[L], euV=EUH.v.EU27_2020?EUH.v.EU27_2020[L]:null;
+  const rank=rows.findIndex(r=>r.g==='FI')+1;
+  const fill=a=>{const o=a.slice();for(let i=0;i<o.length;i++) if(o[i]==null) o[i]=i>0?o[i-1]:(o.find(x=>x!=null)||0);return o;};
+  const series=[{g:'FI',c:'#e05c5c',w:2.5,fill:true},{g:'EU27_2020',c:'#7a8099',w:1.5,dash:'4,3'},{g:'SE',c:'#4f8ef7',w:1.5},{g:'DK',c:'#3dba8c',w:1.5}].filter(s=>EUH.v[s.g]);
+  const allV=series.flatMap(s=>EUH.v[s.g].filter(x=>x!=null));
+  const lc=EUH.years.length>1?lineChart(series.map(s=>({data:fill(EUH.v[s.g]),color:s.c,width:s.w,dash:s.dash,fill:s.fill})),0,Math.ceil(Math.max(...allV)*2)/2,v=>v.toFixed(1).replace('.',','),EUH.years):'';
+  const bars=rows.map(r=>({l:r.l,v:r.v,c:r.g==='FI'?'#e05c5c':'#4a5068',fmt:f2(r.v)}));
+  if(euV!=null) bars.splice(rows.filter(r=>r.v>euV).length,0,{l:'EU27 keskiarvo',v:euV,c:'#7a8099',fmt:f2(euV)});
+  const leg=series.map(s=>'<span class="li"><span class="ld" style="background:'+s.c+'"></span>'+(s.g==='EU27_2020'?'EU27':EUS_NAMES[s.g])+'</span>').join('');
+  box.innerHTML=`
+    <div class="ibox"><strong>Henkirikokset EU-maissa:</strong> Poliisin tietoon tulleet tahalliset henkirikokset sataatuhatta asukasta kohden (Eurostat, taulu crim_off_cat, luokka ICCS0101). Haettu suoraan Eurostatista${EUH.updated?', päivitetty '+EUH.updated:''}. Maiden tilastointitavat eroavat, joten pienet erot eivät ole luotettavia. Eurostatin luku Suomelle voi poiketa Tilastokeskuksen luvusta.</div>
+    <div class="card"><div class="ctitle">Henkirikokset ${EUH.years[0]}–${yr}</div><div class="csub">Tapauksia / 100 000 asukasta</div>
+      <div class="legend">${leg}</div>
+      ${lc}
+    </div>
+    <div class="card"><div class="ctitle">Henkirikokset EU-maissa ${yr}</div><div class="csub">Tapauksia / 100 000 asukasta. Suomi punaisella, sijoitus ${rank}. / ${rows.length} (1. = eniten)</div>${hbars(bars)}</div>`;
+  kaanna();
 }
 
 // ── TOP 3 KASVU ─────────────────────────────────────────
@@ -2217,7 +2315,17 @@ const DICT = {
 ,
 'Persutilastot':'Persutilastot',
 'Suvun WhatsApp-ryhmän virallinen lähde.':'The official source for the family WhatsApp group.',
-'No katotaas sitte':'Right, let us have a look'
+'No katotaas sitte':'Right, let us have a look',
+'Henkirikokset EU-maissa':'Homicides in EU countries',
+'Haetaan lukuja Eurostatista…':'Fetching figures from Eurostat…',
+'Eurostatin henkirikostietoja ei saatu haettua. Yritä myöhemmin uudelleen.':'Eurostat homicide data could not be fetched. Please try again later.',
+'Tapauksia / 100 000 asukasta':'Cases per 100,000 inhabitants',
+'Suomi punaisella, sijoitus':'Finland in red, rank',
+'(1. = eniten)':'(1 = highest)',
+'Henkirikokset EU-maissa:':'Homicides in EU countries:',
+' Poliisin tietoon tulleet tahalliset henkirikokset sataatuhatta asukasta kohden (Eurostat, taulu crim_off_cat, luokka ICCS0101). Haettu suoraan Eurostatista':' Intentional homicides recorded by the police per 100,000 inhabitants (Eurostat, table crim_off_cat, category ICCS0101). Fetched directly from Eurostat',
+', päivitetty ':', updated ',
+'. Maiden tilastointitavat eroavat, joten pienet erot eivät ole luotettavia. Eurostatin luku Suomelle voi poiketa Tilastokeskuksen luvusta.':'. Recording practices differ between countries, so small differences are not reliable. The Eurostat figure for Finland may differ from that of Statistics Finland.'
 };
 const DKEYS = Object.keys(DICT).sort((a,b) => b.length - a.length);
 
