@@ -1056,6 +1056,17 @@ document.addEventListener('DOMContentLoaded', function(){
 function renderIka(){
 
   const PBI=[6.60,7.00,7.30,7.70,8.00,8.50,9.10,10.20,11.10,11.70];
+  // Alle 18-vuotiaat: osuus ryostoepaillyista ja osuus vaestosta (%).
+  const NRY=[36.7,14.5];
+  // Alle 18-vuotiaat: kuinka suuri osa ryhmasta on vuoden aikana
+  // epailtyna pahoinpitelysta tai ryostosta (%). Eri yksikko kuin NRY,
+  // siksi oma kaavionsa.
+  const NAL=[1.0,0.43];
+  const tl=function(fi,en){return LANG==='en'?en:fi;};
+  const pros=function(v){var s=v.toFixed(1);
+    return (LANG==='en'?s:s.replace('.',','))+' %';};
+  const ker=function(v){var s=v.toFixed(1);
+    return LANG==='en'?s:s.replace('.',',');};
   const el=document.getElementById('p-ika');
 
   // Ikäryhmäjakauma epäillyistä 2025 — rikoslakirikokset, kukin epäilty kerran
@@ -1124,15 +1135,26 @@ function renderIka(){
   </div>
 
   <div class="card">
-    <div class="ctitle">Nuoret ulkomaalaistaustaisten rikoksissa — avainluvut</div>
+    <div class="ctitle">${tl('Osuus alle 18-vuotiaiden ryöstöepäillyistä','Share of robbery suspects under 18')} — ${Y[9]}</div>
+    <div class="csub">${tl('Verrattuna ryhmän osuuteen saman ikäisestä väestöstä','Compared with the group share of the same age group in the population')}</div>
     ${hbars([
-      {l:'Osuus alle 18v ryöstöepäillyistä',v:36.7,c:'#e05c5c',fmt:'37 %'},
-      {l:'Osuus alle 18v väestöstä',v:14.5,c:'#7a8099',fmt:'14,5 %'},
-      {l:'Pahoinp./ryöstö epäily — ulkomaalaistaustainen nuori',v:1.0,c:'#e8a23a',fmt:'1,0 %/v'},
-      {l:'Pahoinp./ryöstö epäily — suomalaistaustainen nuori',v:0.43,c:'#4a5068',fmt:'0,4 %/v'},
+      {l:tl('Ulkomaalaistaustaiset ryöstöepäillyistä','Foreign background, of robbery suspects'),v:NRY[0],c:'#e05c5c',fmt:pros(NRY[0])},
+      {l:tl('Ulkomaalaistaustaiset väestöstä','Foreign background, of the population'),v:NRY[1],c:'#7a8099',fmt:pros(NRY[1])},
     ])}
-    <div style="font-size:11px;color:var(--dim);margin-top:8px">Lähde: Tilastokeskus, koko maa ${Y[9]} (rpk/13zk, vaerak/159s). Alle 18-vuotiaat ulkomaalaistaustaiset: ryöstö- tai pahoinpitelyepäiltyjä noin 100 / 10 000, suomalaistaustaiset noin 43 / 10 000. Vaihtelu kaupungeittain on suurta.</div>
+    <div class="csub" style="margin-top:8px">${tl('Yliedustus','Overrepresentation')} ${ker(NRY[0]/NRY[1])}&times;.</div>
   </div>
+
+  <div class="card">
+    <div class="ctitle">${tl('Vuosittainen rikosalttius, alle 18-vuotiaat','Annual offending rate, under 18')} — ${Y[9]}</div>
+    <div class="csub">${tl('Kuinka suuri osa ikäryhmästä on vuoden aikana epäiltynä pahoinpitelystä tai ryöstöstä','What share of the age group is suspected of assault or robbery during a year')}</div>
+    ${hbars([
+      {l:tl('Ulkomaalaistaustainen nuori','Young person, foreign background'),v:NAL[0],c:'#e8a23a',fmt:pros(NAL[0])},
+      {l:tl('Suomalaistaustainen nuori','Young person, Finnish background'),v:NAL[1],c:'#4a5068',fmt:pros(NAL[1])},
+    ])}
+    <div class="csub" style="margin-top:8px">${tl('Ero on '+ker(NAL[0]/NAL[1])+'-kertainen. Valtaosa kummassakin ryhmässä, yli '+Math.floor(100-NAL[0])+' prosenttia, ei ole vuoden aikana epäiltynä näistä rikoksista.','The gap is '+ker(NAL[0]/NAL[1])+'-fold. In both groups the great majority, over '+Math.floor(100-NAL[0])+' per cent, is not suspected of these offences during a year.')}</div>
+  </div>
+
+  <div style="font-size:11px;color:var(--dim);margin-top:-14px;margin-bottom:4px">${tl('Lähde: Tilastokeskus, koko maa','Source: Statistics Finland, whole country')} ${Y[9]} (rpk/13zk, vaerak/159s). ${tl('Alle 18-vuotiaat ulkomaalaistaustaiset: ryöstö- tai pahoinpitelyepäiltyjä noin 100 / 10 000, suomalaistaustaiset noin 43 / 10 000. Vaihtelu kaupungeittain on suurta.','Among those under 18 with a foreign background, roughly 100 per 10,000 are suspected of robbery or assault, against roughly 43 per 10,000 with a Finnish background. Variation between cities is large.')}</div>
 
   <div class="abox">Ulkomaalaistaustaisilla epäillyillä painottuvat 21–49-vuotiaat (67 %), kantaväestöllä ikäjakauma on tasaisempi ja yli 50-vuotiaita on selvästi enemmän (24 % vs. 12 %). Alle 30-vuotiaiden osuus epäillyistä on molemmissa ryhmissä noin 43–44 %. Seksuaalirikoksissa yliedustus on suurin: irakilaisia epäiltiin väestöön suhteutettuna ${SXR[0].toFixed(1).replace('.',',')}-kertaisesti Suomen kansalaisiin verrattuna. Luku ei ole ikä- eikä sukupuolivakioitu, ja vakiointi pienentäisi eroa. Alle 18-vuotiaista ulkomaalaistaustaisista noin 1 % on vuosittain epäiltynä pahoinpitelystä tai ryöstöstä, kantaväestöllä 0,4 %. Valtaosa, noin 99 %, ulkomaalaistaustaisistakin nuorista ei ole vuoden aikana epäiltynä näistä rikoksista.</div>`;
 }
@@ -1565,17 +1587,28 @@ function trendText(a,yrs){
   if(!a||a.length<3) return '';
   var n=a.length, y0=yrs[yrs.length-n]||yrs[0], last=a[n-1], first=a[0];
   var lg=(last-first)/first*100, mx=Math.max.apply(null,a), pk=a.indexOf(mx), pkY=yrs[yrs.length-n+pk];
-  var p1=Math.abs(lg)<10?'Suunnilleen samalla tasolla kuin '+y0:(lg>0?'Selvästi enemmän kuin '+y0+' (+'+lg.toFixed(0)+' %)':'Selvästi vähemmän kuin '+y0+' (−'+Math.abs(lg).toFixed(0)+' %)');
+  var en=(typeof LANG!=='undefined'&&LANG==='en');
+  var tt=function(fi,eng){return en?eng:fi;};
+  var p1=Math.abs(lg)<10
+    ? tt('Suunnilleen samalla tasolla kuin '+y0,'At roughly the same level as in '+y0)
+    : (lg>0
+      ? tt('Selvästi enemmän kuin '+y0+' (+'+lg.toFixed(0)+' %)',
+            'Clearly more than in '+y0+' (+'+lg.toFixed(0)+' %)')
+      : tt('Selvästi vähemmän kuin '+y0+' (−'+Math.abs(lg).toFixed(0)+' %)',
+            'Clearly less than in '+y0+' (−'+Math.abs(lg).toFixed(0)+' %)'));
   var down=0,up=0; for(var i=n-1;i>0&&a[i]<a[i-1];i--) down++; for(var j=n-1;j>0&&a[j]>a[j-1];j--) up++;
   var p2, dir;
-  if(pk===n-1){p2='koko jakson korkein taso'; dir=1;}
-  else if(down>=2){p2='laskenut '+down+' vuotta peräkkäin vuoden '+pkY+' huipusta'; dir=-1;}
-  else if(up>=2){p2='kasvanut '+up+' vuotta peräkkäin'; dir=1;}
-  else if(down===1){p2='laskenut edellisvuodesta'; dir=-1;}
-  else {p2='noussut edellisvuodesta'; dir=1;}
-  var conn=(Math.abs(lg)>=10&&((lg>0&&dir<0)||(lg<0&&dir>0)))?', mutta ':', ';
+  if(pk===n-1){p2=tt('koko jakson korkein taso','the highest level of the whole period'); dir=1;}
+  else if(down>=2){p2=tt('laskenut '+down+' vuotta peräkkäin vuoden '+pkY+' huipusta',
+                         'down for '+down+' consecutive years from the '+pkY+' peak'); dir=-1;}
+  else if(up>=2){p2=tt('kasvanut '+up+' vuotta peräkkäin',
+                       'up for '+up+' consecutive years'); dir=1;}
+  else if(down===1){p2=tt('laskenut edellisvuodesta','down from the previous year'); dir=-1;}
+  else {p2=tt('noussut edellisvuodesta','up from the previous year'); dir=1;}
+  var conn=(Math.abs(lg)>=10&&((lg>0&&dir<0)||(lg<0&&dir>0)))?tt(', mutta ',', but '):', ';
   var t=p1+conn+p2+'.';
-  if(mx<200) t+=' Pienet luvut vaihtelevat paljon vuodesta toiseen.';
+  if(mx<200) t+=tt(' Pienet luvut vaihtelevat paljon vuodesta toiseen.',
+                   ' Small numbers vary a lot from year to year.');
   return t;
 }
 function tulkintaSarja(id){
@@ -1596,15 +1629,22 @@ function ennakkoTxt(id){
     var c=kvArr(renderEnnakko2025,'ENC')[i], p=kvArr(renderEnnakko2025,'ENP')[i]; if(!c||!p) return '';
     var ch=(c-p)/p*100;
     var per=kvStr(renderEnnakko2025,'ENPER');
-    if(Math.abs(ch)<0.05) return ' Ennakkotietojen mukaan jaksolla '+per+' määrä on pysynyt samana kuin edellisvuoden vastaavalla jaksolla.';
-    return ' Ennakkotietojen mukaan jaksolla '+per+' määrä on '+(ch>0?'noussut ':'laskenut ')+Math.abs(ch).toFixed(1).replace('.',',')+' % edellisvuoden vastaavasta jaksosta.';
+    var en=(typeof LANG!=='undefined'&&LANG==='en');
+    if(Math.abs(ch)<0.05) return en
+      ? ' Preliminary data for '+per+' show the figure unchanged from the same period a year earlier.'
+      : ' Ennakkotietojen mukaan jaksolla '+per+' määrä on pysynyt samana kuin edellisvuoden vastaavalla jaksolla.';
+    var luku=Math.abs(ch).toFixed(1);
+    return en
+      ? ' Preliminary data for '+per+' show the figure '+(ch>0?'up ':'down ')+luku+' % on the same period a year earlier.'
+      : ' Ennakkotietojen mukaan jaksolla '+per+' määrä on '+(ch>0?'noussut ':'laskenut ')+luku.replace('.',',')+' % edellisvuoden vastaavasta jaksosta.';
   }catch(e){ return ''; }
 }
 function addTulkinta(id){
   var el=document.getElementById('p-'+id); if(!el||el.querySelector('.tulkinta')) return;
   var a=tulkintaSarja(id); if(!a) return;
   var t=trendText(a.slice(-Y.length),Y); if(!t) return;
-  var box='<div class="ibox tulkinta"><strong>Tulkinta:</strong> '+t+ennakkoTxt(id)+'</div>';
+  var otsikko=(typeof LANG!=='undefined'&&LANG==='en')?'Reading:':'Tulkinta:';
+  var box='<div class="ibox tulkinta"><strong>'+otsikko+'</strong> '+t+ennakkoTxt(id)+'</div>';
   var db=el.querySelector('.dbox');
   if(db) db.insertAdjacentHTML('afterend',box); else el.insertAdjacentHTML('afterbegin',box);
 }
